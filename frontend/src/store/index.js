@@ -8,6 +8,7 @@ const store = createStore({
     state(){
         return {
             account:{
+                userId:null,
                 username:'',
                 isSurveyed:false
             }
@@ -15,13 +16,15 @@ const store = createStore({
     },
     //metations에서 mutations로 바뀜!!!!
     mutations: {
-        setAccount(state, {username, isSurveyed}){
+        setAccount(state, {userId, username, isSurveyed}){
+            state.account.userId = userId
             state.account.username = username
             state.account.isSurveyed = isSurveyed
         },
         clearAccount(state){
-            state.account.username = '';
-            state.account.isSurveyed = false;
+            state.account.userId = null
+            state.account.username = ''
+            state.account.isSurveyed = false
         }
     },
     // plugins : [ createPersistedState({

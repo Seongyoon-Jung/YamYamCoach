@@ -21,12 +21,11 @@ import FooterComponent from '@/components/FooterComponent.vue';
     created(){
       axios.get('/api/users/me') 
         .then((res) => {
-          console.log(res)
           if(res.data =='anonymousUser'){
-            store.commit('setAccount',{username: '', isSurveyed:false})
+            store.commit('setAccount',{userId:null, username: '', isSurveyed:false})
           }
           else{
-            store.commit('setAccount',{username : res.data.username, isSurveyed : res.data.isSurveyed})
+            store.commit('setAccount',{userId : res.data.userId , username : res.data.username, isSurveyed : res.data.surveyed})
           }
         });
     },

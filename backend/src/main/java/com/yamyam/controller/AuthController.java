@@ -33,10 +33,9 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest loginDto, HttpServletRequest request) {
-		System.out.println(loginDto);
 		try {
            LoginResponse loginResponse = authService.login(loginDto,request);
-           System.out.println(loginResponse.isSurveyed());
+           System.out.println(loginResponse.toString());
            return ResponseEntity.ok(loginResponse);
         } catch (AuthenticationException e) {
            System.out.println("인증 실패: " + e.getMessage());

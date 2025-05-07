@@ -33,8 +33,11 @@ public class SurveyController {
 	
 	//설문조사 결과 저장
 	@PostMapping("/submit")
-	public String submit(@RequestBody SurveyRequest surveyRequest) {
+	public ResponseEntity<?> submit(@RequestBody SurveyRequest surveyRequest) {
+		if(surveyService.insertSurveyResult(surveyRequest)) {
+			return ResponseEntity.ok().build();
+		}
 		
-		return null;
+		return ResponseEntity.badRequest().build();
 	}
 }

@@ -99,17 +99,16 @@ export default {
         return;
       }
 
+      //  is머시기 boolean 타입으로 넘어오면 json이 강제로 surveyed로 바꿔버린다
       axios
         .post('/api/auth/login', this.result)
         .then((res) => {
-          if(res.data.isSurveyed == undefined || res.data.isSurveyed == false){
-            store.commit('setAccount',{username : res.data.username, isSurveyed : false})
-          }
-          console.log(this.$store.state.account)
+          store.commit('setAccount',{userId: res.data.userId, username : res.data.username, isSurveyed : res.data.surveyed})
+
           alert("로그인이 완료되었습니다.")
 
           // 설문조사를 완료했으면 홈으로
-          if(this.$store.state.account.isSurveyed){
+          if(res.data.surveyed){
             this.$router.push({name:'HomeView'})
           }
           //설문조사안했으면 설문조사 페이지로
@@ -119,7 +118,6 @@ export default {
           
         })
         .catch((err) => {
-          console.log(err);
         });
     },
   },

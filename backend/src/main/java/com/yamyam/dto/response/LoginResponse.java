@@ -1,15 +1,25 @@
 package com.yamyam.dto.response;
 
 public class LoginResponse {
+	private int userId;
 	private String username;
 	private boolean isSurveyed;
 	
 	public LoginResponse() {
 	}
 
-	public LoginResponse(String username, boolean isSurveyed) {
+	public LoginResponse(int userId, String username, boolean isSurveyed) {
+		this.userId = userId;
 		this.username = username;
 		this.isSurveyed = isSurveyed;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
 	}
 
 	public String getUsername() {
@@ -27,5 +37,13 @@ public class LoginResponse {
 	public void setSurveyed(boolean isSurveyed) {
 		this.isSurveyed = isSurveyed;
 	}
+
+	@Override
+	public String toString() {
+		return "LoginResponse [userId=" + userId + ", username=" + username + ", isSurveyed=" + isSurveyed + "]";
+	}
+
+	
+	
 	
 }

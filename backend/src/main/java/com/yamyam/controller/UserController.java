@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
+import com.yamyam.dto.request.UpdateRequest;
 import com.yamyam.dto.response.LoginResponse;
 import com.yamyam.service.UserService;
 
@@ -34,7 +36,6 @@ public class UserController {
 	//회원가입
 	@PostMapping("")
 	public ResponseEntity<String> singup(@RequestBody SignUpRequest dto) {
-		System.out.println(dto.toString());
 		userService.signUp(dto);
 		return ResponseEntity.ok("회원가입 성공");
 	}
@@ -63,21 +64,24 @@ public class UserController {
 	
 	@GetMapping("/me")
 	public ResponseEntity<?> getCurrentUser() {
-	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-	    if (auth == null || !auth.isAuthenticated()) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
-	    
-	    Object principal = auth.getPrincipal();
-	    //로그인 정보에 isSurveyed 를 담기위해서 새로 정의
-	    if (principal instanceof SecurityAccount) {
-	        SecurityAccount account = (SecurityAccount) principal;
-	        boolean isSurveyed = account.isSurveyed();
-	        LoginResponse loginResponse = new LoginResponse(account.getUsername(),account.isSurveyed());
-	        
-	        return ResponseEntity.ok(loginResponse);
-	    }
-	    
-	    return ResponseEntity.ok(auth.getName() ); // 또는 사용자 정보 DTO
+		LoginResponse loginResponse = userService.checkNowUser();
+		
+		if(loginResponse == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		return ResponseEntity.ok(loginResponse);
+	
+	}
+
+	//수정 진행 해야함~
+	//회원 정보 수정 1. 회원정보 수정란에서 수정
+	@PutMapping("")
+	public ResponseEntity<?> update(@RequestBody UpdateRequest updateRequest){
+		System.out.println(updateRequest.toString());
+		LoginResponse loginResponse = userService.checkNowUser();
+		
+		userService.updateUserInfo(updateRequest, loginResponse.getUsername());
+		
+		return null;
 	}
 }

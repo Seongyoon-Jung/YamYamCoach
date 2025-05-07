@@ -52,6 +52,10 @@ public class SecurityAccount implements UserDetails{
 		return userEntity.getEmail();
 	}
 	
+	public int getUserId() {
+		return userEntity.getUserId();
+	}
+	
 	public boolean isSurveyed() {
 		return userEntity.isSurveyed();
 	}

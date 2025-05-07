@@ -1,10 +1,18 @@
 package com.yamyam.service;
 
+import java.time.LocalDate;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
+import com.yamyam.dto.request.UpdateRequest;
+import com.yamyam.dto.response.LoginResponse;
 import com.yamyam.dto.response.SignUpResponseDto;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
@@ -23,7 +31,7 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public boolean signUp(SignUpRequest userSignUpRequestDto) {
 		
-		UserEntity data = UserEntity.signUpFrom(userSignUpRequestDto, bCryptPasswordEncoder.encode(userSignUpRequestDto.getPassword()));
+		UserEntity data = UserEntity.signUpForm(userSignUpRequestDto, bCryptPasswordEncoder.encode(userSignUpRequestDto.getPassword()));
 		
 		System.out.println(data);
 		
@@ -40,6 +48,39 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public boolean checkedUsername(String username) {
 		return userRepository.existsByUsername(username);
+	}
+
+	@Override
+	public LoginResponse checkNowUser() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+	    if (auth == null || !auth.isAuthenticated()) {
+	        return null;
+	    }
+	    
+	    Object principal = auth.getPrincipal();
+	    //로그인 정보에 isSurveyed 를 담기위해서 새로 정의
+	    
+        SecurityAccount account = (SecurityAccount) principal;
+        boolean isSurveyed = account.isSurveyed();
+        LoginResponse loginResponse = new LoginResponse(account.getUserId(), account.getUsername(),account.isSurveyed());
+        
+        return loginResponse;
+	    
+	}
+
+	@Override
+	public boolean updateUserInfo(UpdateRequest updateRequest, String username) {
+		UserEntity userEntity = userRepository.findByUsername(username);
+//		private boolean gender;
+//	    private LocalDate birthDate;
+//	    private int height;
+//	    private int weight;
+//	    private int targetWeight;
+//	    private boolean isSurveyed;
+//	    private String dietType;
+		
+		return false;
 	}
 
 }

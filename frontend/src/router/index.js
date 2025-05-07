@@ -5,16 +5,14 @@ const routes = [
   {
     path: '/',
     name: 'HomeView',
-    component: () =>
-      import(/* webpackChunkName: "login" */ '../views/HomeView.vue'),
-    meta: { title: '홈 | 냠냠코치' }
+    component: () => import('../views/HomeView.vue'),
+    meta: { title: '홈 | 냠냠코치', requiresSurvey: false }
   },
   {
-    path: '/home',
+    path: '/',
     name: 'HomeLoginView',
-    component: () =>
-      import(/* webpackChunkName: "login" */ '../views/HomeLoginView.vue'),
-    meta: { title: '홈 | 냠냠코치' }
+    component: () => import('../views/HomeLoginView.vue'),
+    meta: { title: '홈 | 냠냠코치', requiresSurvey: true }
   },
   {
     path: '/survey',
@@ -46,21 +44,35 @@ const routes = [
   }
 ];
 
+
+
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });
 
-// 전역 가드
 router.beforeEach((to, from, next) => {
-  // 1) 루트(‘/’)로 진입하는데 이미 로그인된 상태고, 설문조사를 완료한 상태라면
-  if (to.path === '/' && store.state.account.username !='' && store.state.account.isSurveyed) {
-    // 2) ‘DashboardView’(예시)로 리다이렉트
+  // 설문 완료가 필요한 홈(홈로그인뷰)로 진입 시
+  if (to.meta.requiresSurvey) {
+    if (store.state.account.username && store.state.account.isSurveyed) {
+      return next()
+    } else {
+      return next({ name: 'SurveyView' })
+    }
+  }
+
+  // 루트(‘/’) 접근인데 이미 설문 완료 상태면 HomeLoginView로
+  if (
+    to.name === 'HomeView' &&
+    store.state.account.username &&
+    store.state.account.isSurveyed
+  ) {
     return next({ name: 'HomeLoginView' })
   }
-  // 그 외에는 그냥 진행
+
   next()
 })
+
 
 router.afterEach((to) => {
   document.title = to.meta.title || '냠냠코치';

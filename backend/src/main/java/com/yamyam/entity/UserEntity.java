@@ -4,6 +4,7 @@ package com.yamyam.entity;
 import java.time.LocalDate;
 
 import com.yamyam.dto.request.SignUpRequest;
+import com.yamyam.dto.request.UpdateRequest;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -75,56 +76,104 @@ public class UserEntity {
 		this.role = "ROLE_USER";
 	}
     
-    public int getWeight() {
-		return weight;
-	}
-
-	public void setWeight(int weight) {
-		this.weight = weight;
-	}
-
 	public int getUserId() {
 		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
 	}
 
 	public String getEmail() {
 		return email;
 	}
 
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
 	public String getPassword() {
 		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	public String getUsername() {
 		return username;
 	}
 
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
 	public boolean isGender() {
 		return gender;
+	}
+
+	public void setGender(boolean gender) {
+		this.gender = gender;
 	}
 
 	public LocalDate getBirthDate() {
 		return birthDate;
 	}
 
-	public int getHeight() {
+	public void setBirthDate(LocalDate birthDate) {
+		this.birthDate = birthDate;
+	}
+
+	public Integer getHeight() {
 		return height;
+	}
+
+	public void setHeight(Integer height) {
+		this.height = height;
+	}
+
+	public Integer getWeight() {
+		return weight;
+	}
+
+	public void setWeight(Integer weight) {
+		this.weight = weight;
+	}
+
+	public Integer getTargetWeight() {
+		return targetWeight;
+	}
+
+	public void setTargetWeight(Integer targetWeight) {
+		this.targetWeight = targetWeight;
 	}
 
 	public boolean isSurveyed() {
 		return isSurveyed;
 	}
 
+	public void setSurveyed(boolean isSurveyed) {
+		this.isSurveyed = isSurveyed;
+	}
+
 	public String getDietType() {
 		return dietType;
+	}
+
+	public void setDietType(String dietType) {
+		this.dietType = dietType;
 	}
 
 	public String getRole() {
 		return role;
 	}
 
+	public void setRole(String role) {
+		this.role = role;
+	}
+
 	//회원가입 시 setter
-    public static UserEntity signUpFrom(SignUpRequest dto, String encodedPassword) {
+    public static UserEntity signUpForm(SignUpRequest dto, String encodedPassword) {
         return new UserEntity(
             dto.getEmail(),
             encodedPassword,
@@ -134,6 +183,7 @@ public class UserEntity {
         );
     }
 
+    
 	@Override
 	public String toString() {
 		return "UserEntity [userId=" + userId + ", email=" + email + ", password=" + password + ", username=" + username
