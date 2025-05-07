@@ -1,0 +1,20 @@
+package com.yamyam.service;
+
+import org.springframework.stereotype.Service;
+
+import com.yamyam.dto.request.LoginRequest;
+
+@Service
+public class AuthServiceImpl implements AuthService{
+
+	@Override
+	public void login(LoginRequest loginRequestDto) {
+		
+	}
+
+	@Override
+	public void logout(String id) {
+		
+	}
+
+}

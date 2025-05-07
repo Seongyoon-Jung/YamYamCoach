@@ -1,0 +1,30 @@
+package com.yamyam.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.yamyam.dto.response.QuestionResponse;
+import com.yamyam.entity.QuestionEntity;
+import com.yamyam.repository.QuestionRepository;
+
+@Service
+public class SurveyServiceImpl implements SurveyService{
+	
+	//생성자 주입
+	private final QuestionRepository questionRepository;
+	public SurveyServiceImpl(QuestionRepository questionRepository) {
+		this.questionRepository = questionRepository;
+	}
+
+	public List<QuestionResponse> getAllQuestions(int stepLevel) {
+		List<QuestionEntity> list = questionRepository.findAllByStepLevel(stepLevel);
+		List<QuestionResponse> list2 = new ArrayList<>();
+		for (List<QuestionEntity> a : list) {
+		
+		}
+		return questionRepository.findAllByStepLevel(stepLevel);
+	}
+
+}

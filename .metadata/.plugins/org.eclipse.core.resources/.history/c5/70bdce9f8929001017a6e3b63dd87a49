@@ -1,0 +1,5 @@
+package com.yamyam.repository;
+
+public interface QuestionRepository {
+
+}

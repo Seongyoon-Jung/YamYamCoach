@@ -1,0 +1,11 @@
+package com.yamyam.service;
+
+import com.yamyam.dto.request.LoginRequest;
+import com.yamyam.dto.response.LoginResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+public interface AuthService {
+
+	public LoginResponse login(LoginRequest loginRequestDto, HttpServletRequest request);
+}

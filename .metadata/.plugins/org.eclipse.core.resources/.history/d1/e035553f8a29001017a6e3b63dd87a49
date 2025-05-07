@@ -1,0 +1,5 @@
+package com.yamyam.service;
+
+public class SurveyServiceImpl {
+
+}

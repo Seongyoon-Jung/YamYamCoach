@@ -1,0 +1,12 @@
+package com.yamyam.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.yamyam.entity.UserEntity;
+
+public interface UserRepository extends JpaRepository<UserEntity, Integer>{
+	
+	
+	UseEntity findByUsername(String username);
+	UserEntity findByEmailAndPassword(String email,String password);
+}

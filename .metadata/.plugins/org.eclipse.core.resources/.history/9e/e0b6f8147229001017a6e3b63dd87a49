@@ -1,0 +1,36 @@
+spring.application.name=yamyam
+
+# MySQL 설정
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# DB Source URL
+# useSSl : SSL 연결을 사용하지 않도록 설정. 로컬 개발 환경에서는 보통 false로 설정
+# useUnicode : 유니코드(UTF-8 등)를 지원하도록 설정합니다. 한글 등 다국어를 처리할 때 중요
+# serverTimezone : 서버의 시간대를 설정
+# DB내부에서는 무조건 UTC기준으로 저장되지만 JDBC가 꺼낼때 여기서 설정된 시간대를 기준으로 처리해서 담아줌
+spring.datasource.url=jdbc:mysql://localhost:3306/yamyam?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul
+
+# DB username
+spring.datasource.username=ssafy
+
+# DB password
+spring.datasource.password=ssafy
+
+# true 설정시 JPA 쿼리문 확인 가능
+spring.jpa.show-sql=true 
+
+##################################################################
+# 주의점 : 테이블은 없어도 되지만 해당 되는 데이터베이스 명은 생성된 상태여야 함
+#################################################################
+# DDL(create, alter, drop) 정의시 DB의 고유 기능을 사용할 수 있다.
+# create : 엔티티에 등록된 클래스와 매핑되는 테이블을 자동 생성
+# create-drop : 이미 테이블이 존재한다면 삭제후 다시 생성
+# update : 없으면 테이블 생성, 있으면 테이블의 컬럼을 엔티티 설정대로 변경한다
+# validate : 엔티티 클래스와 테이블이 정상적으로 매핑되는지만 검사
+# 테이블이 없거나, 엔티티에 설정된 컬럼이 없다면 예외 발생시키며 종료
+# none(default) : 밑의 구문을 적지않으면 실행되며 아무 일도 일어나지 않는다 
+spring.jpa.hibernate.ddl-auto=update
+
+# JPA의 구현체인 Hibernate가 동작하면서 발생한 SQL의 가독성을 높여준다.
+# SQL 문장을 사람이 읽기 좋게 예쁘게 정렬해서 출력하라
+spring.jpa.properties.hibernate.format_sql=true

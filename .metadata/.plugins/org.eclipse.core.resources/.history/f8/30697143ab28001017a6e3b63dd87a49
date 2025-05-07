@@ -1,0 +1,10 @@
+package com.yamyam.service;
+
+import com.yamyam.dto.request.LoginRequest;
+
+public interface AuthService {
+
+	public LoginResponse login(LoginRequest loginRequestDto);
+	
+	public void logout(String id);
+}

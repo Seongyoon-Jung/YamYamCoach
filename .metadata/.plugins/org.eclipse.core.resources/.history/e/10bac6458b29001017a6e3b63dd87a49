@@ -1,0 +1,19 @@
+package com.yamyam.service;
+
+import java.util.List;
+
+import com.yamyam.repository.QuestionRepository;
+
+public class SurveyServiceImpl implements SurveyService{
+	
+	//생성자 주입
+	private final QuestionRepository questionRepository;
+	public SurveyServiceImpl(QuestionRepository questionRepository) {
+		this.questionRepository = questionRepository;
+	}
+
+	public List<?> getAllQuestions(int stepLevel) {
+		return questionRepository.findAllByStepLevel(stepLevel);
+	}
+
+}
