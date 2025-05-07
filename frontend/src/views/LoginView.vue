@@ -1,0 +1,127 @@
+<template>
+  <div class="d-flex align-items-center justify-content-center min-vh-100">
+    <div
+      class="card p-5 shadow-lg"
+      style="max-width: 450px; width: 100%; border-radius: 1rem"
+    >
+      <h3 class="text-center fw-bold mb-4 text-dark">로그인</h3>
+      <hr />
+
+      <form>
+        <div class="row g-3">
+          <!-- 이메일 -->
+          <div class="col-md-12">
+            <div class="row align-items-center">
+              <label for="email" class="col-md-3 col-form-label fw-bold">이메일</label>
+              <div class="col-md-9">
+                <input
+                  type="email"
+                  id="email"
+                  class="form-control"
+                  placeholder="example@domain.com"
+                  name="email" v-model="result.email"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 비밀번호 -->
+          <div class="col-md-12">
+            <div class="row align-items-center">
+              <label for="password" class="col-md-3 col-form-label fw-bold">비밀번호</label>
+              <div class="col-md-9">
+                <input
+                  type="password"
+                  id="password"
+                  class="form-control"
+                  placeholder="비밀번호를 입력하세요"
+                  name="password" v-model="result.password"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 로그인 버튼 -->
+          <div class="col-md-12 text-center mt-4">
+            <button type="button" class="btn btn-success w-100 mb-3" @click="login">로그인</button>
+            <router-link class="btn btn-outline-primary w-100 mb-3" to="/signup">
+              회원가입
+            </router-link>
+          </div>
+
+          <!-- 아이디 / 비밀번호 찾기 -->
+          <div class="col-md-12 d-flex justify-content-between text-sm">
+            <a href="#">아이디 찾기</a>
+            <a href="#">비밀번호 찾기</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.card {
+  background-color: white;
+  border-radius: 1rem;
+}
+
+input::placeholder {
+  font-size: 0.9rem;
+  color: #999;
+}
+</style>
+
+<script>
+import axios from '@/plugins/axios';
+import store from '@/store'
+
+export default {
+  name: 'SignupView', // name은 index.js에 선언해놓은 이름과 똑같아야함
+  data() {
+    return {
+      result: {
+        email: '',
+        password: '',
+      },
+    };
+  },
+  created() {},
+  methods: {
+    login() {
+      if (this.result.email == '') {
+        alert('이메일 입력필요');
+        return;
+      }
+
+      if (this.result.password == '') {
+        alert('비밀번호 입력필요');
+        return;
+      }
+
+      axios
+        .post('/api/auth/login', this.result)
+        .then((res) => {
+          if(res.data.isSurveyed == undefined || res.data.isSurveyed == false){
+            store.commit('setAccount',{username : res.data.username, isSurveyed : false})
+          }
+          console.log(this.$store.state.account)
+          alert("로그인이 완료되었습니다.")
+
+          // 설문조사를 완료했으면 홈으로
+          if(this.$store.state.account.isSurveyed){
+            this.$router.push({name:'HomeView'})
+          }
+          //설문조사안했으면 설문조사 페이지로
+          else{
+            this.$router.push({name:'SurveyView'})
+          }
+          
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+  },
+};
+</script>
