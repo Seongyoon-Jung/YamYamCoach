@@ -15,6 +15,12 @@ const routes = [
     meta: { title: '홈 | 냠냠코치', requiresAuth: true },
   },
   {
+    path: '/my',
+    name: 'MypageView',
+    component: () => import('../views/MypageView.vue'),
+    meta: { title: '마이페이지 | 냠냠코치', requiresAuth: true },
+  },
+  {
     path: '/survey',
     name: 'SurveyView',
     component: () =>
@@ -51,7 +57,6 @@ const router = createRouter({
 
 // 가드
 router.beforeEach((to, from, next) => {
-  console.log(store.state.account);
   const { username, isSurveyed } = store.state.account;
 
   // 인증 + 설문 완료 필요 경로
@@ -59,7 +64,7 @@ router.beforeEach((to, from, next) => {
     if (username && isSurveyed) {
       return next();
     } else {
-      return next({ name: 'SurveyView' });
+      return next({ name: 'LoginView' });
     }
   }
 
