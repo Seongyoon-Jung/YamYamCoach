@@ -1,11 +1,10 @@
 package com.yamyam.service;
 
-import org.springframework.http.ResponseEntity;
 
+import com.yamyam.dto.CurrentUser;
+import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
-import com.yamyam.dto.response.LoginResponse;
-import com.yamyam.dto.response.SignUpResponseDto;
 
 public interface UserService {
 	
@@ -15,7 +14,7 @@ public interface UserService {
 	
 	public boolean checkedUsername(String username);
 	
-	public LoginResponse checkNowUser();
+	public CurrentUser checkNowUser(SecurityAccount principal);
 	
 	public boolean updateUserInfo(UpdateRequest updateRequest, String username);
 }

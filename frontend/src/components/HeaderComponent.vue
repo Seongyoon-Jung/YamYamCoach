@@ -76,7 +76,7 @@
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-                <router-link class="dropdown-item" to="/mypage"
+                <router-link class="dropdown-item" to="/my"
                   >마이페이지</router-link
                 >
               </li>

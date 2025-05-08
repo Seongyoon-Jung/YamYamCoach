@@ -35,9 +35,17 @@ nav a.router-link-exact-active {
   color: #42b983;
 }
 
-/* 다크 모드용 예시 */
-.dark-mode {
+/* dark-mode 전역 스타일 */
+/* body.dark-mode {
   background-color: #121212;
   color: #eee;
 }
+body.dark-mode .navbar {
+  background-color: #1f1f1f !important;
+}
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  color: #ddd;
+} */
+/* 원하는 다른 컴포넌트 스타일도 추가 */
 </style>

@@ -9,11 +9,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.yamyam.dto.CurrentUser;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
 import com.yamyam.dto.response.LoginResponse;
-import com.yamyam.dto.response.SignUpResponseDto;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
 
@@ -51,19 +51,12 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public LoginResponse checkNowUser() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		
-	    if (auth == null || !auth.isAuthenticated()) {
-	        return null;
-	    }
+	public CurrentUser checkNowUser(SecurityAccount principal) {
+	    String email = principal.getEmail();
 	    
-	    String email = ((SecurityAccount)auth.getPrincipal()).getEmail();
 	    UserEntity userEntity = userRepository.findByEmail(email);
         
-        LoginResponse loginResponse = new LoginResponse(userEntity.getUserId(), userEntity.getUsername(),userEntity.isSurveyed());
-        
-        return loginResponse;
+        return CurrentUser.currentUser(userEntity);
 	    
 	}
 
