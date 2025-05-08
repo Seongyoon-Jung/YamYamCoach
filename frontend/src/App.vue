@@ -13,27 +13,6 @@ import HeaderComponent from '@/components/HeaderComponent.vue';
 import FooterComponent from '@/components/FooterComponent.vue';
 </script>
 
-<script>
-  import axios from '@/plugins/axios';
-  import store from '@/store'
-
-  export default {
-    created(){
-      axios.get('/api/users/me') 
-        .then((res) => {
-          if(res.data =='anonymousUser'){
-            store.commit('setAccount',{userId:null, username: '', isSurveyed:false})
-          }
-          else{
-            store.commit('setAccount',{userId : res.data.userId , username : res.data.username, isSurveyed : res.data.surveyed})
-          }
-        });
-    },
-};
-
-</script>
-
-
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -61,5 +40,4 @@ nav a.router-link-exact-active {
   background-color: #121212;
   color: #eee;
 }
-
 </style>
