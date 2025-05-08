@@ -45,7 +45,7 @@ public class AuthServiceImpl implements AuthService{
                              SecurityContextHolder.getContext());
         
         UserEntity userEntity = userRepository.findByEmail(loginRequestDto.getEmail());
-        System.out.println("survey : " + userEntity.isSurveyed());
+        System.out.println(userEntity.toString());
         LoginResponse loginResponse = new LoginResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
         return loginResponse;
 	}

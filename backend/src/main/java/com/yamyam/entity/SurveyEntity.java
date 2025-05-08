@@ -29,7 +29,7 @@ public class SurveyEntity {
     @Column(name = "step_level", nullable = false)
     private Integer stepLevel;
 
-    @Column(name = "survey_date", nullable = false, columnDefinition = "DATE DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "survey_date", nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime surveyDate;
 
     @Column(name = "answer_values", nullable = false, length = 100)

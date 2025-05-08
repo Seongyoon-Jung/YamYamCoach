@@ -8,10 +8,16 @@
           <p class="lead mt-3 mb-4">
             재미있는 설문을 통해 나에게 꼭 맞는 식습관을 찾아보세요!
           </p>
-          <router-link to="/login" class="btn btn-lg btn-success" v-if="username==''"
+          <router-link
+            to="/login"
+            class="btn btn-lg btn-success"
+            v-if="username == ''"
             >로그인 하기{{ username }}</router-link
           >
-          <router-link to="/survey" class="btn btn-lg btn-success" v-if="username!='' && !isSurveyed"
+          <router-link
+            to="/survey"
+            class="btn btn-lg btn-success"
+            v-if="username != '' && !isSurveyed"
             >지금 설문하기</router-link
           >
         </div>
@@ -49,24 +55,26 @@
 
 export default {
   name: 'HomeView',
-  data(){
+  data() {
     return {
       username: this.$store.state.account.username,
-      isSurveyed: this.$store.state.account.isSurveyed
-    }
+      isSurveyed: this.$store.state.account.isSurveyed,
+    };
   },
-  created(){
+  created() {
     this.username = this.$store.state.account.username;
-    if(this.$store.state.account.isSurveyed == undefined || this.$store.state.account.isSurveyed == false){
+    if (
+      this.$store.state.account.isSurveyed == undefined ||
+      this.$store.state.account.isSurveyed == false
+    ) {
       this.isSurveyed = false;
+    } else {
+      this.isSurveyed = this.$store.state.account.isSurveyed;
     }
-    else{
-      this.isSurveyed = this.$store.state.account.isSurveyed ;
-    }
-    
-    console.log(this.$store.state.account,this.username,this.isSurveyed)
+
+    //console.log(this.$store.state.account,this.username,this.isSurveyed)
   },
-  methods:{},
+  methods: {},
 };
 </script>
 

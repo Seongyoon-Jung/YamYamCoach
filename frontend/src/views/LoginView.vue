@@ -12,14 +12,17 @@
           <!-- 이메일 -->
           <div class="col-md-12">
             <div class="row align-items-center">
-              <label for="email" class="col-md-3 col-form-label fw-bold">이메일</label>
+              <label for="email" class="col-md-3 col-form-label fw-bold"
+                >이메일</label
+              >
               <div class="col-md-9">
                 <input
                   type="email"
                   id="email"
                   class="form-control"
                   placeholder="example@domain.com"
-                  name="email" v-model="result.email"
+                  name="email"
+                  v-model="result.email"
                 />
               </div>
             </div>
@@ -28,14 +31,17 @@
           <!-- 비밀번호 -->
           <div class="col-md-12">
             <div class="row align-items-center">
-              <label for="password" class="col-md-3 col-form-label fw-bold">비밀번호</label>
+              <label for="password" class="col-md-3 col-form-label fw-bold"
+                >비밀번호</label
+              >
               <div class="col-md-9">
                 <input
                   type="password"
                   id="password"
                   class="form-control"
                   placeholder="비밀번호를 입력하세요"
-                  name="password" v-model="result.password"
+                  name="password"
+                  v-model="result.password"
                 />
               </div>
             </div>
@@ -43,8 +49,17 @@
 
           <!-- 로그인 버튼 -->
           <div class="col-md-12 text-center mt-4">
-            <button type="button" class="btn btn-success w-100 mb-3" @click="login">로그인</button>
-            <router-link class="btn btn-outline-primary w-100 mb-3" to="/signup">
+            <button
+              type="button"
+              class="btn btn-success w-100 mb-3"
+              @click="login"
+            >
+              로그인
+            </button>
+            <router-link
+              class="btn btn-outline-primary w-100 mb-3"
+              to="/signup"
+            >
               회원가입
             </router-link>
           </div>
@@ -74,7 +89,7 @@ input::placeholder {
 
 <script>
 import axios from '@/plugins/axios';
-import store from '@/store'
+import store from '@/store';
 
 export default {
   name: 'SignupView', // name은 index.js에 선언해놓은 이름과 똑같아야함
@@ -103,21 +118,25 @@ export default {
       axios
         .post('/api/auth/login', this.result)
         .then((res) => {
-          store.commit('setAccount',{userId: res.data.userId, username : res.data.username, isSurveyed : res.data.surveyed})
+          store.commit('setAccount', {
+            userId: res.data.userId,
+            username: res.data.username,
+            isSurveyed: res.data.surveyed,
+          });
 
-          alert("로그인이 완료되었습니다.")
+          alert('로그인이 완료되었습니다.');
 
           // 설문조사를 완료했으면 홈으로
-          if(res.data.surveyed){
-            this.$router.push({name:'HomeView'})
+          if (res.data.surveyed) {
+            this.$router.push({ name: 'HomeView' });
           }
           //설문조사안했으면 설문조사 페이지로
-          else{
-            this.$router.push({name:'SurveyView'})
+          else {
+            this.$router.push({ name: 'SurveyView' });
           }
-          
         })
         .catch((err) => {
+          alert('로그인에 실패하였습니다.');
         });
     },
   },

@@ -58,12 +58,10 @@ public class UserServiceImpl implements UserService{
 	        return null;
 	    }
 	    
-	    Object principal = auth.getPrincipal();
-	    //로그인 정보에 isSurveyed 를 담기위해서 새로 정의
-	    
-        SecurityAccount account = (SecurityAccount) principal;
-        boolean isSurveyed = account.isSurveyed();
-        LoginResponse loginResponse = new LoginResponse(account.getUserId(), account.getUsername(),account.isSurveyed());
+	    String email = ((SecurityAccount)auth.getPrincipal()).getEmail();
+	    UserEntity userEntity = userRepository.findByEmail(email);
+        
+        LoginResponse loginResponse = new LoginResponse(userEntity.getUserId(), userEntity.getUsername(),userEntity.isSurveyed());
         
         return loginResponse;
 	    
