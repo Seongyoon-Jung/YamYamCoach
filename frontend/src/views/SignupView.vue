@@ -244,7 +244,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model.number="result.height"
+                  v-model="result.height"
                   min="0"
                   required
                 />
@@ -256,7 +256,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model.number="result.weight"
+                  v-model="result.weight"
                   min="0"
                   required
                 />
@@ -268,7 +268,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model.number="result.targetWeight"
+                  v-model="result.targetWeight"
                   min="0"
                   required
                 />
