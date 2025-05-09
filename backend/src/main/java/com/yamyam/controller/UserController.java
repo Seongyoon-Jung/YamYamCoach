@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
-import com.yamyam.dto.response.LoginResponse;
 import com.yamyam.service.UserService;
 
 @RestController
@@ -34,12 +33,34 @@ public class UserController {
 		this.userService = userService;
 	}
 
+	//내 정보 상세조회
+	@GetMapping("")
+	public ResponseEntity<?> detail(@AuthenticationPrincipal SecurityAccount principal) {
+		if(principal == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		
+		return ResponseEntity.ok(userService.checkUserDetail(principal));
+	}
+	
 	//회원가입
 	@PostMapping("")
 	public ResponseEntity<String> singup(@RequestBody SignUpRequest dto) {
 		userService.signUp(dto);
 		return ResponseEntity.ok("회원가입 성공");
 	}
+	
+	//수정 진행 해야함~
+	//회원 정보 수정 1. 회원정보 수정란에서 수정
+//	@PutMapping("")
+//	public ResponseEntity<?> update(@RequestBody UpdateRequest updateRequest){
+//		System.out.println(updateRequest.toString());
+//		LoginResponse loginResponse = userService.checkNowUser();
+//		
+//		userService.updateUserInfo(updateRequest, loginResponse.getUsername());
+//		
+//		return null;
+//	}
 	
 	//이메일 중복 검사
 	@GetMapping("/check-email")
@@ -70,19 +91,7 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 		
-		return ResponseEntity.ok(userService.checkNowUser(principal));
+		return ResponseEntity.ok(userService.checkCurrentUser(principal));
 	
 	}
-
-	//수정 진행 해야함~
-	//회원 정보 수정 1. 회원정보 수정란에서 수정
-//	@PutMapping("")
-//	public ResponseEntity<?> update(@RequestBody UpdateRequest updateRequest){
-//		System.out.println(updateRequest.toString());
-//		LoginResponse loginResponse = userService.checkNowUser();
-//		
-//		userService.updateUserInfo(updateRequest, loginResponse.getUsername());
-//		
-//		return null;
-//	}
 }

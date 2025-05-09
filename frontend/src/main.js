@@ -15,6 +15,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 async function bootstrap() {
   try {
     const res = await axios.get('/api/users/me');
+    console.log(res.data);
     if (res.data === 'anonymousUser') {
       store.commit('setAccount', {
         userId: null,

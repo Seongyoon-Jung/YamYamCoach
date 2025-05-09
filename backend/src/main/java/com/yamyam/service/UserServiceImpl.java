@@ -9,11 +9,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.yamyam.dto.CurrentUser;
+import com.yamyam.dto.response.CurrentUserResponse;
+import com.yamyam.dto.response.UserDetailResponse;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
-import com.yamyam.dto.response.LoginResponse;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
 
@@ -33,8 +33,6 @@ public class UserServiceImpl implements UserService{
 		
 		UserEntity data = UserEntity.signUpForm(userSignUpRequestDto, bCryptPasswordEncoder.encode(userSignUpRequestDto.getPassword()));
 		
-		System.out.println(data);
-		
 		userRepository.save(data);
 		
 		return true;
@@ -51,12 +49,12 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public CurrentUser checkNowUser(SecurityAccount principal) {
+	public UserDetailResponse checkUserDetail(SecurityAccount principal) {
 	    String email = principal.getEmail();
 	    
 	    UserEntity userEntity = userRepository.findByEmail(email);
         
-        return CurrentUser.currentUser(userEntity);
+        return UserDetailResponse.currentUser(userEntity);
 	    
 	}
 
@@ -72,6 +70,17 @@ public class UserServiceImpl implements UserService{
 //	    private String dietType;
 		
 		return false;
+	}
+
+	@Override
+	public CurrentUserResponse checkCurrentUser(SecurityAccount principal) {
+		String email = principal.getEmail();
+	    
+	    UserEntity userEntity = userRepository.findByEmail(email);
+        
+	    CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
+	    
+        return currentUserResponse;
 	}
 
 }

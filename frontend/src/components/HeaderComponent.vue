@@ -86,7 +86,7 @@
                 >
               </li>
               <li>
-                <router-link class="dropdown-item" to="/profile/edit"
+                <router-link class="dropdown-item" to="/my/info"
                   >내 정보 수정</router-link
                 >
               </li>

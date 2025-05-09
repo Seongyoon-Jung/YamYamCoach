@@ -11,7 +11,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Service;
 
 import com.yamyam.dto.request.LoginRequest;
-import com.yamyam.dto.response.LoginResponse;
+import com.yamyam.dto.response.CurrentUserResponse;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
 
@@ -30,7 +30,7 @@ public class AuthServiceImpl implements AuthService{
 	}
 
 	@Override
-	public LoginResponse login(LoginRequest loginRequestDto, HttpServletRequest request) {
+	public CurrentUserResponse login(LoginRequest loginRequestDto, HttpServletRequest request) {
 		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword());
 
         // 스프링 시큐리티에 위임 → 내부적으로 UserDetailsService + PasswordEncoder 실행됨
@@ -45,9 +45,11 @@ public class AuthServiceImpl implements AuthService{
                              SecurityContextHolder.getContext());
         
         UserEntity userEntity = userRepository.findByEmail(loginRequestDto.getEmail());
-        System.out.println(userEntity.toString());
-        LoginResponse loginResponse = new LoginResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
-        return loginResponse;
+        
+        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
+
+        return currentUserResponse;
+        
 	}
 
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yamyam.dto.request.LoginRequest;
-import com.yamyam.dto.response.LoginResponse;
+import com.yamyam.dto.response.CurrentUserResponse;
 import com.yamyam.service.AuthService;
 
 import jakarta.servlet.ServletException;
@@ -34,9 +34,8 @@ public class AuthController {
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest loginDto, HttpServletRequest request) {
 		try {
-           LoginResponse loginResponse = authService.login(loginDto,request);
-           System.out.println(loginResponse.toString());
-           return ResponseEntity.ok(loginResponse);
+           CurrentUserResponse currentUserResponse = authService.login(loginDto,request);
+           return ResponseEntity.ok(currentUserResponse);
         } catch (AuthenticationException e) {
            System.out.println("인증 실패: " + e.getMessage());
            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이메일 또는 비밀번호가 일치하지 않습니다.");
