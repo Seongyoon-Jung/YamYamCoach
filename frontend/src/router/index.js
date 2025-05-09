@@ -16,23 +16,29 @@ const routes = [
   },
   {
     path: '/my',
-    name: 'MypageView',
-    component: () => import('../views/MypageView.vue'),
-    meta: { title: '마이페이지 | 냠냠코치', requiresAuth: true },
+    name: 'MyView',
+    component: () => import('../views/MyView.vue'),
+    meta: { title: '마이페이지', requiresAuth: true },
+  },
+  {
+    path: '/my/info',
+    name: 'MyInfoView',
+    component: () => import('../views/MyInfoView.vue'),
+    meta: { title: '내 정보 | 마이페이지', requiresAuth: true },
   },
   {
     path: '/survey',
     name: 'SurveyView',
     component: () =>
       import(/* webpackChunkName: "login" */ '../views/SurveyView.vue'),
-    meta: { title: '설문조사 | 냠냠코치' },
+    meta: { title: '설문조사' },
   },
   {
     path: '/login',
     name: 'LoginView',
     component: () =>
       import(/* webpackChunkName: "login" */ '../views/LoginView.vue'),
-    meta: { title: '로그인 | 냠냠코치' },
+    meta: { title: '로그인' },
   },
   {
     path: '/signup',
@@ -40,13 +46,13 @@ const routes = [
 
     component: () =>
       import(/* webpackChunkName: "login" */ '../views/SignupView.vue'),
-    meta: { title: '회원가입 | 냠냠코치' },
+    meta: { title: '회원가입' },
   },
   {
     path: '/features',
     name: 'FeaturesView',
     component: () => import('../views/FeaturesView.vue'),
-    meta: { title: '기능소개 | 냠냠코치' },
+    meta: { title: '기능소개' },
   },
 ];
 
@@ -61,7 +67,7 @@ router.beforeEach((to, from, next) => {
 
   // 인증 + 설문 완료 필요 경로
   if (to.meta.requiresAuth) {
-    if (username && isSurveyed) {
+    if (username) {
       return next();
     } else {
       return next({ name: 'LoginView' });
@@ -77,7 +83,7 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach((to) => {
-  document.title = to.meta.title || '냠냠코치';
+  document.title = to.meta.title + ' - 냠냠코치';
 });
 
 export default router;

@@ -152,6 +152,7 @@
 
 <script>
 import axios from '@/plugins/axios';
+import store from '@/store';
 
 export default {
   name: 'SurveyView',
@@ -263,12 +264,12 @@ export default {
         })
         .catch((err) => {});
 
-      const me = axios.get('/api/users/me');
-      store.commit('setAccount', {
-        userId: me.data.userId,
-        username: me.data.username,
-        isSurveyed: me.data.isSurveyed,
-      });
+      // const me = axios.get('/api/users/me');
+      // store.commit('setAccount', {
+      //   userId: me.data.userId,
+      //   username: me.data.username,
+      //   isSurveyed: me.data.isSurveyed,
+      // });
     },
 
     //설문 결과를 바탕으로 타입을 특정하기 위한 함수
