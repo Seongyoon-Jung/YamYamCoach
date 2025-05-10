@@ -4,11 +4,12 @@
       class="card p-5 shadow-lg"
       style="max-width: 450px; width: 100%; border-radius: 1rem"
     >
-      <h3 class="text-center fw-bold mb-4 text-dark">로그인</h3>
+      <h3 class="text-center fw-bold text-dark">로그인</h3>
       <hr />
 
       <form>
         <div class="row g-3">
+          <span class="text-danger" v-show="click" v-text="warning"></span>
           <!-- 이메일 -->
           <div class="col-md-12">
             <div class="row align-items-center">
@@ -99,18 +100,21 @@ export default {
         email: '',
         password: '',
       },
+      click: false,
+      warning:""
     };
   },
   created() {},
   methods: {
     login() {
+      this.click = true
       if (this.result.email == '') {
-        alert('이메일 입력필요');
+        this.warning = "이메일을 입력해주세요"
         return;
       }
 
       if (this.result.password == '') {
-        alert('비밀번호 입력필요');
+        this.warning = "비밀번호를 입력해주세요"
         return;
       }
 
@@ -124,8 +128,6 @@ export default {
             isSurveyed: res.data.surveyed,
           });
 
-          alert('로그인이 완료되었습니다.');
-
           // 설문조사를 완료했으면 홈으로
           if (res.data.surveyed) {
             this.$router.push({ name: 'HomeView' });
@@ -136,7 +138,7 @@ export default {
           }
         })
         .catch((err) => {
-          alert('로그인에 실패하였습니다.');
+          this.warning = "이메일 또는 비밀번호가 일치하지 않습니다"
         });
     },
   },

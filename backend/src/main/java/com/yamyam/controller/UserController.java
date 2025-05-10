@@ -47,6 +47,7 @@ public class UserController {
 	@PostMapping("")
 	public ResponseEntity<String> singup(@RequestBody SignUpRequest dto) {
 		userService.signUp(dto);
+		System.out.println(dto.toString());
 		return ResponseEntity.ok("회원가입 성공");
 	}
 	

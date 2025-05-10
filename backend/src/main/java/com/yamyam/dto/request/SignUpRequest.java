@@ -92,4 +92,12 @@ public class SignUpRequest {
 		this.targetWeight = targetWeight;
 	}
 
+	@Override
+	public String toString() {
+		return "SignUpRequest [email=" + email + ", password=" + password + ", username=" + username + ", gender="
+				+ gender + ", birthDate=" + birthDate + ", height=" + height + ", weight=" + weight + ", targetWeight="
+				+ targetWeight + "]";
+	}
+	
+	
 }
