@@ -12,7 +12,7 @@
           회원 정보 입력 (선택)
         </h3>
         <p>
-          ※주의 ) <u>건너뛰기</u> 시엔 나이·성별 평균값 기반 분석이 제공되어<br />
+          ※ <span class="text-danger">주의</span> ) 미입력 시엔 나이·성별 평균값 기반 분석이 제공되어<br />
           정확도가 떨어질 수 있으니 주의하세요!<br />
         </p>
       </div>
@@ -23,26 +23,12 @@
           <!-- 이메일 -->
           <div class="col-md-12">
             <!-- 레이블을 input-group 위에 두고 form-label 클래스로 왼쪽 정렬 -->
-            <label for="email" class="form-label fw-bold"
+            <label for="text" class="form-label fw-bold"
               >이메일
-              <span class="text-danger fw-normal warning" v-if="warning.email"
-                >이메일을 입력해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.checkEmail === null"
-                >중복 확인을 해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-else-if="warning.checkEmail === true"
-                >사용할 수 없는 이메일입니다.</span
-              >
-              <span
-                class="text-success fw-normal warning"
-                v-if="warning.checkEmail === false"
-                >사용할 수 있는 이메일입니다.</span
-              >
+
+              <span class="text-danger fw-normal warning" v-show="click" v-if="!result.checkedEmail" v-text="warning.email"></span>
+              <span class="text-success fw-normal warning" v-show="click" v-else>사용 가능한 이메일입니다</span>
+      
             </label>
 
             <div class="input-group">
@@ -69,11 +55,7 @@
           <div class="col-md-12">
             <label for="password" class="form-label fw-bold"
               >비밀번호
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.password"
-                >비밀번호를 입력해주세요.</span
-              >
+              <span class="text-danger fw-normal warning" v-show="click" v-text="warning.password"></span>
             </label>
             <input
               type="password"
@@ -84,22 +66,14 @@
               name="password"
               v-model="result.password"
             />
+            <span class="text-info warning" >※ 8~16자의 영문, 숫자, 특수문자를 사용해 주세요.</span>
           </div>
 
           <!-- 비밀번호 재입력 -->
           <div class="col-md-12">
             <label for="checkPassword" class="form-label fw-bold"
               >비밀번호 확인
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.checkPassword === null"
-                >비밀번호 확인해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.checkPassword === true"
-                >비밀번호가 일치하지 않습니다</span
-              >
+              <span class="text-danger fw-normal warning" v-show="click" v-text="warning.checkPassword"></span>
             </label>
 
             <input
@@ -116,26 +90,8 @@
           <div class="col-md-12">
             <label for="username" class="form-label fw-bold"
               >닉네임
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.username"
-                >닉네임을 입력해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.checkUsername === null"
-                >중복 확인을 해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-else-if="warning.checkUsername === true"
-                >사용할 수 없는 닉네임입니다.</span
-              >
-              <span
-                class="text-success fw-normal warning"
-                v-if="warning.checkUsername === false"
-                >사용할 수 있는 닉네임입니다.</span
-              >
+              <span class="text-danger fw-normal warning" v-show="click" v-if="!result.checkedUsername" v-text="warning.username"></span>
+              <span class="text-success fw-normal warning" v-show="click" v-else>사용 가능한 닉네임입니다</span>
             </label>
 
             <div class="input-group">
@@ -156,20 +112,17 @@
                 중복 확인
               </button>
             </div>
+            <span class="text-info warning" >※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
           </div>
 
           <div class="col-md-12">
             <!-- 성별 -->
             <label class="form-label fw-bold"
               >성별
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.gender === null"
-                >성별을 선택해주세요.</span
-              >
+              <span class="text-danger fw-normal warning" v-show="click" v-text="warning.gender"></span>
             </label>
-            <div class="btn-group w-100" role="group">
-              <input
+              <div class="btn-group w-100" role="group">
+                <input
                 type="radio"
                 class="btn-check"
                 name="gender"
@@ -201,16 +154,7 @@
           <div class="col-md-12">
             <label for="birthdate" class="form-label fw-bold">
               생년월일
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.birthDate === null"
-                >생년월일을 입력해주세요.</span
-              >
-              <span
-                class="text-danger fw-normal warning"
-                v-if="warning.birthDate === true"
-                >생년월일을 정확히 입력해주세요.</span
-              >
+              <span class="text-danger fw-normal warning" v-show="click" v-text="warning.birthDate"></span>
             </label>
             <input
               type="text"
@@ -235,7 +179,6 @@
         </div>
 
         <div class="row g-3" v-else>
-          <!-- 이메일 -->
           <div class="col-md-12">
             <div class="row align-items-center">
               <!-- 키 -->
@@ -244,7 +187,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model="result.height"
+                  v-model="optionResult.height"
                   min="0"
                   required
                 />
@@ -256,7 +199,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model="result.weight"
+                  v-model="optionResult.weight"
                   min="0"
                   required
                 />
@@ -268,7 +211,7 @@
                 <input
                   type="number"
                   class="form-control"
-                  v-model="result.targetWeight"
+                  v-model="optionResult.targetWeight"
                   min="0"
                   required
                 />
@@ -282,12 +225,15 @@
 
           <div class="d-flex justify-content-between">
             <button class="btn btn-secondary" @click="prevBasic">이전</button>
-            <button type="button" class="btn btn-primary" @click="save">
+            <button type="button" class="btn btn-primary" @click="handleSignup">
               회원가입
             </button>
+            <!-- ConfirmDialog 컴포넌트를 ref 로 선언 -->
+            
           </div>
         </div>
       </form>
+      
       <div class="text-center mt-4">
         <router-link
           to="/login"
@@ -298,6 +244,7 @@
         </router-link>
       </div>
     </div>
+    <ConfirmDialog ref="confirmDialog" />
   </div>
 </template>
 
@@ -311,30 +258,53 @@ input::placeholder {
   font-size: 0.9rem;
   color: #999;
 }
+
+.warning {
+  font-size: small;
+}
 </style>
 
 <script>
 import axios from '@/plugins/axios';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 export default {
   name: 'SignupView', // name은 index.js에 선언해놓은 이름과 똑같아야함
+  components: { ConfirmDialog },
   data() {
     return {
       isbasic: true,
       result: {
-        email: null,
-        password: null,
+        email: '',
+        password: '',
         checkPassword: '',
-        username: null,
-        gender: null,
-        birthDate: null,
-        height: null,
-        weight: null,
-        targetWeight: null,
-        checkedEmail: null,
-        checkedUsername: null,
+        username: '',
+        gender: '',
+        birthDate: '',
+        checkedEmail: '',
+        checkedUsername: '',
+        checkedEmailRule:'',
+        checkedPasswordRule:'',
+        checkedUsernameRule:'',
       },
-      warning: {},
+      success:{
+        email : '',
+        username : ''
+      },
+      optionResult :{
+        height: '',
+        weight: '',
+        targetWeight: '',
+      },
+      click: false,
+      warning: {
+        email: '',
+        password: '',
+        checkPassword: '',
+        username: '',
+        gender: '',
+        birthDate: '',
+      },
     };
   },
   created() {},
@@ -344,65 +314,106 @@ export default {
     },
 
     nextBasic() {
-      if (!this.result.email) {
-        this.warning['email'] = true;
-        delete this.warning.checkEmail;
-        return;
+      this.warningMessage()
+      if(Object.values(this.result).includes('')){
+        this.click = true
+        return
       }
-
-      if (!this.result.checkedEmail) {
-        this.warning['checkEmail'] = null;
-        return;
-      }
-
-      if (!this.result.password) {
-        this.warning['password'] = true;
-        return;
-      }
-      delete this.warning.password;
-
-      if (!this.result.checkPassword) {
-        this.warning['checkPassword'] = null;
-        return;
-      }
-
-      if (this.result.password != this.result.checkPassword) {
-        this.warning['checkPassword'] = true;
-        return;
-      }
-
-      delete this.warning.checkPassword;
-
-      if (!this.result.username) {
-        this.warning['username'] = true;
-        delete this.warning.checkUsername;
-        return;
-      }
-      this.warning['username'] = false;
-
-      if (!this.result.checkedUsername) {
-        this.warning['checkUsername'] = null;
-        return;
-      }
-
-      if (this.result.gender === null) {
-        this.warning['gender'] = null;
-        return;
-      }
-      delete this.warning.gender;
-
-      //아무것도 입력하지 않았을 경우
-      if (!this.result.birthDate) {
-        this.warning['birthDate'] = null;
-        return;
-      } else if (!this.isValidCompactDate(this.result.birthDate)) {
-        this.warning['birthDate'] = true;
-        return;
-      }
-      delete this.warning.birthDate;
 
       this.isbasic = false;
     },
+    warningMessage(){
+      if(!this.result.email){
+        this.warning.email = "이메일을 입력하세요"
+        this.result.checkedEmail = false
+      }
+      else if(this.result.email && !this.result.checkedEmail || this.success.email !== this.result.email){
+        this.result.checkedEmail = false 
+        this.warning.email = "이메일 중복을 확인하세요"
+      }
+      else if(this.result.email){
+        if(this.checkEmailRule()){
+          this.warning.email = ''
+        }
+        else{
+          this.warning.email = '이메일을 정확히 입력하세요'
+        }
+      }
+
+      if(!this.result.password){
+        this.warning.password = "비밀번호를 입력하세요"
+      }
+      else{
+        if(this.checkPasswordRule()){
+          this.warning.password = ''
+        }
+        else{
+          this.warning.password = '비밀번호가 규칙에 맞지 않습니다'
+        }
+      }
+
+      if(!this.result.checkPassword){
+        this.warning.checkPassword = "비밀번호를 입력하세요"
+      }
+      else if(this.result.checkPassword !== this.result.password){
+        this.warning.checkPassword = "비밀번호가 일치하지 않습니다"
+      }
+      else{
+        this.warning.checkPassword = ''
+      }
+
+      if(!this.result.username){
+        this.warning.username = '닉네임을 입력하세요'
+        this.result.checkedUsername = false
+      }
+      else if((this.result.username && !this.result.checkedUsername) || this.success.username !==this.result.username){
+        this.result.checkedUsername = false
+        this.warning.username = "닉네임 중복을 확인하세요"
+      }
+      else if(this.result.username){
+        if(this.checkUsernameRule()){
+          this.warning.username = ''
+        }
+        else{
+          this.warning.username = '닉네임이 규칙에 맞지않습니다'
+        }
+      }
+
+      if(this.result.gender === ''){
+        this.warning.gender = '성별을 선택하세요'
+      }
+      else{
+        this.warning.gender = ''
+      }
+
+      if (!this.result.birthDate) {
+        this.warning.birthDate = '생년월일을 입력하세요';
+      } else if (!this.isValidCompactDate()) {
+        this.warning.birthDate = '생년월일을 정확히 입력하세요'
+      }
+      else{
+        this.warning.birthDate = ''
+      }
+    },
+    async handleSignup() {
+      // 빈 값이 있으면
+      if (Object.values(this.optionResult).includes('')) {
+        const ok = await this.$refs.confirmDialog.open({
+          title: '선택정보 확인',
+          message: `
+            선택정보 미입력 시 정확한 식단분석이 불가능합니다.<br/>
+            그래도 진행하시겠습니까?
+          `
+        });
+        if (!ok) {
+          // 유저가 취소 눌렀을 때
+          return;
+        }
+      }
+      // 확인 눌렀거나, 애초에 빈 값이 없을 때
+      this.save();
+    },
+
     save() {
       var stringToDate = this.result.birthDate;
       stringToDate =
@@ -412,91 +423,125 @@ export default {
         '-' +
         stringToDate.substring(6, 8);
       // 입력 했을때 20000101 에서 보내기직전에 2000-01-01로 바꾸지 않기 위해서 새로만들어서 보내기기
+
+
+
       const post = {
         email: this.result.email,
         password: this.result.password,
         username: this.result.username,
         gender: this.result.gender,
         birthDate: stringToDate,
-        height: this.result.height,
-        weight: this.result.weight,
-        targetWeight: this.result.targetWeight,
+        height: this.optionResult.height,
+        weight: this.optionResult.weight,
+        targetWeight: this.optionResult.targetWeight,
       };
-
-      console.log(post);
 
       axios
         .post('/api/users', post)
         .then((res) => {
-          console.log(res);
-          alert('회원가입이 완료되었습니다.');
           this.$router.push({ name: 'LoginView' });
         })
         .catch((err) => {
           console.log(err);
         });
     },
-    isValidCompactDate(str) {
-      // 1. 길이검사
-      if (str.length != 8) {
+    isValidCompactDate() {
+      const pattern = /^(19|20)\d{2}(?:(?:0[13578]|1[02])(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)(?:0[1-9]|[12]\d|30)|02(?:0[1-9]|1\d|2\d))$/;
+      if (!pattern.test(this.result.birthDate)) {
         return false;
       }
-
-      // 2. 연월일 추출
-      const year = parseInt(str.substring(0, 4), 10);
-      const month = parseInt(str.substring(4, 6), 10);
-      const day = parseInt(str.substring(6, 8), 10);
-
-      // 3. Date 객체로 변환
-      const date = new Date(year, month - 1, day);
-
-      // 4. 날짜 유효성 검사
-      return (
-        date.getFullYear() === year &&
-        date.getMonth() + 1 === month &&
-        date.getDate() === day
-      );
+      // 윤년이면서 2월 29일인 경우만 별도 허용
+      const year = parseInt(this.result.birthDate.slice(0,4), 10);
+      const month = this.result.birthDate.slice(4,6), day = this.result.birthDate.slice(6,8);
+      if (month === "02" && day === "29") {
+        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+      }
+      return true;
     },
     checkEmail() {
+      this.click = true
       if (!this.result.email) {
-        this.warning['email'] = true;
-        delete this.warning.checkEmail;
+        this.result.checkedEmail = false;
+        this.warning.email = '이메일을 입력하세요'
         return;
       }
-      this.warning['email'] = false;
+      
+      if(!this.checkEmailRule()){
+        this.result.checkedEmail = false;
+        this.warning.email = '이메일을 정확히 입력하세요'
+        return
+      }
+
       axios
         .get('/api/users/check-email', { params: { email: this.result.email } })
         .then((res) => {
-          this.warning['checkEmail'] = false;
           this.result.checkedEmail = true;
+          this.success.email = this.result.email
         })
         .catch((err) => {
-          this.warning['checkEmail'] = true;
-          this.result.email = '';
+          this.warning.email = '사용 불가능한 이메일 입니다'
           this.result.checkedEmail = false;
         });
     },
     checkUsername() {
+      this.click = true
       if (!this.result.username) {
-        this.warning['username'] = true;
-        delete this.warning.checkUsername;
-        return;
+        this.result.checkedUsername = false;
+        this.warning.username = '닉네임을 입력하세요'
+        return
       }
-      this.warning['username'] = false;
+
+      if(!this.checkUsernameRule()){
+        this.result.checkedUsername = false;
+        this.warning.username = '닉네임이 규칙에 맞지 않습니다'
+        return
+      }
+
       axios
         .get('/api/users/check-username', {
           params: { username: this.result.username },
         })
         .then((res) => {
-          this.warning['checkUsername'] = false;
           this.result.checkedUsername = true;
+          this.success.username = this.result.username
         })
         .catch((err) => {
-          this.warning['checkUsername'] = true;
-          this.result.username = '';
+          this.warning.username = '사용 불가능한 닉네임 입니다'
           this.result.checkedUsername = false;
         });
     },
+    checkEmailRule(){
+      // 이메일 유효성 검사를 위한 정규식 표현 
+      const pattern = /^[A-Za-z0-9_\.\-]+@[A-Za-z0-9\-]+\.[A-za-z0-9\-]+/;
+      if(pattern.test(this.result.email)){
+        this.result.checkedEmailRule = true
+        return true
+      }
+
+      this.result.checkedEmailRule = false
+      return false;
+    },
+    checkPasswordRule(){
+      const pattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;':",.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{}|;':",.<>\/?]{8,16}$/;
+      if(pattern.test(this.result.password)){
+        this.result.checkedPasswordRule = true
+        return true
+      }
+
+      this.result.checkedPasswordRule = false
+      return false
+    },
+    checkUsernameRule(){
+      const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/;
+      if(pattern.test(this.result.username)){
+        this.result.checkedUsernameRule = true
+        return true
+      }
+      
+      this.result.checkedUsernameRule = false
+      return false
+    }
   },
 };
 </script>
