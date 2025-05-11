@@ -64,7 +64,6 @@ const router = createRouter({
 // 가드
 router.beforeEach((to, from, next) => {
   const { username, isSurveyed } = store.state.account;
-
   // 인증 + 설문 완료 필요 경로
   if (to.meta.requiresAuth) {
     if (username) {

@@ -17,6 +17,8 @@ import com.yamyam.dto.request.UpdateRequest;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
 
+import jakarta.servlet.http.HttpSession;
+
 @Service
 public class UserServiceImpl implements UserService{
 
@@ -53,23 +55,18 @@ public class UserServiceImpl implements UserService{
 	    String email = principal.getEmail();
 	    
 	    UserEntity userEntity = userRepository.findByEmail(email);
-        
         return UserDetailResponse.currentUser(userEntity);
 	    
 	}
 
 	@Override
-	public boolean updateUserInfo(UpdateRequest updateRequest, String username) {
-		UserEntity userEntity = userRepository.findByUsername(username);
-//		private boolean gender;
-//	    private LocalDate birthDate;
-//	    private int height;
-//	    private int weight;
-//	    private int targetWeight;
-//	    private boolean isSurveyed;
-//	    private String dietType;
+	public boolean updateUserInfo(UpdateRequest updateRequest) {
+		UserEntity data = userRepository.findByUserId(updateRequest.getUserId());
+		data.updateForm(updateRequest);
+		userRepository.save(data);
 		
-		return false;
+		
+		return true;
 	}
 
 	@Override
@@ -77,10 +74,19 @@ public class UserServiceImpl implements UserService{
 		String email = principal.getEmail();
 	    
 	    UserEntity userEntity = userRepository.findByEmail(email);
-        
+
 	    CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
 	    
         return currentUserResponse;
+	}
+
+	@Override
+	public boolean deleteUser(HttpSession session, int userId) {
+		session.invalidate();
+		
+		userRepository.deleteById(userId);
+		
+		return true;
 	}
 
 }

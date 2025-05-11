@@ -187,7 +187,16 @@ public class UserEntity {
             dto.getTargetWeight()
         );
     }
-
+    
+    //회원 정보 수정 setter
+    public void updateForm(UpdateRequest dto) {
+    	this.username = dto.getUsername();
+    	this.gender = dto.isGender();
+    	this.birthDate = dto.getBirthDate();
+    	this.height = dto.getHeight();
+    	this.weight = dto.getWeight();
+    	this.targetWeight = dto.getTargetWeight();
+    }
     
 	@Override
 	public String toString() {

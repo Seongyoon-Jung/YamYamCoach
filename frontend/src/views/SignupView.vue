@@ -23,7 +23,7 @@
           <!-- 이메일 -->
           <div class="col-md-12">
             <!-- 레이블을 input-group 위에 두고 form-label 클래스로 왼쪽 정렬 -->
-            <label for="text" class="form-label fw-bold"
+            <label for="email" class="form-label fw-bold"
               >이메일
 
               <span class="text-danger fw-normal warning" v-show="click" v-if="!result.checkedEmail" v-text="warning.email"></span>
@@ -33,7 +33,7 @@
 
             <div class="input-group">
               <input
-                type="email"
+                type="text"
                 id="email"
                 class="form-control"
                 placeholder="example@domain.com"
@@ -218,17 +218,13 @@
               </div>
             </div>
           </div>
-          <!-- 가입 버튼 -->
-          <div class="text-end">
-            <a class="btn text-black" @click="save">건너뛰기</a>
-          </div>
 
           <div class="d-flex justify-content-between">
             <button class="btn btn-secondary" @click="prevBasic">이전</button>
             <button type="button" class="btn btn-primary" @click="handleSignup">
               회원가입
             </button>
-            <!-- ConfirmDialog 컴포넌트를 ref 로 선언 -->
+            
             
           </div>
         </div>
@@ -244,6 +240,7 @@
         </router-link>
       </div>
     </div>
+    <!-- ConfirmDialog 컴포넌트를 ref 로 선언 -->
     <ConfirmDialog ref="confirmDialog" />
   </div>
 </template>

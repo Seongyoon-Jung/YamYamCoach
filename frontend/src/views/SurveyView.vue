@@ -26,31 +26,6 @@
             </div>
           </div>
 
-          <!-- 2) 기본정보 입력 화면 회원 가입 페이지에서 실행할 예정
-            <div v-else-if="showBasic" class="card p-4 shadow-sm">
-              <h4 class="text-center text-primary mb-4">기본 정보 입력</h4>
-              <div class="mb-3">
-                <label class="form-label">키 (cm)</label>
-                <input type="number" class="form-control" v-model.number="basic.height" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">체중 (kg)</label>
-                <input type="number" class="form-control" v-model.number="basic.weight" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">목표 체중 (kg)</label>
-                <input type="number" class="form-control" v-model.number="basic.targetWeight" />
-              </div>
-              <div class="d-flex justify-content-between">
-                <button class="btn btn-secondary" @click="backToIntro">
-                  이전
-                </button>
-                <button class="btn btn-primary" @click="startSurvey">
-                  다음
-                </button>
-              </div>
-            </div> -->
-
           <!-- 3) 실제 설문 화면 -->
           <div v-else-if="showSurvey" class="card p-4 shadow-sm">
             <h3 class="text-center text-primary mb-4">식습관 분석</h3>
@@ -140,7 +115,7 @@
             />
 
             <!-- 메인으로 돌아가기 버튼 -->
-            <router-link to="/" class="btn btn-outline-secondary">
+            <router-link to="/home" class="btn btn-outline-secondary">
               메인으로 돌아가기
             </router-link>
           </div>
