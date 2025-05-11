@@ -275,6 +275,7 @@ export default {
         email: '',
         password: '',
         checkPassword: '',
+        checkedPasswordSame: '',
         username: '',
         gender: '',
         birthDate: '',
@@ -283,6 +284,7 @@ export default {
         checkedEmailRule:'',
         checkedPasswordRule:'',
         checkedUsernameRule:'',
+        checkedBirthDateRule:''
       },
       success:{
         email : '',
@@ -322,10 +324,10 @@ export default {
     warningMessage(){
       if(!this.result.email){
         this.warning.email = "이메일을 입력하세요"
-        this.result.checkedEmail = false
+        this.result.checkedEmail = ''
       }
       else if(this.result.email && !this.result.checkedEmail || this.success.email !== this.result.email){
-        this.result.checkedEmail = false 
+        this.result.checkedEmail = '' 
         this.warning.email = "이메일 중복을 확인하세요"
       }
       else if(this.result.email){
@@ -351,20 +353,23 @@ export default {
 
       if(!this.result.checkPassword){
         this.warning.checkPassword = "비밀번호를 입력하세요"
+        this.result.checkedPasswordSame = '';
       }
       else if(this.result.checkPassword !== this.result.password){
         this.warning.checkPassword = "비밀번호가 일치하지 않습니다"
+        this.result.checkedPasswordSame = '';
       }
       else{
         this.warning.checkPassword = ''
+        this.result.checkedPasswordSame = true;
       }
 
       if(!this.result.username){
         this.warning.username = '닉네임을 입력하세요'
-        this.result.checkedUsername = false
+        this.result.checkedUsername = ''
       }
       else if((this.result.username && !this.result.checkedUsername) || this.success.username !==this.result.username){
-        this.result.checkedUsername = false
+        this.result.checkedUsername = ''
         this.warning.username = "닉네임 중복을 확인하세요"
       }
       else if(this.result.username){
@@ -385,10 +390,13 @@ export default {
 
       if (!this.result.birthDate) {
         this.warning.birthDate = '생년월일을 입력하세요';
+        this.result.checkedBirthDateRule = '';
       } else if (!this.isValidCompactDate()) {
         this.warning.birthDate = '생년월일을 정확히 입력하세요'
+        this.result.checkedBirthDateRule = '';
       }
       else{
+        this.result.checkedBirthDateRule = true;
         this.warning.birthDate = ''
       }
     },
@@ -446,26 +454,31 @@ export default {
     isValidCompactDate() {
       const pattern = /^(19|20)\d{2}(?:(?:0[13578]|1[02])(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)(?:0[1-9]|[12]\d|30)|02(?:0[1-9]|1\d|2\d))$/;
       if (!pattern.test(this.result.birthDate)) {
+        this.result.checkedBirthDateRule = '';
         return false;
       }
       // 윤년이면서 2월 29일인 경우만 별도 허용
       const year = parseInt(this.result.birthDate.slice(0,4), 10);
       const month = this.result.birthDate.slice(4,6), day = this.result.birthDate.slice(6,8);
       if (month === "02" && day === "29") {
-        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        if((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)){
+          return true
+        }
+        this.result.checkedBirthDateRule = '';
+        return false;
       }
       return true;
     },
     checkEmail() {
       this.click = true
       if (!this.result.email) {
-        this.result.checkedEmail = false;
+        this.result.checkedEmail = '';
         this.warning.email = '이메일을 입력하세요'
         return;
       }
       
       if(!this.checkEmailRule()){
-        this.result.checkedEmail = false;
+        this.result.checkedEmail = '';
         this.warning.email = '이메일을 정확히 입력하세요'
         return
       }
@@ -478,19 +491,19 @@ export default {
         })
         .catch((err) => {
           this.warning.email = '사용 불가능한 이메일 입니다'
-          this.result.checkedEmail = false;
+          this.result.checkedEmail = '';
         });
     },
     checkUsername() {
       this.click = true
       if (!this.result.username) {
-        this.result.checkedUsername = false;
+        this.result.checkedUsername = '';
         this.warning.username = '닉네임을 입력하세요'
         return
       }
 
       if(!this.checkUsernameRule()){
-        this.result.checkedUsername = false;
+        this.result.checkedUsername = '';
         this.warning.username = '닉네임이 규칙에 맞지 않습니다'
         return
       }
@@ -505,7 +518,7 @@ export default {
         })
         .catch((err) => {
           this.warning.username = '사용 불가능한 닉네임 입니다'
-          this.result.checkedUsername = false;
+          this.result.checkedUsername = '';
         });
     },
     checkEmailRule(){
@@ -516,7 +529,7 @@ export default {
         return true
       }
 
-      this.result.checkedEmailRule = false
+      this.result.checkedEmailRule = ''
       return false;
     },
     checkPasswordRule(){
@@ -526,7 +539,7 @@ export default {
         return true
       }
 
-      this.result.checkedPasswordRule = false
+      this.result.checkedPasswordRule = ''
       return false
     },
     checkUsernameRule(){
@@ -536,7 +549,7 @@ export default {
         return true
       }
       
-      this.result.checkedUsernameRule = false
+      this.result.checkedUsernameRule = ''
       return false
     }
   },
