@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="d-flex flex-column min-vh-100">
     <HeaderComponent />
-    <main class="flex-grow-1 pt-5">
+    <main class="container bg-light flex-grow-1 pt-5">
       <router-view />
     </main>
     <FooterComponent />
@@ -32,7 +32,7 @@ nav a {
 }
 
 nav a.router-link-exact-active {
-  color: #42b983;
+  color: #42b983 !important;
 }
 
 /* dark-mode 전역 스타일 */

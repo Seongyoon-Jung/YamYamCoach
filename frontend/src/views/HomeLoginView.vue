@@ -1,144 +1,163 @@
 <template>
-  <div class="dashboard">
-    <!-- Profile Section -->
-    <section class="profile-row py-4 bg-white border-bottom">
-      <div class="container">
-        <div class="d-flex align-items-center gap-3">
-          <img
-            :src="user.avatarUrl || '/default-avatar.png'"
-            alt="Profile"
-            class="rounded-circle"
-            width="60"
-            height="60"
-          />
-          <div>
-            <span class="mb-0 fs-2">{{ user.username }}</span>
-            <span class="fs-5"> 님 안녕하세요!</span>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div class="d-flex pt-3 position-relative">
+    <!-- ─── 사이드바 ───────────────────────────────────────────────────────────── -->
+    
 
-    <!-- Stats Cards -->
-    <section class="stats-row py-4 bg-white">
-      <div class="container">
-        <div class="row g-3">
-          <div class="col-md-3" v-for="(stat, i) in stats" :key="i">
-            <div class="card text-center shadow-sm p-3">
-              <div class="stat-label text-uppercase text-muted mb-2">
-                {{ stat.label }}
-              </div>
-              <div class="stat-value h2 fw-bold">
-                {{ stat.value }}
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- ─── 메인 컨텐츠 ───────────────────────────────────────────────────────── -->
+    <main class=" flex-grow-1 overflow-auto p-4">
+      <!-- 인사+날짜/시간 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">안녕하세요, <strong>{{account.username}}</strong>님</h2>
       </div>
-    </section>
+      <hr>
 
-    <!-- Big Charts -->
-    <section class="charts-row py-4 bg-light">
-      <div class="container">
-        <div class="row g-3">
-          <div class="col-lg-8">
-            <div class="card shadow-sm p-3">
-              <div class="card-header">
-                <h5 class="mb-0">월별 식습관 지표</h5>
-              </div>
-              <div
-                class="chart-placeholder d-flex align-items-center justify-content-center"
-              >
-                <!-- 여기에 실제 LineChart 컴포넌트 삽입 -->
-                차트 영역
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card shadow-sm p-3">
-              <div class="card-header">
-                <h5 class="mb-0">진행률</h5>
-              </div>
-              <div
-                class="chart-placeholder d-flex align-items-center justify-content-center"
-              >
-                <!-- 여기에 실제 DonutChart 컴포넌트 삽입 -->
-                도넛 차트
+      <!-- 차트 + 사이드 정보 -->
+      <div class="row gx-4 mb-4">
+        <!-- 주차트 -->
+        <div class="col-lg-8 mb-4">
+          <div class="card shadow-sm h-100">
+            <ul class="nav nav-tabs card-header-tabs px-3">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">칼로리</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">탄수화물</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">단백질</a>
+              </li>
+            </ul>
+            <div class="card-body">
+              <div class="chart-placeholder d-flex align-items-center justify-content-center" style="height: 300px;">
+                <!-- 여기에 차트 컴포넌트 삽입 -->
+                Line Chart Here
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+        <!-- 사이드 정보 카드들 -->
+        <div class="col-lg-4">
+          <div class="row gy-4">
+             <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                  오늘은 수요일 입니다
+                </div>
+                <div class="card-body p-3">
+                  <small><i class="bi bi-calendar3"></i> 2025-05-09  
+                    <i class="bi bi-clock ms-3"></i> 8:55 am</small>
+                </div>
+              </div>
+            </div>
 
-    <!-- Small Charts / Info Cards -->
-    <section class="small-charts-row py-4 bg-white">
-      <div class="container">
-        <div class="row g-3">
-          <div class="col-md-3" v-for="n in 4" :key="n">
-            <div class="card shadow-sm p-3">
-              <div class="card-header">
-                <h6 class="mb-0">세부 지표 {{ n }}</h6>
-              </div>
-              <div
-                class="chart-placeholder small-chart d-flex align-items-center justify-content-center"
-              >
-                <!-- 여기에 실제 SmallChart 컴포넌트 삽입 -->
-                작은 차트
-              </div>
+            <div class="col-12">
+              <div class="card shadow-sm">
+    <!-- 헤더 -->
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">정보</h6>
+      <a href="#" class="small text-decoration-none">Edit ✎</a>
+    </div>
+
+    <!-- 본문 -->
+    <div class="card-body p-3">
+      <div class="row gx-3 gy-4">
+        <!-- 운동시간 -->
+        <div class="col-6 text-center">
+          <div class="text-muted small mb-1">운동시간</div>
+          <div class="d-inline-block" style="width:80px; height:80px;">
+            <!-- DonutChart 컴포넌트 자리 -->
+            <!-- 예) <DonutChart :value="40" :max="60" suffix="분"/> -->
+            <div class="chart-placeholder">Donut</div>
+          </div>
+          <div class="small text-primary mt-1">+30%</div>
+        </div>
+
+        <!-- 물 섭취 -->
+        <div class="col-6 text-center">
+          <div class="text-muted small mb-1">물 섭취</div>
+          <div class="d-inline-block" style="width:80px; height:80px;">
+            <!-- DonutChart 컴포넌트 자리 -->
+            <!-- 예) <DonutChart :value="0.7" :max="2" suffix="L"/> -->
+            <div class="chart-placeholder">Donut</div>
+          </div>
+          <div class="small text-primary mt-1">+30%</div>
+        </div>
+
+        <!-- 오늘 수면 시간 -->
+        <div class="col-12">
+          <div class="text-muted small mb-1">오늘 수면 시간: 6시간 30분</div>
+          <div class="chart-placeholder" style="height:100px;">
+            <!-- BarChart 컴포넌트 자리 -->
+            Bar Chart
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="card shadow-sm p-3 h-100">
-              <div class="card-header">
-                <h6 class="mb-0">알림 및 진행</h6>
+        </div>
+      </div>  
+
+      <!-- 오늘의 칼럼 & 오늘의 식단 -->
+      <div class="row gx-4">
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>오늘의 칼럼</span>
+              <button class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i></button>
+            </div>
+            <img src="https://via.placeholder.com/600x200" class="card-img-top" alt="">
+            <div class="card-body">
+              <h5 class="card-title">현미가 암을 더 생기게 한다?</h5>
+              <p class="card-text text-muted">[송무호의 비건뉴스] 77. 현미와 비소, 왜 문제가 됐나?</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>오늘의 식단</span>
+              <button class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i></button>
+            </div>
+            <div class="card-body d-flex gap-3 flex-wrap">
+              <div v-for="dish in todayDishes" :key="dish.name" class="text-center" style="width: 120px;">
+                <img :src="dish.img" class="rounded mb-2" style="width:100%; height:80px; object-fit:cover" alt="">
+                <div class="small">{{ dish.name }}</div>
+                <i class="bi bi-heart ms-1"></i>
               </div>
-              <ul class="list-unstyled mb-0">
-                <li
-                  v-for="i in 3"
-                  :key="i"
-                  class="d-flex justify-content-between align-items-center py-2 border-bottom"
-                >
-                  <span>알림 항목 {{ i }}</span>
-                  <button class="btn btn-sm btn-outline-primary">보기</button>
-                </li>
-              </ul>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </main>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import store from '@/store';
 
 export default {
   name: 'DashboardView',
-  computed: {
-    ...mapState({
-      user: (state) => state.account, // { username, avatarUrl, role, ... }
-    }),
-  },
   data() {
     return {
-      user: {
-        username: this.$store.state.account.username,
+      account : {
+        username : this.$store.state.account.username
       },
-      stats: [
-        { label: '완료율', value: '87%' },
-        { label: '활동 수', value: '1,503' },
-        { label: '칼로리', value: '2,450' },
-        { label: '걸음 수', value: '4,220' },
-      ],
+      todayDishes: [
+        { name: '된장찌개 + 순대튀김강정', img: 'https://via.placeholder.com/120x80' },
+        { name: '차이니즈파게티 + 마늘토스트', img: 'https://via.placeholder.com/120x80' }
+      ]
     };
-  },
+  }
 };
 </script>
 
 <style scoped>
-/* .profile-row {
-    border-bottom: 1px solid #e9ecef;
-  } */
+.chart-placeholder {
+  background: #f8f9fa;
+  border: 1px dashed #ddd;
+  color: #888;
+  font-style: italic;
+}
 </style>

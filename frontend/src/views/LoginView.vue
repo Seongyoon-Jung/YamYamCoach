@@ -128,14 +128,8 @@ export default {
             isSurveyed: res.data.surveyed,
           });
 
-          // 설문조사를 완료했으면 홈으로
-          if (res.data.surveyed) {
-            this.$router.push({ name: 'HomeView' });
-          }
-          //설문조사안했으면 설문조사 페이지로
-          else {
-            this.$router.push({ name: 'SurveyView' });
-          }
+          this.$router.push({ name: 'HomeView' });
+          
         })
         .catch((err) => {
           this.warning = "이메일 또는 비밀번호가 일치하지 않습니다"

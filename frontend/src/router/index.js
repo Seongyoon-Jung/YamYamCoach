@@ -6,13 +6,7 @@ const routes = [
     path: '/',
     name: 'HomeView',
     component: () => import('../views/HomeView.vue'),
-    meta: { title: '홈 | 냠냠코치', requiresSurvey: false },
-  },
-  {
-    path: '/home',
-    name: 'HomeLoginView',
-    component: () => import('../views/HomeLoginView.vue'),
-    meta: { title: '홈 | 냠냠코치', requiresAuth: true },
+    meta: { title: '홈'},
   },
   {
     path: '/my',
@@ -59,23 +53,20 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+  linkActiveClass: "router-link-active",
+  linkExactActiveClass: "router-link-exact-active"
 });
 
 // 가드
 router.beforeEach((to, from, next) => {
   const { username, isSurveyed } = store.state.account;
-  // 인증 + 설문 완료 필요 경로
+
   if (to.meta.requiresAuth) {
     if (username) {
       return next();
     } else {
       return next({ name: 'LoginView' });
     }
-  }
-
-  // 루트 접근 시 설문 완료 상태면 대시보드로 리다이렉트
-  if (to.name === 'HomeView' && username && isSurveyed) {
-    return next({ name: 'HomeLoginView' });
   }
 
   next();

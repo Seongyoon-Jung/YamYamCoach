@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <div v-if="!isLoggedIn">
     <!-- Hero Section -->
     <header class="hero">
       <div class="hero-overlay text-center">
@@ -47,20 +47,74 @@
         </div>
       </div>
     </section>
-  </main>
+  </div>
+
+  <div v-else>
+    <div class="d-flex pt-3 position-relative">
+    <!-- ─── 사이드바 ───────────────────────────────────────────────────────────── -->
+    
+
+    <!-- ─── 메인 컨텐츠 ───────────────────────────────────────────────────────── -->
+    <main class=" flex-grow-1 overflow-auto p-4">
+      <!-- 인사+날짜/시간 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">안녕하세요, <strong>{{username}}</strong>님</h2>
+      </div>
+      <hr>
+
+      <!-- 차트 + 사이드 정보 -->
+      <div class="row gx-4 mb-4">
+        <MainChart ref="MainChart" />
+        
+        <!-- 사이드 정보 카드들 -->
+        <div class="col-lg-4">
+          <div class="row gy-4">
+            <Calendar ref="Calendar" />
+            <Information ref="Information"/>     
+          </div>
+        </div>
+      </div>  
+
+      <!-- 오늘의 칼럼 & 오늘의 식단 -->
+      <div class="row gx-4">
+        <TodayColumn ref="TodayColumn" />
+        <TodayDiet ref="TodayDiet" />
+      </div>
+    </main>
+    </div>
+  </div>
 </template>
 
 <script>
 // @ is an alias to /src
+import { mapState } from 'vuex';
+import MainChart from '@/components/mainpage/MainChart.vue';
+import Calendar from '@/components/mainpage/Calendar.vue';
+import Information from '@/components/mainpage/Information.vue';
+import TodayColumn from '@/components/mainpage/TodayColumn.vue';
+import TodayDiet from '@/components/mainpage/TodayDiet.vue';
 
 export default {
   name: 'HomeView',
+  components:{ MainChart, Calendar, Information, TodayColumn, TodayDiet },
+  computed: {
+    ...mapState({
+      user: (state) => state.account, // { userId, username, isSurveyed, email? }
+    }),
+    isLoggedIn() {
+      return !!this.user.username;
+    },
+    darkMode() {
+      return document.body.classList.contains('dark-mode');
+    },
+  },
   data() {
     return {
-      username: this.$store.state.account.username,
-      isSurveyed: this.$store.state.account.isSurveyed,
+      username: '',
+      isSurveyed: '',
     };
   },
+  
   created() {
     this.username = this.$store.state.account.username;
     if (
@@ -71,8 +125,6 @@ export default {
     } else {
       this.isSurveyed = this.$store.state.account.isSurveyed;
     }
-
-    //console.log(this.$store.state.account,this.username,this.isSurveyed)
   },
   methods: {},
 };
