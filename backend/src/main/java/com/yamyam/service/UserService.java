@@ -7,6 +7,8 @@ import com.yamyam.dto.request.UpdateRequest;
 import com.yamyam.dto.response.CurrentUserResponse;
 import com.yamyam.dto.response.UserDetailResponse;
 
+import jakarta.servlet.http.HttpSession;
+
 public interface UserService {
 	
 	public boolean signUp(SignUpRequest userSignUpRequestDto);
@@ -19,5 +21,7 @@ public interface UserService {
 	
 	public CurrentUserResponse checkCurrentUser(SecurityAccount principal);
 	
-	public boolean updateUserInfo(UpdateRequest updateRequest, String username);
+	public boolean updateUserInfo(UpdateRequest updateRequest);
+	
+	public boolean deleteUser(HttpSession session, int userId);
 }

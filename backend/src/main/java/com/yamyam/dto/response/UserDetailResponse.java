@@ -32,9 +32,6 @@ public class UserDetailResponse {
 		this.targetWeight = targetWeight;
 	}
 
-
-
-
 	public static UserDetailResponse currentUser(UserEntity userEntity) {
 		return new UserDetailResponse(
 				userEntity.getUserId(),

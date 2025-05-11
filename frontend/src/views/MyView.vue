@@ -15,9 +15,9 @@
           <h5 class="mb-0">{{ user.username }}</h5>
           <small class="text-muted">구독 {{ user.subscriptions }}</small>
         </div>
-        <button class="btn btn-outline-secondary ms-auto">
+        <router-link to="/my/info" class="btn btn-outline-secondary ms-auto">
           <i class="bi bi-gear-fill"></i> 개인정보 수정
-        </button>
+        </router-link>
         <button class="btn btn-link text-secondary p-2">
           <i class="bi bi-three-dots-vertical"></i>
         </button>
