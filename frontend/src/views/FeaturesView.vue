@@ -12,7 +12,7 @@
         <h2 class="h4 fw-bold mb-3">기본 기능</h2>
         <div class="table-responsive">
           <table class="table table-striped align-middle">
-            <thead class="table-dark">
+            <thead class="table-success">
               <tr>
                 <th scope="col">번호</th>
                 <th scope="col">데이터 / 기능</th>

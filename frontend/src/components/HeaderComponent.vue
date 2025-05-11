@@ -1,16 +1,16 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top border-bottom border-3">
     <div class="container">
       <!-- 브랜드 + 주요 네비게이션 -->
       <router-link class="navbar-brand fw-bold me-4" to="/"
         >냠냠코치</router-link
       >
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-bold">
         <li class="nav-item">
-          <router-link class="nav-link" to="/">홈</router-link>
+          <router-link class="nav-link text-decoration-none" to="/">홈</router-link>
         </li>
         <li class="nav-item">
-          <router-link class="nav-link" to="/features">기능 소개</router-link>
+          <router-link class="nav-link text-decoration-none" to="/features">기능 소개</router-link>
         </li>
       </ul>
 
@@ -25,7 +25,7 @@
       </button>
 
       <!-- 우측 액션 아이콘 & 로그인/프로필 -->
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <div class="collapse navbar-collapse justify-content-end fw-bold" id="navbarNav">
         <ul class="navbar-nav align-items-center">
           <!-- 검색 아이콘 -->
           <li class="nav-item me-3">
@@ -46,7 +46,7 @@
           <!-- 로그인 전 -->
           <li v-if="!isLoggedIn" class="nav-item">
             <router-link
-              class="nav-link btn btn-primary text-white px-3"
+              class="nav-link btn btn-success text-white px-3"
               to="/login"
             >
               로그인
@@ -68,13 +68,11 @@
                 width="32"
                 height="32"
               />
+              <span class="mx-2">{{ user.username }}</span>
             </a>
+
             <ul class="dropdown-menu dropdown-menu-end">
-              <li class="dropdown-header">
-                {{ user.username }} 님 안녕하세요 !<br />
-                <small class="text-muted">{{ user.email }}</small>
-              </li>
-              <li><hr class="dropdown-divider" /></li>
+              
               <li>
                 <router-link class="dropdown-item" to="/my"
                   >마이페이지</router-link
@@ -100,6 +98,7 @@
       </div>
     </div>
   </nav>
+
 </template>
 
 <script>
@@ -125,10 +124,10 @@ export default {
         .post('/api/auth/logout')
         .then(() => {
           this.$store.commit('clearAccount');
+          console.log(this.$store.state.account)
           this.$router.push({ name: 'HomeView' });
         })
         .catch((err) => {
-          console.error(err);
           alert('로그아웃에 실패했습니다.');
         });
     },

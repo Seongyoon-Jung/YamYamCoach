@@ -1,8 +1,9 @@
 <template>
-  <footer class="py-4 bg-dark text-white text-center mt-auto">
+  <footer class="py-4 bg-secondary text-white text-center mt-auto">
     <div class="container">
       <small>&copy; 2025 냠냠코치. 모든 권리 보유.</small>
     </div>
+    
   </footer>
 </template>
 
