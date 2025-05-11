@@ -223,7 +223,8 @@ export default {
         this.optionResult.weight = res.data.weight;
         this.optionResult.targetWeight = res.data.targetWeight;
         this.success.username = res.data.username;
-        this.result.checkedUsername = true
+        this.result.checkedUsername = true,
+        this.result.checkedUsernameRule = true
       })
       .catch((err) => {});
   },
@@ -278,6 +279,7 @@ export default {
       axios
         .put('/api/users', post)
         .then((res) => {
+          this.$store.state.account.username = this.result.username;
           this.$router.push({ name: 'MyView' });
         })
         .catch((err) => {
@@ -285,29 +287,12 @@ export default {
         });
     },
     warningMessage(){
-      if(!this.result.email){
-        this.warning.email = "이메일을 입력하세요"
-        this.result.checkedEmail = false
-      }
-      else if(this.result.email && !this.result.checkedEmail || this.success.email !== this.result.email){
-        this.result.checkedEmail = false 
-        this.warning.email = "이메일 중복을 확인하세요"
-      }
-      else if(this.result.email){
-        if(this.checkEmailRule()){
-          this.warning.email = ''
-        }
-        else{
-          this.warning.email = '이메일을 정확히 입력하세요'
-        }
-      }
-
       if(!this.result.username){
         this.warning.username = '닉네임을 입력하세요'
-        this.result.checkedUsername = false
+        this.result.checkedUsername = ''
       }
       else if((this.result.username && !this.result.checkedUsername) || this.success.username !==this.result.username){
-        this.result.checkedUsername = false
+        this.result.checkedUsername = ''
         this.warning.username = "닉네임 중복을 확인하세요"
       }
       else if(this.result.username){
@@ -315,6 +300,7 @@ export default {
           this.warning.username = ''
         }
         else{
+          his.result.checkedUsername = ''
           this.warning.username = '닉네임이 규칙에 맞지않습니다'
         }
       }
@@ -351,14 +337,19 @@ export default {
     checkUsername() {
       this.click = true
       if (!this.result.username) {
-        this.result.checkedUsername = false;
+        this.result.checkedUsername = '';
         this.warning.username = '닉네임을 입력하세요'
         return
       }
 
       if(!this.checkUsernameRule()){
-        this.result.checkedUsername = false;
+        this.result.checkedUsername = '';
         this.warning.username = '닉네임이 규칙에 맞지 않습니다'
+        return
+      }
+
+      if(this.result.username == this.success.username){
+        this.click = false
         return
       }
 
@@ -372,7 +363,7 @@ export default {
         })
         .catch((err) => {
           this.warning.username = '사용 불가능한 닉네임 입니다'
-          this.result.checkedUsername = false;
+          this.result.checkedUsername = '';
         });
     },
     checkUsernameRule(){
@@ -382,7 +373,7 @@ export default {
         return true
       }
       
-      this.result.checkedUsernameRule = false
+      this.result.checkedUsernameRule = ''
       return false
     },
     async handleDelete() {
