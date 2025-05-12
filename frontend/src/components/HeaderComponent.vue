@@ -2,15 +2,13 @@
   <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top border-bottom border-3">
     <div class="container">
       <!-- 브랜드 + 주요 네비게이션 -->
-      <router-link class="navbar-brand fw-bold me-4" to="/"
-        >냠냠코치</router-link
-      >
+      <RouterLink class="navbar-brand fw-bold me-4" to="/">냠냠코치</RouterLink>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-bold">
         <li class="nav-item">
-          <router-link class="nav-link text-decoration-none" to="/">홈</router-link>
+          <RouterLink class="nav-link text-decoration-none" to="/">홈</RouterLink>
         </li>
         <li class="nav-item">
-          <router-link class="nav-link text-decoration-none" to="/features">기능 소개</router-link>
+          <RouterLink class="nav-link text-decoration-none" to="/features">기능 소개</RouterLink>
         </li>
       </ul>
 
@@ -29,28 +27,20 @@
         <ul class="navbar-nav align-items-center">
           <!-- 검색 아이콘 -->
           <li class="nav-item me-3">
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/">
               <i class="bi bi-search fs-5"></i>
             </a>
           </li>
           <!-- 다크 모드 토글 -->
           <li class="nav-item me-3">
-            <a class="nav-link" href="#" @click.prevent="toggleDarkMode">
-              <i
-                :class="darkMode ? 'bi bi-sun' : 'bi bi-moon'"
-                class="fs-5"
-              ></i>
+            <a class="nav-link" href="/" @click.prevent="toggleDarkMode">
+              <i :class="darkMode ? 'bi bi-sun' : 'bi bi-moon'" class="fs-5"></i>
             </a>
           </li>
 
           <!-- 로그인 전 -->
           <li v-if="!isLoggedIn" class="nav-item">
-            <router-link
-              class="nav-link btn btn-success text-white px-3"
-              to="/login"
-            >
-              로그인
-            </router-link>
+            <RouterLink class="btn btn-success text-white px-3" to="/login"> 로그인 </RouterLink>
           </li>
 
           <!-- 로그인 후: 프로필 드롭다운 -->
@@ -72,21 +62,14 @@
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end">
-              
               <li>
-                <router-link class="dropdown-item" to="/my"
-                  >마이페이지</router-link
-                >
+                <RouterLink class="dropdown-item" to="/my">마이페이지</RouterLink>
               </li>
               <li>
-                <router-link class="dropdown-item" to="/support"
-                  >고객지원</router-link
-                >
+                <RouterLink class="dropdown-item" to="/support">고객지원</RouterLink>
               </li>
               <li>
-                <router-link class="dropdown-item" to="/my/info"
-                  >내 정보 수정</router-link
-                >
+                <RouterLink class="dropdown-item" to="/my/info">내 정보 수정</RouterLink>
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
@@ -98,44 +81,34 @@
       </div>
     </div>
   </nav>
-
 </template>
 
-<script>
-import axios from '@/plugins/axios';
-import { mapState } from 'vuex';
+<script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from '@/plugins/axios'
+import { userAccountStore } from '@/store/account'
 
-export default {
-  name: 'HeaderComponent',
-  computed: {
-    ...mapState({
-      user: (state) => state.account, // { userId, username, isSurveyed, email? }
-    }),
-    isLoggedIn() {
-      return !!this.user.username;
-    },
-    darkMode() {
-      return document.body.classList.contains('dark-mode');
-    },
-  },
-  methods: {
-    logout() {
-      axios
-        .post('/api/auth/logout')
-        .then(() => {
-          this.$store.commit('clearAccount');
-          console.log(this.$store.state.account)
-          this.$router.push({ name: 'HomeView' });
-        })
-        .catch((err) => {
-          alert('로그아웃에 실패했습니다.');
-        });
-    },
-    toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    },
-  },
-};
+const router = useRouter()
+const accountStore = userAccountStore()
+
+const user = computed(() => accountStore)
+const isLoggedIn = computed(() => !!user.value.username)
+const darkMode = computed(() => document.body.classList.contains('dark-mode'))
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode')
+}
+
+async function logout() {
+  try {
+    await axios.post('/api/auth/logout')
+    accountStore.clearAccount()
+    router.push({ name: 'HomeView' })
+  } catch (e) {
+    alert('로그아웃에 실패했습니다.')
+  }
+}
 </script>
 
 <style scoped>

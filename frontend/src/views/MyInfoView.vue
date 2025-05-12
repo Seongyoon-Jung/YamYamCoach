@@ -8,13 +8,11 @@
         <!-- 기본 정보 섹션 -->
         <h6 class="mb-3">기본 정보</h6>
         <div class="card mb-4 p-3">
-          <div  class="row g-3 text-start col-md-12">
+          <div class="row g-3 text-start col-md-12">
             <!-- 이메일 -->
             <div class="col-md-12 mb-3">
               <!-- 레이블을 input-group 위에 두고 form-label 클래스로 왼쪽 정렬 -->
-              <label for="email" class="form-label fw-bold"
-                >이메일
-              </label>
+              <label for="email" class="form-label fw-bold">이메일 </label>
 
               <div class="input-group">
                 <input
@@ -35,8 +33,15 @@
             <div class="col-md-12 mb-3">
               <label for="username" class="form-label fw-bold"
                 >닉네임
-                <span class="text-danger fw-normal warning" v-show="click" v-if="!result.checkedUsername" v-text="warning.username"></span>
-                <span class="text-success fw-normal warning" v-show="click" v-else>사용 가능한 닉네임입니다</span>
+                <span
+                  class="text-danger fw-normal warning"
+                  v-show="click"
+                  v-if="!result.checkedUsername"
+                  v-text="warning.username"
+                ></span>
+                <span class="text-success fw-normal warning" v-show="click" v-else
+                  >사용 가능한 닉네임입니다</span
+                >
               </label>
 
               <div class="input-group">
@@ -49,25 +54,25 @@
                   name="username"
                   v-model="result.username"
                 />
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  @click="checkUsername"
-                >
+                <button type="button" class="btn btn-outline-secondary" @click="checkUsername">
                   중복 확인
                 </button>
               </div>
-              <span class="text-info warning" >※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
+              <span class="text-info warning">※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
             </div>
 
             <div class="col-md-12 mb-3">
               <!-- 성별 -->
               <label class="form-label fw-bold"
                 >성별
-                <span class="text-danger fw-normal warning" v-show="click" v-text="warning.gender"></span>
+                <span
+                  class="text-danger fw-normal warning"
+                  v-show="click"
+                  v-text="warning.gender"
+                ></span>
               </label>
-                <div class="btn-group w-100" role="group">
-                  <input
+              <div class="btn-group w-100" role="group">
+                <input
                   type="radio"
                   class="btn-check"
                   name="gender"
@@ -76,9 +81,7 @@
                   v-model="result.gender"
                   autocomplete="off"
                 />
-                <label class="btn btn-outline-secondary flex-fill" for="male">
-                  남성
-                </label>
+                <label class="btn btn-outline-secondary flex-fill" for="male"> 남성 </label>
 
                 <input
                   type="radio"
@@ -89,9 +92,7 @@
                   v-model="result.gender"
                   autocomplete="off"
                 />
-                <label class="btn btn-outline-secondary flex-fill" for="female">
-                  여성
-                </label>
+                <label class="btn btn-outline-secondary flex-fill" for="female"> 여성 </label>
               </div>
             </div>
 
@@ -99,7 +100,11 @@
             <div class="col-md-12 mb-0">
               <label for="birthdate" class="form-label fw-bold">
                 생년월일
-                <span class="text-danger fw-normal warning" v-show="click" v-text="warning.birthDate"></span>
+                <span
+                  class="text-danger fw-normal warning"
+                  v-show="click"
+                  v-text="warning.birthDate"
+                ></span>
               </label>
               <input
                 type="text"
@@ -114,12 +119,10 @@
           </div>
         </div>
 
-       
-
         <!-- 추가 정보 섹션 -->
         <h6 class="mb-3">추가 정보</h6>
         <div class="card mb-4 p-3">
-          <div  class="row g-3 text-start col-md-12">
+          <div class="row g-3 text-start col-md-12">
             <!-- 키 -->
             <div class="col-md-12 mb-3">
               <label class="form-label fw-bold">키 (cm)</label>
@@ -161,9 +164,7 @@
         <!-- 저장/취소 버튼 -->
         <div class="d-flex justify-content-center gap-3">
           <button type="button" class="btn btn-primary px-5" @click="handleUpdate">저장</button>
-          <button class="btn btn-outline-secondary px-5" @click="goBack"
-            >취소</button
-          >
+          <button type="button" class="btn btn-outline-secondary px-5" @click="goBack">취소</button>
         </div>
       </form>
 
@@ -176,241 +177,191 @@
   </main>
 </template>
 
-<script>
-import axios from '@/plugins/axios';
-import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import store from '@/store';
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from '@/plugins/axios'
+import { userAccountStore } from '@/store/account'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
-export default {
-  name: 'MyInfoView',
-  components: { ConfirmDialog },
-  data() {
-    return {
-      result : {
-        email: '',
-        username: '',
-        gender: '',
-        birthDate: '',
-        checkedUsername: '',
-        checkedUsernameRule: '',
-      },
-      optionResult : {
-        height: '',
-        weight: '',
-        targetWeight: '',
-      },
-      click: false,
-      warning: {
-        email: '',
-        username: '',
-        gender: '',
-        birthDate: '',
-      },
-      success: {
-        username:'',
-      }
-    };
-  },
-  created() {
-    axios
-      .get('/api/users')
-      .then((res) => {
-        this.result.email = res.data.email;
-        this.result.username = res.data.username;
-        this.result.gender = res.data.gender;
-        this.result.birthDate = res.data.birthDate.replaceAll("-","");
-        this.optionResult.height = res.data.height;
-        this.optionResult.weight = res.data.weight;
-        this.optionResult.targetWeight = res.data.targetWeight;
-        this.success.username = res.data.username;
-        this.result.checkedUsername = true,
-        this.result.checkedUsernameRule = true
-      })
-      .catch((err) => {});
-  },
-  methods: {
-    async handleUpdate() {
-      this.warningMessage()
-      if(Object.values(this.result).includes('')){
-        this.click = true
-        return
-      }
+const router = useRouter()
+const accountStore = userAccountStore()
+const confirmDialog = ref(null)
 
+const result = reactive({
+  email: '',
+  username: '',
+  gender: '',
+  birthDate: '',
+  checkedUsername: '',
+  checkedUsernameRule: '',
+})
 
-      // 빈 값이 있으면
-      if (Object.values(this.optionResult).includes('')) {
-        const ok = await this.$refs.confirmDialog.open({
-          title: '선택정보 확인',
-          message: `
-            선택정보 미입력 시 정확한 식단분석이 불가능합니다.<br/>
-            그래도 진행하시겠습니까?
-          `
-        });
-        if (!ok) {
-          // 유저가 취소 눌렀을 때
-          return;
-        }
-      }
-      // 확인 눌렀거나, 애초에 빈 값이 없을 때
-      this.save();
-    },
-    save() {
-      var stringToDate = this.result.birthDate;
-      stringToDate =
-        stringToDate.substring(0, 4) +
-        '-' +
-        stringToDate.substring(4, 6) +
-        '-' +
-        stringToDate.substring(6, 8);
-      // 입력 했을때 20000101 에서 보내기직전에 2000-01-01로 바꾸지 않기 위해서 새로만들어서 보내기기
+const optionResult = reactive({
+  height: '',
+  weight: '',
+  targetWeight: '',
+})
 
+const click = ref(false)
+const warning = reactive({
+  email: '',
+  username: '',
+  gender: '',
+  birthDate: '',
+})
+const success = reactive({ username: '' })
 
+onMounted(() => {
+  axios.get('/api/users').then((res) => {
+    result.email = res.data.email
+    result.username = res.data.username
+    result.gender = res.data.gender
+    result.birthDate = res.data.birthDate.replaceAll('-', '')
+    optionResult.height = res.data.height
+    optionResult.weight = res.data.weight
+    optionResult.targetWeight = res.data.targetWeight
+    success.username = res.data.username
+    result.checkedUsername = true
+    result.checkedUsernameRule = true
+  })
+})
 
-      const post = {
-        userId : this.$store.state.account.userId,
-        username: this.result.username,
-        gender: this.result.gender,
-        birthDate: stringToDate,
-        height: this.optionResult.height,
-        weight: this.optionResult.weight,
-        targetWeight: this.optionResult.targetWeight,
-      };
+const checkUsernameRule = () => {
+  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/
+  if (pattern.test(result.username)) {
+    result.checkedUsernameRule = true
+    return true
+  }
+  result.checkedUsernameRule = ''
+  return false
+}
 
-      axios
-        .put('/api/users', post)
-        .then((res) => {
-          this.$store.state.account.username = this.result.username;
-          this.$router.push({ name: 'MyView' });
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    },
-    warningMessage(){
-      if(!this.result.username){
-        this.warning.username = '닉네임을 입력하세요'
-        this.result.checkedUsername = ''
-      }
-      else if((this.result.username && !this.result.checkedUsername) || this.success.username !==this.result.username){
-        this.result.checkedUsername = ''
-        this.warning.username = "닉네임 중복을 확인하세요"
-      }
-      else if(this.result.username){
-        if(this.checkUsernameRule()){
-          this.warning.username = ''
-        }
-        else{
-          his.result.checkedUsername = ''
-          this.warning.username = '닉네임이 규칙에 맞지않습니다'
-        }
-      }
+const isValidCompactDate = () => {
+  const pattern =
+    /^(19|20)\d{2}(?:(?:0[13578]|1[02])(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)(?:0[1-9]|[12]\d|30)|02(?:0[1-9]|1\d|2\d))$/
+  if (!pattern.test(result.birthDate)) return false
 
-      if(this.result.gender === ''){
-        this.warning.gender = '성별을 선택하세요'
-      }
-      else{
-        this.warning.gender = ''
-      }
+  const year = parseInt(result.birthDate.slice(0, 4))
+  const month = result.birthDate.slice(4, 6)
+  const day = result.birthDate.slice(6, 8)
 
-      if (!this.result.birthDate) {
-        this.warning.birthDate = '생년월일을 입력하세요';
-      } else if (!this.isValidCompactDate()) {
-        this.warning.birthDate = '생년월일을 정확히 입력하세요'
-      }
-      else{
-        this.warning.birthDate = ''
-      }
-    },
-    isValidCompactDate() {
-      const pattern = /^(19|20)\d{2}(?:(?:0[13578]|1[02])(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)(?:0[1-9]|[12]\d|30)|02(?:0[1-9]|1\d|2\d))$/;
-      if (!pattern.test(this.result.birthDate)) {
-        return false;
-      }
-      // 윤년이면서 2월 29일인 경우만 별도 허용
-      const year = parseInt(this.result.birthDate.slice(0,4), 10);
-      const month = this.result.birthDate.slice(4,6), day = this.result.birthDate.slice(6,8);
-      if (month === "02" && day === "29") {
-        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-      }
-      return true;
-    },
-    checkUsername() {
-      this.click = true
-      if (!this.result.username) {
-        this.result.checkedUsername = '';
-        this.warning.username = '닉네임을 입력하세요'
-        return
-      }
+  if (month === '02' && day === '29') {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+  }
+  return true
+}
 
-      if(!this.checkUsernameRule()){
-        this.result.checkedUsername = '';
-        this.warning.username = '닉네임이 규칙에 맞지 않습니다'
-        return
-      }
+const warningMessage = () => {
+  if (!result.username) {
+    warning.username = '닉네임을 입력하세요'
+    result.checkedUsername = ''
+  } else if ((result.username && !result.checkedUsername) || success.username !== result.username) {
+    result.checkedUsername = ''
+    warning.username = '닉네임 중복을 확인하세요'
+  } else if (result.username && checkUsernameRule()) {
+    warning.username = ''
+  } else {
+    result.checkedUsername = ''
+    warning.username = '닉네임이 규칙에 맞지않습니다'
+  }
 
-      if(this.result.username == this.success.username){
-        this.click = false
-        return
-      }
+  warning.gender = result.gender === '' ? '성별을 선택하세요' : ''
 
-      axios
-        .get('/api/users/check-username', {
-          params: { username: this.result.username },
-        })
-        .then((res) => {
-          this.result.checkedUsername = true;
-          this.success.username = this.result.username
-        })
-        .catch((err) => {
-          this.warning.username = '사용 불가능한 닉네임 입니다'
-          this.result.checkedUsername = '';
-        });
-    },
-    checkUsernameRule(){
-      const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/;
-      if(pattern.test(this.result.username)){
-        this.result.checkedUsernameRule = true
-        return true
-      }
-      
-      this.result.checkedUsernameRule = ''
-      return false
-    },
-    async handleDelete() {
-  
-      const ok = await this.$refs.confirmDialog.open({
-        title: '회원 탈퇴 확인',
-        message: `
-          회원 탈퇴 시 모든 정보가 삭제되고 복구가 불가능합니다.<br/>
-          그래도 진행하시겠습니까?
-        `
-      });
-      if (!ok) {
-        return;
-      }
-      
-      // 확인 눌렀거나
-      this.delete()
-      
-    },
-    delete(){
-      axios
-        .delete('/api/users', {
-          params: { userId: this.$store.state.account.userId },
-        })
-        .then((res) => {
-          store.commit('clearAccount');
-          this.$router.push({ name: 'HomeView' });
-        })
-        .catch((err) => {
+  if (!result.birthDate) {
+    warning.birthDate = '생년월일을 입력하세요'
+  } else if (!isValidCompactDate()) {
+    warning.birthDate = '생년월일을 정확히 입력하세요'
+  } else {
+    warning.birthDate = ''
+  }
+}
 
-        });
-    },
-    goBack(){
-      this.$router.go(-1)
-    }
-  },
-};
+const checkUsername = () => {
+  click.value = true
+  if (!result.username) {
+    result.checkedUsername = ''
+    warning.username = '닉네임을 입력하세요'
+    return
+  }
+  if (!checkUsernameRule()) {
+    result.checkedUsername = ''
+    warning.username = '닉네임이 규칙에 맞지 않습니다'
+    return
+  }
+  if (result.username === success.username) {
+    click.value = false
+    return
+  }
+  axios
+    .get('/api/users/check-username', { params: { username: result.username } })
+    .then(() => {
+      result.checkedUsername = true
+      success.username = result.username
+    })
+    .catch(() => {
+      warning.username = '사용 불가능한 닉네임 입니다'
+      result.checkedUsername = ''
+    })
+}
+
+const save = () => {
+  const birth = result.birthDate
+  const stringToDate = `${birth.substring(0, 4)}-${birth.substring(4, 6)}-${birth.substring(6, 8)}`
+
+  const post = {
+    userId: accountStore.userId,
+    username: result.username,
+    gender: result.gender,
+    birthDate: stringToDate,
+    height: optionResult.height,
+    weight: optionResult.weight,
+    targetWeight: optionResult.targetWeight,
+  }
+
+  axios
+    .put('/api/users', post)
+    .then(() => {
+      accountStore.username = result.username
+      router.push({ name: 'MyView' })
+    })
+    .catch((err) => {
+      console.error(err)
+    })
+}
+
+const handleUpdate = async () => {
+  warningMessage()
+  if (Object.values(result).includes('')) {
+    click.value = true
+    return
+  }
+  if (Object.values(optionResult).includes('')) {
+    const ok = await confirmDialog.value.open({
+      title: '선택정보 확인',
+      message: `선택정보 미입력 시 정확한 식단분석이 불가능합니다.<br/>그래도 진행하시겠습니까?`,
+    })
+    if (!ok) return
+  }
+  save()
+}
+
+const handleDelete = async () => {
+  const ok = await confirmDialog.value.open({
+    title: '회원 탈퇴 확인',
+    message: `회원 탈퇴 시 모든 정보가 삭제되고 복구가 불가능합니다.<br/>그래도 진행하시겠습니까?`,
+  })
+  if (!ok) return
+
+  axios.delete('/api/users', { params: { userId: accountStore.userId } }).then(() => {
+    accountStore.clearAccount()
+    router.push({ name: 'HomeView' })
+  })
+}
+
+const goBack = () => {
+  router.go(-1)
+}
 </script>
 
 <style scoped>

@@ -33,9 +33,7 @@
             <div class="d-flex align-items-center">
               <div class="level-icon me-3">
                 <!-- 임시 헥사곤 + 물고기 아이콘 -->
-                <div
-                  class="hexagon d-flex align-items-center justify-content-center"
-                >
+                <div class="hexagon d-flex align-items-center justify-content-center">
                   <i class="bi bi-fish fs-2 text-primary"></i>
                 </div>
               </div>
@@ -84,26 +82,22 @@
   </main>
 </template>
 
-<script>
-import { mapState } from 'vuex';
+<script setup>
+import { computed } from 'vue'
+import { userAccountStore } from '@/store/account'
 
-export default {
-  name: 'MyPage',
-  computed: {
-    ...mapState({
-      user: (state) => ({
-        avatarUrl: state.account.avatarUrl,
-        username: state.account.username,
-        subscriptions: state.account.subscriptions || 0,
-        level: state.account.level || 1,
-        title: state.account.title || '초보자',
-        xp: state.account.xp || 0,
-        xpProgress: state.account.xpProgress || 0,
-        coins: state.account.coins || 0,
-      }),
-    }),
-  },
-};
+const accountStore = userAccountStore()
+
+const user = computed(() => ({
+  avatarUrl: accountStore.avatarUrl,
+  username: accountStore.username,
+  subscriptions: accountStore.subscriptions || 0,
+  level: accountStore.level || 1,
+  title: accountStore.title || '초보자',
+  xp: accountStore.xp || 0,
+  xpProgress: accountStore.xpProgress || 0,
+  coins: accountStore.coins || 0,
+}))
 </script>
 
 <style scoped>
@@ -126,14 +120,7 @@ export default {
   width: 60px;
   height: 60px;
   background: #e9ecef;
-  clip-path: polygon(
-    25% 5.77%,
-    75% 5.77%,
-    100% 50%,
-    75% 94.23%,
-    25% 94.23%,
-    0% 50%
-  );
+  clip-path: polygon(25% 5.77%, 75% 5.77%, 100% 50%, 75% 94.23%, 25% 94.23%, 0% 50%);
   border-radius: 4px;
 }
 .level-icon .hexagon {
