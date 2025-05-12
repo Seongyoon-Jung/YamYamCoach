@@ -1,0 +1,249 @@
+/* ====================================================================== */
+/* 0. SCHEMA INITIALIZATION                                              */
+/* ====================================================================== */
+DROP DATABASE IF EXISTS yamyam;
+CREATE DATABASE yamyam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE yamyam;
+
+/* ====================================================================== */
+/* 1. USER – MEMBER BASIC INFO                                           */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+    user_id        INT PRIMARY KEY AUTO_INCREMENT,
+    email          VARCHAR(50)  NOT NULL UNIQUE,
+    password       VARCHAR(50)  NOT NULL,
+    username       VARCHAR(50)  NOT NULL UNIQUE,
+    gender         TINYINT      NOT NULL,      -- 0: male, 1: female
+    birth_date     DATE         NOT NULL,
+    height         INT,
+    weight         INT,
+    target_weight  INT,
+    is_surveyed    TINYINT      DEFAULT 0,     -- 0: no, 1: yes
+    diet_type      VARCHAR(50)  DEFAULT NULL,  -- e.g., weight_loss, muscle_gain
+    role           VARCHAR(20)  NOT NULL DEFAULT 'ROLE_USER'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `user`
+  (email, password, username, gender, birth_date, height, weight, target_weight, is_surveyed, diet_type, role)
+VALUES
+  ('hong@example.com','pw123','hong',0,'1990-05-01',175,70,65,1,'weight_loss','ROLE_USER'),
+  ('lee@example.com','pw456','lee',1,'1985-08-15',162,58,55,0,'muscle_gain','ROLE_USER'),
+  ('park@example.com','pw789','park',0,'1992-12-30',180,80,75,1,NULL,'ROLE_USER'),
+  ('kim@example.com','pwabc','kim',1,'1995-03-20',158,50,50,0,NULL,'ROLE_USER');
+
+/* ====================================================================== */
+/* 2. QUESTION – DIETARY SURVEY QUESTIONS                                */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `question`;
+CREATE TABLE `question` (
+    question_id     INT PRIMARY KEY AUTO_INCREMENT,
+    step_level      INT  NOT NULL,        -- 1 or 2
+    question_text   TEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `question` (step_level, question_text) VALUES
+  (1,'나는 하루 세 끼를 규칙적으로 먹는다.'),
+  (1,'나는 자주 야식을 먹는 편이다.'),
+  (1,'나의 식사 시간은 거의 매일 비슷한 편이다.'),
+  (1,'한 끼에 내가 먹는 양이 적절하다고 느낀다.'),
+  (1,'나는 주로 채소와 단백질을 골고루 섭취하려고 노력한다.'),
+  (1,'나는 단 음식을 자주 즐겨 먹는다.'),
+  (1,'나는 일주일에 최소 3회 이상 규칙적으로 운동을 한다.'),
+  (1,'나는 하루에 2L 이상의 물을 충분히 마신다.'),
+  (1,'나는 스트레스를 받을 때 평소보다 더 많이 먹는 편이다.'),
+  (1,'나는 식사할 때 TV·휴대폰·일 등 딴짓 없이 음식에만 집중해서 먹는다.');
+
+/* ====================================================================== */
+/* 3. SURVEY – USER SURVEY ANSWERS                                       */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `survey`;
+CREATE TABLE `survey` (
+    survey_id     INT PRIMARY KEY AUTO_INCREMENT,
+    user_id       INT NOT NULL,
+    step_level    INT NOT NULL,
+    survey_date   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    answer_values VARCHAR(100) NOT NULL,   -- e.g., '1,2,3,4,5'
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* ====================================================================== */
+/* 4. DISH – 개별 메뉴 영양 정보                                           */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `dish`;
+CREATE TABLE `dish` (
+    dish_id        INT PRIMARY KEY AUTO_INCREMENT,
+    dish_name      VARCHAR(100) NOT NULL,
+    calorie_kcal   DOUBLE,
+    sugar_g        DOUBLE,
+    fiber_g        DOUBLE,
+    ash_g          DOUBLE,
+    sodium_mg      DOUBLE,
+    calcium_mg     DOUBLE,
+    iron_mg        DOUBLE,
+    phosphorus_mg  DOUBLE,
+    potassium_mg   DOUBLE,
+    vitamin_a_mcg  DOUBLE,
+    vitamin_b1_mg  DOUBLE,
+    vitamin_b2_mg  DOUBLE,
+    vitamin_b3_mg  DOUBLE,
+    folic_acid_mcg DOUBLE,
+    vitamin_c_mg   DOUBLE,
+    vitamin_d_mcg  DOUBLE,
+    vitamin_e_mg   DOUBLE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `dish` (
+    dish_name, calorie_kcal, sugar_g, fiber_g, ash_g, sodium_mg,
+    calcium_mg, iron_mg, phosphorus_mg, potassium_mg,
+    vitamin_a_mcg, vitamin_b1_mg, vitamin_b2_mg, vitamin_b3_mg,
+    folic_acid_mcg, vitamin_c_mg, vitamin_d_mcg, vitamin_e_mg
+) VALUES
+  ('우동',        350,  2.5, 1.2, 0.5, 800,  15, 1.2, 100, 200, 50, 0.1, 0.2, 1.5, 20, 3, 0.0, 0.5),
+  ('김치',         30,  1.0, 2.0, 0.8, 500,  40, 2.0,  50, 250, 30, 0.2, 0.1, 0.5, 25,20, 0.0, 0.2),
+  ('샐러드',       80,  3.0, 3.0, 0.7, 100,  25, 1.0,  60, 300, 60, 0.1, 0.1, 0.8, 30,25, 0.0, 1.0),
+  ('만두',        160,  1.2, 1.0, 0.6, 300,  10, 1.5,  80, 150, 20, 0.2, 0.2, 2.0, 10, 2, 0.0, 0.3),
+  ('야채튀김',    210,  1.5, 0.8, 1.0, 450,   5, 0.8,  70, 180, 15, 0.1, 0.1, 0.3,  8, 1, 0.0, 0.2),
+  ('볶음밥',      520,  4.0, 2.0, 1.2, 900,  20, 2.5, 120, 350, 40, 0.3, 0.2, 3.0, 15, 4, 0.0, 0.6),
+  ('채소볶음',    110,  2.0, 3.5, 0.9, 250,  30, 2.2,  90, 320, 35, 0.1, 0.1, 0.5, 18,15, 0.0, 0.8),
+  ('스테이크',    650,  0.5, 0.0, 2.0, 750,  10, 3.0, 110, 400, 10, 0.3, 0.4, 5.0,  5, 0, 0.1, 2.0),
+  ('현미밥',      330,  0.6, 2.0, 0.4,   5,  20, 1.0,  80, 270, 10, 0.1, 0.1, 1.0, 12, 1, 0.0, 0.4),
+  ('과일샐러드',  120, 12.0,1.5, 0.5,   5,  15, 0.5,  60, 230,  5, 0.1, 0.1, 0.6, 45,45, 0.0, 1.2);
+
+/* ====================================================================== */
+/* 5. COURSE_SCHEDULE – 날짜별 A/B 코스 정의                             */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `course_schedule`;
+CREATE TABLE `course_schedule` (
+    schedule_id   INT AUTO_INCREMENT PRIMARY KEY,
+    schedule_date DATE           NOT NULL,
+    course_type   CHAR(1)        NOT NULL,
+    course_name   VARCHAR(100)   NOT NULL,
+    UNIQUE(schedule_date, course_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `course_schedule` (schedule_date, course_type, course_name) VALUES
+  ('2025-05-10','A','A코스: 우동 & 볶음밥'),
+  ('2025-05-10','B','B코스: 만두 & 샐러드'),
+  ('2025-05-11','A','A코스: 샐러드 백반'),
+  ('2025-05-11','B','B코스: 스테이크 정식');
+
+/* ====================================================================== */
+/* 6. SCHEDULE_DISH – 코스별 세부 메뉴 매핑                               */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `schedule_dish`;
+CREATE TABLE `schedule_dish` (
+    schedule_id   INT            NOT NULL,
+    dish_id       INT            NOT NULL,
+    serving_order INT            NOT NULL DEFAULT 1,
+    note          VARCHAR(255)   DEFAULT NULL,
+    created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP 
+                                      ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (schedule_id, dish_id),
+    FOREIGN KEY (schedule_id) REFERENCES `course_schedule`(schedule_id) ON DELETE CASCADE,
+    FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
+  -- 2025-05-10 A (id=1)
+  (1,1,1,'메인: 우동'),
+  (1,6,2,'사이드: 볶음밥'),
+  (1,2,3,'반찬: 김치'),
+  (1,7,4,'반찬: 채소볶음'),
+  (1,5,5,'반찬: 야채튀김'),
+  -- 2025-05-10 B (id=2)
+  (2,4,1,'메인: 만두'),
+  (2,3,2,'사이드: 샐러드'),
+  (2,8,3,'사이드: 스테이크'),
+  (2,2,4,'반찬: 김치'),
+  (2,1,5,'토핑: 우동');
+
+/* ====================================================================== */
+/* 7. DISH_RECORD – 사용자 섭취 기록                                     */
+/* ====================================================================== */
+DROP TABLE IF EXISTS `dish_record`;
+CREATE TABLE `dish_record` (
+    record_id   INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT           NOT NULL,
+    schedule_id INT           NOT NULL,
+    dish_id     INT           NOT NULL,
+    recorded_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, schedule_id, dish_id),
+    FOREIGN KEY (user_id)     REFERENCES `user`(user_id)          ON DELETE CASCADE,
+    FOREIGN KEY (schedule_id) REFERENCES `course_schedule`(schedule_id) ON DELETE CASCADE,
+    FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
+  (1,1,1),(1,1,6),(2,2,4),(2,2,3);
+
+/* ====================================================================== */
+/* 8. TODAY=2025-05-12용 추가 더미 & A코스 선택 기록(user_id=4)            */
+/* ====================================================================== */
+SET @today := '2025-05-12';
+SET @user_id := 4;
+
+INSERT INTO `course_schedule` (schedule_date, course_type, course_name)
+VALUES
+  (@today,'A','A코스: 우동 & 김치 & 샐러드'),
+  (@today,'B','B코스: 만두 & 야채튀김');
+
+SELECT @schedA := schedule_id
+  FROM `course_schedule`
+ WHERE schedule_date = @today AND course_type = 'A' LIMIT 1;
+
+INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
+  (@schedA,1,1,'메인: 우동'),
+  (@schedA,2,2,'반찬: 김치'),
+  (@schedA,3,3,'사이드: 샐러드');
+
+-- user_id=4가 today A코스에서 dish_id 1,3을 체크
+INSERT IGNORE INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
+  (@user_id,@schedA,1),
+  (@user_id,@schedA,3);
+
+/* ====================================================================== */
+/* 9. 확인 쿼리                                                         */
+/* ====================================================================== */
+-- (1) 날짜별 선택 코스
+SELECT cs.schedule_date, cs.course_type
+  FROM `dish_record` dr
+  JOIN `course_schedule` cs USING(schedule_id)
+ WHERE dr.user_id = @user_id
+ GROUP BY cs.schedule_date, cs.course_type
+ ORDER BY cs.schedule_date, cs.course_type;
+
+-- (2) 오늘 섭취 음식
+SELECT d.dish_id, d.dish_name, d.calorie_kcal, d.sugar_g, d.fiber_g
+  FROM `dish_record` dr
+  JOIN `course_schedule` cs USING(schedule_id)
+  JOIN `dish` d          USING(dish_id)
+ WHERE dr.user_id = @user_id
+   AND cs.schedule_date = @today
+ ORDER BY d.dish_id;
+
+-- (3) 오늘 총 영양소
+SELECT
+  SUM(d.calorie_kcal) AS total_calories,
+  SUM(d.sugar_g)      AS total_sugar,
+  SUM(d.fiber_g)      AS total_fiber,
+  SUM(d.ash_g)        AS total_ash,
+  SUM(d.sodium_mg)    AS total_sodium,
+  SUM(d.calcium_mg)   AS total_calcium,
+  SUM(d.iron_mg)      AS total_iron,
+  SUM(d.vitamin_c_mg) AS total_vitamin_c
+FROM `dish_record` dr
+JOIN `course_schedule` cs USING(schedule_id)
+JOIN `dish` d          USING(dish_id)
+WHERE dr.user_id = @user_id
+  AND cs.schedule_date = @today;
+
+-- (4) 오늘 A/B 코스별 메뉴 & 칼로리
+SELECT cs.course_type, d.dish_id, d.dish_name, d.calorie_kcal
+  FROM `course_schedule` cs
+  JOIN `schedule_dish`   sd USING(schedule_id)
+  JOIN `dish`            d  USING(dish_id)
+ WHERE cs.schedule_date = @today
+ ORDER BY cs.course_type, sd.serving_order;
+
