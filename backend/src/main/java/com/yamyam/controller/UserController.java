@@ -7,8 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,8 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
-import com.yamyam.dto.response.LoginResponse;
 import com.yamyam.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,11 +36,35 @@ public class UserController {
 		this.userService = userService;
 	}
 
-	//회원가입
+	//내 정보 상세조회
+	@GetMapping("")
+	public ResponseEntity<?> detail(@AuthenticationPrincipal SecurityAccount principal) {
+		if(principal == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		
+		return ResponseEntity.ok(userService.checkUserDetail(principal));
+	}
+	
+	// 회원가입
 	@PostMapping("")
 	public ResponseEntity<String> singup(@RequestBody SignUpRequest dto) {
 		userService.signUp(dto);
 		return ResponseEntity.ok("회원가입 성공");
+	}
+	
+	// 회원 정보 수정
+	@PutMapping("")
+	public ResponseEntity<String> update(@RequestBody UpdateRequest updateRequest){
+		userService.updateUserInfo(updateRequest);
+		return ResponseEntity.ok("개인정보 수정 성공");
+	}
+	
+	//회원 탈퇴
+	@DeleteMapping("")
+	public ResponseEntity<String> delete(HttpSession session, @RequestParam("userId") int userId){
+		userService.deleteUser(session,userId);
+		return ResponseEntity.ok("회원탈퇴 성공");
 	}
 	
 	//이메일 중복 검사
@@ -63,25 +90,13 @@ public class UserController {
 	}
 	
 	@GetMapping("/me")
-	public ResponseEntity<?> getCurrentUser() {
-		LoginResponse loginResponse = userService.checkNowUser();
-		
-		if(loginResponse == null) {
+	// @AuthenticationPrincipal SecurityAccount principal 현재 로그인 정보를 불러오기 위한 것
+	public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal SecurityAccount principal) {
+		if(principal == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
-		return ResponseEntity.ok(loginResponse);
+		
+		return ResponseEntity.ok(userService.checkCurrentUser(principal));
 	
-	}
-
-	//수정 진행 해야함~
-	//회원 정보 수정 1. 회원정보 수정란에서 수정
-	@PutMapping("")
-	public ResponseEntity<?> update(@RequestBody UpdateRequest updateRequest){
-		System.out.println(updateRequest.toString());
-		LoginResponse loginResponse = userService.checkNowUser();
-		
-		userService.updateUserInfo(updateRequest, loginResponse.getUsername());
-		
-		return null;
 	}
 }

@@ -1,17 +1,18 @@
 <template>
-  <main>
+  <div v-if="!isLoggedIn">
     <!-- Hero Section -->
     <header class="hero">
       <div class="hero-overlay text-center">
         <div class="container">
           <h1 class="display-4 fw-bold">당신만을 위한 식단 코치</h1>
-          <p class="lead mt-3 mb-4">
-            재미있는 설문을 통해 나에게 꼭 맞는 식습관을 찾아보세요!
-          </p>
-          <router-link to="/login" class="btn btn-lg btn-success" v-if="username==''"
+          <p class="lead mt-3 mb-4">재미있는 설문을 통해 나에게 꼭 맞는 식습관을 찾아보세요!</p>
+          <router-link to="/login" class="btn btn-lg btn-success" v-if="username == ''"
             >로그인 하기{{ username }}</router-link
           >
-          <router-link to="/survey" class="btn btn-lg btn-success" v-if="username!='' && !isSurveyed"
+          <router-link
+            to="/survey"
+            class="btn btn-lg btn-success"
+            v-if="username != '' && !isSurveyed"
             >지금 설문하기</router-link
           >
         </div>
@@ -41,40 +42,72 @@
         </div>
       </div>
     </section>
-  </main>
+  </div>
+
+  <div v-else>
+    <div class="d-flex pt-3 position-relative">
+      <!-- ─── 사이드바 ───────────────────────────────────────────────────────────── -->
+
+      <!-- ─── 메인 컨텐츠 ───────────────────────────────────────────────────────── -->
+      <main class="flex-grow-1 overflow-auto p-4">
+        <!-- 인사+날짜/시간 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="mb-0">
+            안녕하세요, <strong>{{ username }}</strong
+            >님
+          </h2>
+        </div>
+        <hr />
+
+        <!-- 차트 + 사이드 정보 -->
+        <div class="row gx-4 mb-4">
+          <MainChart ref="MainChart" />
+
+          <!-- 사이드 정보 카드들 -->
+          <div class="col-lg-4">
+            <div class="row gy-4">
+              <Calendar ref="Calendar" />
+              <Information ref="Information" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 오늘의 칼럼 & 오늘의 식단 -->
+        <div class="row gx-4">
+          <TodayColumn ref="TodayColumn" />
+          <TodayDiet ref="TodayDiet" />
+        </div>
+      </main>
+    </div>
+  </div>
 </template>
 
-<script>
-// @ is an alias to /src
+<script setup>
+import MainChart from '@/components/mainpage/MainChart.vue'
+import Calendar from '@/components/mainpage/Calendar.vue'
+import Information from '@/components/mainpage/Information.vue'
+import TodayColumn from '@/components/mainpage/TodayColumn.vue'
+import TodayDiet from '@/components/mainpage/TodayDiet.vue'
 
-export default {
-  name: 'HomeView',
-  data(){
-    return {
-      username: this.$store.state.account.username,
-      isSurveyed: this.$store.state.account.isSurveyed
-    }
-  },
-  created(){
-    this.username = this.$store.state.account.username;
-    if(this.$store.state.account.isSurveyed == undefined || this.$store.state.account.isSurveyed == false){
-      this.isSurveyed = false;
-    }
-    else{
-      this.isSurveyed = this.$store.state.account.isSurveyed ;
-    }
-    
-    console.log(this.$store.state.account,this.username,this.isSurveyed)
-  },
-  methods:{},
-};
+import { computed } from 'vue'
+import { userAccountStore } from '@/store/account'
+
+// pinia store을 사용하겠다
+const accountStore = userAccountStore()
+
+const username = computed(() => accountStore.username)
+const isSurveyed = computed(() => accountStore.isSurveyed)
+const isLoggedIn = computed(() => !!username.value)
+
+console.log('isLoggedIn:', isLoggedIn.value)
+console.log('username:', username.value)
 </script>
 
 <!-- scoped는 이 페이지에서만 css를 설정할때 씀 -->
 <style scoped>
 .hero {
-  background: url('https://images.unsplash.com/photo-1551218808-94e220e084d2')
-    no-repeat center center;
+  background: url('https://images.unsplash.com/photo-1551218808-94e220e084d2') no-repeat center
+    center;
   background-size: cover;
   color: white;
   height: 100vh;

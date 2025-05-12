@@ -1,14 +1,14 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top border-bottom border-3">
     <div class="container">
       <!-- 브랜드 + 주요 네비게이션 -->
-      <router-link class="navbar-brand fw-bold me-4" to="/">냠냠코치</router-link>
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <RouterLink class="navbar-brand fw-bold me-4" to="/">냠냠코치</RouterLink>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-bold">
         <li class="nav-item">
-          <router-link class="nav-link" to="/">홈</router-link>
+          <RouterLink class="nav-link text-decoration-none" to="/">홈</RouterLink>
         </li>
         <li class="nav-item">
-          <router-link class="nav-link" to="/features">기능 소개</router-link>
+          <RouterLink class="nav-link text-decoration-none" to="/features">기능 소개</RouterLink>
         </li>
       </ul>
 
@@ -22,37 +22,60 @@
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- 우측 액션 아이콘 & 로그인 -->
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <!-- 우측 액션 아이콘 & 로그인/프로필 -->
+      <div class="collapse navbar-collapse justify-content-end fw-bold" id="navbarNav">
         <ul class="navbar-nav align-items-center">
           <!-- 검색 아이콘 -->
-          <li class="nav-item">
-            <a class="nav-link" href="#">
+          <li class="nav-item me-3">
+            <a class="nav-link" href="/">
               <i class="bi bi-search fs-5"></i>
             </a>
           </li>
           <!-- 다크 모드 토글 -->
-          <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="toggleDarkMode">
-              <i class="bi bi-moon fs-5"></i>
+          <li class="nav-item me-3">
+            <a class="nav-link" href="/" @click.prevent="toggleDarkMode">
+              <i :class="darkMode ? 'bi bi-sun' : 'bi bi-moon'" class="fs-5"></i>
             </a>
           </li>
-          <!-- 로그인 / 로그아웃 -->
-          <li class="nav-item ms-3">
-            <router-link
-              v-if="$store.state.account.username === ''"
-              class="nav-link btn btn-primary text-white px-3"
-              to="/login"
-            >
-              로그인
-            </router-link>
+
+          <!-- 로그인 전 -->
+          <li v-if="!isLoggedIn" class="nav-item">
+            <RouterLink class="btn btn-success text-white px-3" to="/login"> 로그인 </RouterLink>
+          </li>
+
+          <!-- 로그인 후: 프로필 드롭다운 -->
+          <li v-else class="nav-item dropdown">
             <a
-              v-else
-              class="nav-link btn btn-primary text-white px-3"
-              @click="logout"
+              class="nav-link dropdown-toggle d-flex align-items-center"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
             >
-              로그아웃
+              <img
+                src="/default-avatar.png"
+                alt="avatar"
+                class="rounded-circle"
+                width="32"
+                height="32"
+              />
+              <span class="mx-2">{{ user.username }}</span>
             </a>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <RouterLink class="dropdown-item" to="/my">마이페이지</RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item" to="/support">고객지원</RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item" to="/my/info">내 정보 수정</RouterLink>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <button class="dropdown-item" @click="logout">로그아웃</button>
+              </li>
+            </ul>
           </li>
         </ul>
       </div>
@@ -60,36 +83,40 @@
   </nav>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from '@/plugins/axios'
-import store from '@/store'
+import { userAccountStore } from '@/store/account'
 
-export default {
-  name: 'HeaderComponent',
-  methods: {
-    logout() {
-      axios
-        .post('/api/auth/logout')
-        .then((res) => {
-          this.$store.commit('clearAccount')
-          alert('로그아웃이 완료되었습니다.')
-          this.$router.push({ name: 'HomeView' })
-        })
-        .catch((err) => {
-          console.log(err)
-          alert('로그아웃에 실패하였습니다.')
-        })
-    },
-    toggleDarkMode() {
-      document.body.classList.toggle('dark-mode')
-    }
+const router = useRouter()
+const accountStore = userAccountStore()
+
+const user = computed(() => accountStore)
+const isLoggedIn = computed(() => !!user.value.username)
+const darkMode = computed(() => document.body.classList.contains('dark-mode'))
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode')
+}
+
+async function logout() {
+  try {
+    await axios.post('/api/auth/logout')
+    accountStore.clearAccount()
+    router.push({ name: 'HomeView' })
+  } catch (e) {
+    alert('로그아웃에 실패했습니다.')
   }
 }
 </script>
 
 <style scoped>
-/* nav-link 로고 옆 간격 맞춤 */
 .navbar-brand {
   margin-right: 1rem;
+}
+.dropdown-header {
+  padding: 0.5rem 1rem;
+  white-space: normal;
 }
 </style>

@@ -1,15 +1,52 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-// 라우터 기능을 사용하기 위한 임포트
-import router from './router';
-// 스토어 기능을 사용하기 위한 임포트
-import store from './store';
+import { createApp } from 'vue'
+import App from './App.vue'
 
-//@/ 는 src부터 찾겠다라는 뜻
+// 라우터
+import router from './router'
 
-// bootstrap을 쓰기위한 import
-import 'bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+// Pinia
+import { createPinia } from 'pinia'
+import { userAccountStore } from '@/store/account' // ✅ store 직접 사용
+
+// axios
+import axios from '@/plugins/axios'
+
+// Bootstrap
+import 'bootstrap'
+import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 
-createApp(App).use(store).use(router).mount('#app');
+async function bootstrap() {
+  const pinia = createPinia()
+  const app = createApp(App)
+
+  app.use(pinia)
+
+  // Pinia 스토어 인스턴스 생성 (useXXX는 앱 등록 후에 호출)
+  const accountStore = userAccountStore()
+
+  try {
+    const res = await axios.get('/api/users/me')
+    console.log(res.data)
+
+    if (res.data === 'anonymousUser') {
+      accountStore.setAccount({
+        userId: null,
+        username: '',
+        isSurveyed: false,
+      })
+    } else {
+      accountStore.setAccount({
+        userId: res.data.userId,
+        username: res.data.username,
+        isSurveyed: res.data.surveyed,
+      })
+    }
+  } catch (e) {
+    console.error('유저 정보 로딩 실패:', e)
+  }
+
+  app.use(router).mount('#app')
+}
+
+bootstrap()

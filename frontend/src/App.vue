@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="d-flex flex-column min-vh-100">
     <HeaderComponent />
-    <main class="flex-grow-1 pt-5">
+    <main class="container bg-light flex-grow-1 pt-5">
       <router-view />
     </main>
     <FooterComponent />
@@ -9,30 +9,9 @@
 </template>
 
 <script setup>
-import HeaderComponent from '@/components/HeaderComponent.vue';
-import FooterComponent from '@/components/FooterComponent.vue';
+import HeaderComponent from '@/components/HeaderComponent.vue'
+import FooterComponent from '@/components/FooterComponent.vue'
 </script>
-
-<script>
-  import axios from '@/plugins/axios';
-  import store from '@/store'
-
-  export default {
-    created(){
-      axios.get('/api/users/me') 
-        .then((res) => {
-          if(res.data =='anonymousUser'){
-            store.commit('setAccount',{userId:null, username: '', isSurveyed:false})
-          }
-          else{
-            store.commit('setAccount',{userId : res.data.userId , username : res.data.username, isSurveyed : res.data.surveyed})
-          }
-        });
-    },
-};
-
-</script>
-
 
 <style>
 #app {
@@ -53,13 +32,20 @@ nav a {
 }
 
 nav a.router-link-exact-active {
-  color: #42b983;
+  color: #42b983 !important;
 }
 
-/* 다크 모드용 예시 */
-.dark-mode {
+/* dark-mode 전역 스타일 */
+/* body.dark-mode {
   background-color: #121212;
   color: #eee;
 }
-
+body.dark-mode .navbar {
+  background-color: #1f1f1f !important;
+}
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  color: #ddd;
+} */
+/* 원하는 다른 컴포넌트 스타일도 추가 */
 </style>

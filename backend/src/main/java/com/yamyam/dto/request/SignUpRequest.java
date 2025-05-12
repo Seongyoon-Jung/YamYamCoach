@@ -8,14 +8,16 @@ public class SignUpRequest {
     private String username;
     private boolean gender;
     private LocalDate birthDate;
-    private int height;
-    private int weight;
+    // null 값이 들어갈 수도 있으므로 참조형으로 선언
+    private Integer height;
+    private Integer weight;
+    private Integer targetWeight;
 
     public SignUpRequest() {
 	}
 
 	public SignUpRequest(String email, String password, String username, boolean gender, LocalDate birthDate,
-			int height, int weight) {
+			Integer height, Integer weight, Integer targetWeight) {
 		this.email = email;
 		this.password = password;
 		this.username = username;
@@ -23,6 +25,7 @@ public class SignUpRequest {
 		this.birthDate = birthDate;
 		this.height = height;
 		this.weight = weight;
+		this.targetWeight = targetWeight;
 	}
 
 	public String getEmail() {
@@ -65,26 +68,28 @@ public class SignUpRequest {
 		this.birthDate = birthDate;
 	}
 
-	public int getHeight() {
+	public Integer getHeight() {
 		return height;
 	}
 
-	public void setHeight(int height) {
+	public void setHeight(Integer height) {
 		this.height = height;
 	}
 
-	public int getWeight() {
+	public Integer getWeight() {
 		return weight;
 	}
 
-	public void setWeight(int weight) {
+	public void setWeight(Integer weight) {
 		this.weight = weight;
 	}
 
-	@Override
-	public String toString() {
-		return "UserSignUpDto [email=" + email + ", password=" + password + ", username=" + username + ", gender="
-				+ gender + ", birthDate=" + birthDate + ", height=" + height + ", weight=" + weight + "]";
+	public Integer getTargetWeight() {
+		return targetWeight;
 	}
+
+	public void setTargetWeight(Integer targetWeight) {
+		this.targetWeight = targetWeight;
+	}	
 	
 }

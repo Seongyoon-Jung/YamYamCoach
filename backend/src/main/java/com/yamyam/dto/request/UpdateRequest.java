@@ -3,26 +3,42 @@ package com.yamyam.dto.request;
 import java.time.LocalDate;
 
 public class UpdateRequest {
+	private int userId;
+	private String username;
 	private boolean gender;
     private LocalDate birthDate;
     private int height;
     private int weight;
     private int targetWeight;
-    private boolean isSurveyed;
-    private String dietType;
     
     public UpdateRequest() {
 	}
 
-	public UpdateRequest(boolean gender, LocalDate birthDate, int height, int weight, int targetWeight,
-			boolean isSurveyed, String dietType) {
+	public UpdateRequest(int userId, String username, boolean gender, LocalDate birthDate, int height, int weight,
+			int targetWeight) {
+		this.userId = userId;
+		this.username = username;
 		this.gender = gender;
 		this.birthDate = birthDate;
 		this.height = height;
 		this.weight = weight;
 		this.targetWeight = targetWeight;
-		this.isSurveyed = isSurveyed;
-		this.dietType = dietType;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 	public boolean isGender() {
@@ -65,27 +81,12 @@ public class UpdateRequest {
 		this.targetWeight = targetWeight;
 	}
 
-	public boolean isSurveyed() {
-		return isSurveyed;
-	}
-
-	public void setSurveyed(boolean isSurveyed) {
-		this.isSurveyed = isSurveyed;
-	}
-
-	public String getDietType() {
-		return dietType;
-	}
-
-	public void setDietType(String dietType) {
-		this.dietType = dietType;
-	}
-
 	@Override
 	public String toString() {
-		return "UpdateRequest [gender=" + gender + ", birthDate=" + birthDate + ", height=" + height + ", weight="
-				+ weight + ", targetWeight=" + targetWeight + ", isSurveyed=" + isSurveyed + ", dietType=" + dietType
-				+ "]";
+		return "UpdateRequest [userId=" + userId + ", username=" + username + ", gender=" + gender + ", birthDate="
+				+ birthDate + ", height=" + height + ", weight=" + weight + ", targetWeight=" + targetWeight + "]";
 	}
+
+	
 	
 }

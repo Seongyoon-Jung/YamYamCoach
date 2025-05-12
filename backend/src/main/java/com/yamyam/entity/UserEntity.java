@@ -65,17 +65,19 @@ public class UserEntity {
     
     // 기본 생성자 (필수적으로 필요)
     public UserEntity() {}
-
-    public UserEntity(String email, String password, String username,
-            boolean gender, LocalDate birthDate) {
+    
+    public UserEntity(String email, String password, String username, boolean gender, LocalDate birthDate,
+			Integer height, Integer weight, Integer targetWeight) {
 		this.email = email;
 		this.password = password;
 		this.username = username;
 		this.gender = gender;
 		this.birthDate = birthDate;
+		this.height = height;
+		this.weight = weight;
+		this.targetWeight = targetWeight;
 		this.role = "ROLE_USER";
 	}
-    
 	public int getUserId() {
 		return userId;
 	}
@@ -179,10 +181,22 @@ public class UserEntity {
             encodedPassword,
             dto.getUsername(),
             dto.isGender(),
-            dto.getBirthDate()
+            dto.getBirthDate(),
+            dto.getHeight(),
+            dto.getWeight(),
+            dto.getTargetWeight()
         );
     }
-
+    
+    //회원 정보 수정 setter
+    public void updateForm(UpdateRequest dto) {
+    	this.username = dto.getUsername();
+    	this.gender = dto.isGender();
+    	this.birthDate = dto.getBirthDate();
+    	this.height = dto.getHeight();
+    	this.weight = dto.getWeight();
+    	this.targetWeight = dto.getTargetWeight();
+    }
     
 	@Override
 	public String toString() {

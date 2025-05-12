@@ -13,6 +13,9 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "survey")
 public class SurveyEntity {
@@ -24,12 +27,13 @@ public class SurveyEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE) // on delete cascade 속성 지정
     private UserEntity user;
 
     @Column(name = "step_level", nullable = false)
     private Integer stepLevel;
 
-    @Column(name = "survey_date", nullable = false, columnDefinition = "DATE DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "survey_date", nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime surveyDate;
 
     @Column(name = "answer_values", nullable = false, length = 100)

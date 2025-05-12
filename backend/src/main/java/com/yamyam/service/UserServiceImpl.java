@@ -9,13 +9,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.yamyam.dto.response.CurrentUserResponse;
+import com.yamyam.dto.response.UserDetailResponse;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.dto.request.SignUpRequest;
 import com.yamyam.dto.request.UpdateRequest;
-import com.yamyam.dto.response.LoginResponse;
-import com.yamyam.dto.response.SignUpResponseDto;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -33,8 +35,6 @@ public class UserServiceImpl implements UserService{
 		
 		UserEntity data = UserEntity.signUpForm(userSignUpRequestDto, bCryptPasswordEncoder.encode(userSignUpRequestDto.getPassword()));
 		
-		System.out.println(data);
-		
 		userRepository.save(data);
 		
 		return true;
@@ -51,36 +51,42 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public LoginResponse checkNowUser() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		
-	    if (auth == null || !auth.isAuthenticated()) {
-	        return null;
-	    }
+	public UserDetailResponse checkUserDetail(SecurityAccount principal) {
+	    String email = principal.getEmail();
 	    
-	    Object principal = auth.getPrincipal();
-	    //로그인 정보에 isSurveyed 를 담기위해서 새로 정의
-	    
-        SecurityAccount account = (SecurityAccount) principal;
-        boolean isSurveyed = account.isSurveyed();
-        LoginResponse loginResponse = new LoginResponse(account.getUserId(), account.getUsername(),account.isSurveyed());
-        
-        return loginResponse;
+	    UserEntity userEntity = userRepository.findByEmail(email);
+        return UserDetailResponse.currentUser(userEntity);
 	    
 	}
 
 	@Override
-	public boolean updateUserInfo(UpdateRequest updateRequest, String username) {
-		UserEntity userEntity = userRepository.findByUsername(username);
-//		private boolean gender;
-//	    private LocalDate birthDate;
-//	    private int height;
-//	    private int weight;
-//	    private int targetWeight;
-//	    private boolean isSurveyed;
-//	    private String dietType;
+	public boolean updateUserInfo(UpdateRequest updateRequest) {
+		UserEntity data = userRepository.findByUserId(updateRequest.getUserId());
+		data.updateForm(updateRequest);
+		userRepository.save(data);
 		
-		return false;
+		
+		return true;
+	}
+
+	@Override
+	public CurrentUserResponse checkCurrentUser(SecurityAccount principal) {
+		String email = principal.getEmail();
+	    
+	    UserEntity userEntity = userRepository.findByEmail(email);
+
+	    CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
+	    
+        return currentUserResponse;
+	}
+
+	@Override
+	public boolean deleteUser(HttpSession session, int userId) {
+		session.invalidate();
+		
+		userRepository.deleteById(userId);
+		
+		return true;
 	}
 
 }

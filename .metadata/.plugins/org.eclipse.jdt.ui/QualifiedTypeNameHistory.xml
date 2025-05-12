@@ -22,4 +22,5 @@
     <fullyQualifiedTypeName name="com.yamyam.repository.UserRepository"/>
     <fullyQualifiedTypeName name="com.yamyam.entity.SurveyEntity"/>
     <fullyQualifiedTypeName name="org.springframework.http.ResponseEntity"/>
+    <fullyQualifiedTypeName name="com.yamyam.dto.CurrentUser"/>
 </qualifiedTypeNameHistroy>

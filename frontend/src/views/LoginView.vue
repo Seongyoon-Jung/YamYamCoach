@@ -1,14 +1,12 @@
 <template>
   <div class="d-flex align-items-center justify-content-center min-vh-100">
-    <div
-      class="card p-5 shadow-lg"
-      style="max-width: 450px; width: 100%; border-radius: 1rem"
-    >
-      <h3 class="text-center fw-bold mb-4 text-dark">로그인</h3>
+    <div class="card p-5 shadow-lg" style="max-width: 450px; width: 100%; border-radius: 1rem">
+      <h3 class="text-center fw-bold text-dark">로그인</h3>
       <hr />
 
       <form>
         <div class="row g-3">
+          <span class="text-danger" v-show="click" v-text="warning"></span>
           <!-- 이메일 -->
           <div class="col-md-12">
             <div class="row align-items-center">
@@ -19,7 +17,8 @@
                   id="email"
                   class="form-control"
                   placeholder="example@domain.com"
-                  name="email" v-model="result.email"
+                  name="email"
+                  v-model="result.email"
                 />
               </div>
             </div>
@@ -35,7 +34,8 @@
                   id="password"
                   class="form-control"
                   placeholder="비밀번호를 입력하세요"
-                  name="password" v-model="result.password"
+                  name="password"
+                  v-model="result.password"
                 />
               </div>
             </div>
@@ -72,54 +72,48 @@ input::placeholder {
 }
 </style>
 
-<script>
-import axios from '@/plugins/axios';
-import store from '@/store'
+<script setup>
+import { ref } from 'vue'
+import axios from '@/plugins/axios'
+import { userAccountStore } from '@/store/account'
+import { useRouter } from 'vue-router'
 
-export default {
-  name: 'SignupView', // name은 index.js에 선언해놓은 이름과 똑같아야함
-  data() {
-    return {
-      result: {
-        email: '',
-        password: '',
-      },
-    };
-  },
-  created() {},
-  methods: {
-    login() {
-      if (this.result.email == '') {
-        alert('이메일 입력필요');
-        return;
-      }
+const router = useRouter()
+const accountStore = userAccountStore()
 
-      if (this.result.password == '') {
-        alert('비밀번호 입력필요');
-        return;
-      }
+const result = ref({
+  email: '',
+  password: '',
+})
 
-      //  is머시기 boolean 타입으로 넘어오면 json이 강제로 surveyed로 바꿔버린다
-      axios
-        .post('/api/auth/login', this.result)
-        .then((res) => {
-          store.commit('setAccount',{userId: res.data.userId, username : res.data.username, isSurveyed : res.data.surveyed})
+const click = ref(false)
+const warning = ref('')
 
-          alert("로그인이 완료되었습니다.")
+const login = async () => {
+  click.value = true
 
-          // 설문조사를 완료했으면 홈으로
-          if(res.data.surveyed){
-            this.$router.push({name:'HomeView'})
-          }
-          //설문조사안했으면 설문조사 페이지로
-          else{
-            this.$router.push({name:'SurveyView'})
-          }
-          
-        })
-        .catch((err) => {
-        });
-    },
-  },
-};
+  if (!result.value.email) {
+    warning.value = '이메일을 입력해주세요'
+    return
+  }
+
+  if (!result.value.password) {
+    warning.value = '비밀번호를 입력해주세요'
+    return
+  }
+
+  try {
+    const res = await axios.post('/api/auth/login', result.value)
+
+    accountStore.setAccount({
+      userId: res.data.userId,
+      username: res.data.username,
+      isSurveyed: res.data.surveyed,
+    })
+
+    router.push({ name: 'HomeView' })
+  } catch (e) {
+    warning.value = '이메일 또는 비밀번호가 일치하지 않습니다'
+  }
+}
 </script>
