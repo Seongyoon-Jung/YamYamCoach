@@ -21,6 +21,12 @@ const routes = [
     meta: { title: '내 정보 | 마이페이지', requiresAuth: true },
   },
   {
+    path: '/community',
+    name: 'CommunityView',
+    component: () => import('../views/CommunityView.vue'),
+    meta: { title: '커뮤니티' },
+  },
+  {
     path: '/survey',
     name: 'SurveyView',
     component: () => import('../views/SurveyView.vue'),
@@ -43,6 +49,17 @@ const routes = [
     name: 'FeaturesView',
     component: () => import('../views/FeaturesView.vue'),
     meta: { title: '기능소개' },
+  },
+  {
+    path: '/error',
+    name: 'notFound',
+    component: () => import('../views/ErrorView.vue'),
+    meta: { title: '에러' },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/error',
+    meta: { title: '에러' },
   },
 ]
 
