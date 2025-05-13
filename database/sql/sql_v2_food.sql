@@ -252,11 +252,80 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
   (@schedB, 8, 3, '메인: 스테이크'),
   (@schedB, 9, 4, '사이드: 현미밥'),
   (@schedB, 10,5, '사이드: 과일샐러드');
-  
-  
+    
   select * from schedule_dish;
   
   
  select *
  from course_schedule s
- where schedule_date = date(now())
+ where schedule_date = date(now());
+
+/* ====================================================================== */
+/* 게시판 및 댓글 작성 테이블                                              */
+/* ====================================================================== */
+  
+DROP TABLE if exists board; 
+CREATE TABLE board (
+    board_id       INT PRIMARY KEY AUTO_INCREMENT,
+    user_id        INT NOT NULL,
+    title          VARCHAR(255) NOT NULL,
+    content        TEXT NOT NULL,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    view_count     INT DEFAULT 0,
+    like_count     INT DEFAULT 0,
+    image_url      VARCHAR(500),
+
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+);
+
+DROP TABLE if exists `comment`;
+CREATE TABLE `comment` (
+    comment_id     INT PRIMARY KEY AUTO_INCREMENT,
+    board_id       INT NOT NULL,
+    user_id        INT NOT NULL,
+    content        TEXT NOT NULL,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (board_id) REFERENCES board(board_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES `user`(user_id) ON DELETE CASCADE
+);
+
+INSERT INTO board (
+    user_id, title, content, created_at, updated_at, view_count, like_count, image_url
+) VALUES
+(
+    1,
+    '첫 번째 게시글 제목',
+    '안녕하세요! 이것은 첫 번째 게시글 내용입니다.',
+    NOW(), NOW(),
+    10,
+    1,
+    'https://example.com/image1.jpg'
+),
+(
+    1,
+    '두 번째 게시글 제목',
+    '이것은 두 번째 게시글 내용이며, 이미지가 없습니다.',
+    NOW(), NOW(),
+    0,
+    0,
+    'https://example.com/image2.jpg'
+);
+
+INSERT INTO comment (
+    board_id, user_id, content, created_at, updated_at
+) VALUES
+(
+    1,
+    1,
+    '첫 번째 게시글에 대한 첫 번째 댓글입니다.',
+    NOW(), NOW()
+),
+(
+    2,
+    1,
+    '두 번째 게시글에 달린 첫번째 댓글이에요!',
+    NOW(), NOW()
+);
