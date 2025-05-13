@@ -1,7 +1,7 @@
 <template>
   <div class="community-page container py-5">
     <!-- 제목 -->
-    <h2 class="text-center mb-4">집밥일기</h2>
+    <h2 class="text-center mb-4">커뮤니티</h2>
 
     <!-- 검색 바 -->
     <div class="d-flex justify-content-center mb-3">
@@ -30,7 +30,7 @@
     >
       <div>
         <input type="checkbox" id="onlyMine" class="form-check-input me-2" />
-        <label for="onlyMine" class="form-check-label">내 집밥일기만 보기</label>
+        <label for="onlyMine" class="form-check-label">내 게시글만 보기</label>
       </div>
       <button class="btn btn-link text-decoration-none">
         <i class="bi bi-sorta-down-alt me-1"></i>인기순
