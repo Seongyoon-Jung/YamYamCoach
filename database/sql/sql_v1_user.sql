@@ -13,7 +13,7 @@ DROP TABLE if exists user;
 CREATE TABLE user (
     user_id        INT PRIMARY KEY AUTO_INCREMENT,
     email       VARCHAR(50)  NOT NULL UNIQUE,
-    password  VARCHAR(50)  NOT NULL,
+    password  VARCHAR(60)  NOT NULL,
     username      VARCHAR(50)  NOT NULL UNIQUE,
     gender         TINYINT      NOT NULL,      -- 0: male, 1: female
     birth_date     DATE         NOT NULL,
