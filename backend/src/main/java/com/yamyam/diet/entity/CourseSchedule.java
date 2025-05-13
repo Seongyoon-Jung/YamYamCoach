@@ -9,7 +9,7 @@ import java.util.List;
 public class CourseSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long scheduleId;
+    private int scheduleId;
 
     @Column(nullable = false)
     private LocalDate scheduleDate;
@@ -24,7 +24,7 @@ public class CourseSchedule {
     private List<ScheduleDish> scheduleDishes;
 
     // Getters
-    public Long getScheduleId() {
+    public int getScheduleId() {
         return scheduleId;
     }
 
@@ -45,7 +45,7 @@ public class CourseSchedule {
     }
 
     // Setters
-    public void setScheduleId(Long scheduleId) {
+    public void setScheduleId(int scheduleId) {
         this.scheduleId = scheduleId;
     }
 

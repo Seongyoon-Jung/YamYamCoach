@@ -7,36 +7,80 @@ import jakarta.persistence.*;
 public class Dish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long dishId;
+    @Column(name = "dish_id")
+    private Integer dishId;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "dish_name", nullable = false, length = 100)
     private String dishName;
 
+    @Column(name = "calorie_kcal")
     private Double calorieKcal;
+
+    @Column(name = "carbohydrate_g")
     private Double carbohydrateG;
+
+    @Column(name = "sugar_g")
     private Double sugarG;
+
+    @Column(name = "fiber_g")
     private Double fiberG;
+
+    @Column(name = "protein_g")
     private Double proteinG;
+
+    @Column(name = "fat_g")
     private Double fatG;
+
+    @Column(name = "saturated_fat_g")
     private Double saturatedFatG;
+
+    @Column(name = "trans_fat_g")
     private Double transFatG;
+
+    @Column(name = "ash_g")
     private Double ashG;
+
+    @Column(name = "sodium_mg")
     private Double sodiumMg;
+
+    @Column(name = "calcium_mg")
     private Double calciumMg;
+
+    @Column(name = "iron_mg")
     private Double ironMg;
+
+    @Column(name = "phosphorus_mg")
     private Double phosphorusMg;
+
+    @Column(name = "potassium_mg")
     private Double potassiumMg;
+
+    @Column(name = "vitamin_a_mcg")
     private Double vitaminAMcg;
+
+    @Column(name = "vitamin_b1_mg")
     private Double vitaminB1Mg;
+
+    @Column(name = "vitamin_b2_mg")
     private Double vitaminB2Mg;
+
+    @Column(name = "vitamin_b3_mg")
     private Double vitaminB3Mg;
+
+    @Column(name = "folic_acid_mcg")
     private Double folicAcidMcg;
+
+    @Column(name = "vitamin_c_mg")
     private Double vitaminCMg;
+
+    @Column(name = "vitamin_d_mcg")
     private Double vitaminDMcg;
+
+    @Column(name = "vitamin_e_mg")
     private Double vitaminEMg;
 
     // Getters
-    public Long getDishId() {
+    public int getDishId() {
         return dishId;
     }
 
@@ -133,7 +177,7 @@ public class Dish {
     }
 
     // Setters
-    public void setDishId(Long dishId) {
+    public void setDishId(int dishId) {
         this.dishId = dishId;
     }
 

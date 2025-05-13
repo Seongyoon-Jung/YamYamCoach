@@ -8,6 +8,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, Long> {
+public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, Integer> {
     List<CourseSchedule> findByScheduleDate(LocalDate date);
 } 

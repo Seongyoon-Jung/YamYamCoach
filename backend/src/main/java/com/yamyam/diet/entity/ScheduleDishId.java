@@ -5,32 +5,32 @@ import java.io.Serializable;
 
 @Embeddable
 public class ScheduleDishId implements Serializable {
-    private Long scheduleId;
-    private Long dishId;
+    private Integer scheduleId;
+    private Integer dishId;
 
     public ScheduleDishId() {
     }
 
-    public ScheduleDishId(Long scheduleId, Long dishId) {
+    public ScheduleDishId(Integer scheduleId, Integer dishId) {
         this.scheduleId = scheduleId;
         this.dishId = dishId;
     }
 
     // Getters
-    public Long getScheduleId() {
+    public Integer getScheduleId() {
         return scheduleId;
     }
 
-    public Long getDishId() {
+    public Integer getDishId() {
         return dishId;
     }
 
     // Setters
-    public void setScheduleId(Long scheduleId) {
+    public void setScheduleId(Integer scheduleId) {
         this.scheduleId = scheduleId;
     }
 
-    public void setDishId(Long dishId) {
+    public void setDishId(Integer dishId) {
         this.dishId = dishId;
     }
 
