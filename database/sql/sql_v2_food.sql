@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
     user_id        INT PRIMARY KEY AUTO_INCREMENT,
     email          VARCHAR(50)  NOT NULL UNIQUE,
-    password       VARCHAR(50)  NOT NULL,
+    password       VARCHAR(60)  NOT NULL,
     username       VARCHAR(50)  NOT NULL UNIQUE,
     gender         TINYINT      NOT NULL,      -- 0: male, 1: female
     birth_date     DATE         NOT NULL,
@@ -24,13 +24,14 @@ CREATE TABLE `user` (
     role           VARCHAR(20)  NOT NULL DEFAULT 'ROLE_USER'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- admin계정 생성 
+-- admin@admin.com
+-- !asdf1234
+
 INSERT INTO `user`
   (email, password, username, gender, birth_date, height, weight, target_weight, is_surveyed, diet_type, role)
 VALUES
-  ('hong@example.com','pw123','hong',0,'1990-05-01',175,70,65,1,'weight_loss','ROLE_USER'),
-  ('lee@example.com','pw456','lee',1,'1985-08-15',162,58,55,0,'muscle_gain','ROLE_USER'),
-  ('park@example.com','pw789','park',0,'1992-12-30',180,80,75,1,NULL,'ROLE_USER'),
-  ('kim@example.com','pwabc','kim',1,'1995-03-20',158,50,50,0,NULL,'ROLE_USER');
+  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자1', '0', '2000-01-01', '180', '90', '40', '0', NULL, 'ROLE_USER');
 
 /* ====================================================================== */
 /* 2. QUESTION – DIETARY SURVEY QUESTIONS                                */
@@ -247,3 +248,4 @@ SELECT cs.course_type, d.dish_id, d.dish_name, d.calorie_kcal
  WHERE cs.schedule_date = @today
  ORDER BY cs.course_type, sd.serving_order;
 
+select * from user;
