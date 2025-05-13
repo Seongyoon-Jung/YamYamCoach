@@ -315,6 +315,7 @@ function prevBasic() {
 
 function nextBasic() {
   warningMessage()
+  console.log(Object.values(result))
   if (Object.values(result).includes('')) {
     click.value = true
     return
@@ -326,24 +327,31 @@ function warningMessage() {
   if (!result.email) {
     warning.email = '이메일을 입력하세요'
     result.checkedEmail = ''
+    result.checkedEmailRule = ''
   } else if ((result.email && !result.checkedEmail) || success.email !== result.email) {
     result.checkedEmail = ''
     warning.email = '이메일 중복을 확인하세요'
+    result.checkedEmailRule = ''
   } else if (result.email) {
     if (checkEmailRule()) {
       warning.email = ''
+      result.checkedEmailRule = true
     } else {
       warning.email = '이메일을 정확히 입력하세요'
+      result.checkedEmailRule = ''
     }
   }
 
   if (!result.password) {
     warning.password = '비밀번호를 입력하세요'
+    result.checkedPasswordRule = ''
   } else {
     if (checkPasswordRule()) {
       warning.password = ''
+      result.checkedPasswordRule = true
     } else {
       warning.password = '비밀번호가 규칙에 맞지 않습니다'
+      result.checkedPasswordRule = ''
     }
   }
 
@@ -361,14 +369,18 @@ function warningMessage() {
   if (!result.username) {
     warning.username = '닉네임을 입력하세요'
     result.checkedUsername = ''
+    result.checkedUsernameRule = ''
   } else if ((result.username && !result.checkedUsername) || success.username !== result.username) {
     result.checkedUsername = ''
     warning.username = '닉네임 중복을 확인하세요'
+    result.checkedUsernameRule = ''
   } else if (result.username) {
     if (checkUsernameRule()) {
       warning.username = ''
+      result.checkedUsernameRule = true
     } else {
       warning.username = '닉네임이 규칙에 맞지않습니다'
+      result.checkedUsernameRule = ''
     }
   }
 

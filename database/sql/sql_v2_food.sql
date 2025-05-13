@@ -31,7 +31,7 @@ CREATE TABLE `user` (
 INSERT INTO `user`
   (email, password, username, gender, birth_date, height, weight, target_weight, is_surveyed, diet_type, role)
 VALUES
-  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자1', '0', '2000-01-01', '180', '90', '40', '0', NULL, 'ROLE_USER');
+  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자1', 0, '2000-01-01', '180', '90', '40', 0, NULL, 'ROLE_USER');
 
 /* ====================================================================== */
 /* 2. QUESTION – DIETARY SURVEY QUESTIONS                                */
@@ -73,25 +73,30 @@ CREATE TABLE `survey` (
 /* ====================================================================== */
 DROP TABLE IF EXISTS `dish`;
 CREATE TABLE `dish` (
-    dish_id        INT PRIMARY KEY AUTO_INCREMENT,
-    dish_name      VARCHAR(100) NOT NULL,
-    calorie_kcal   DOUBLE,
-    sugar_g        DOUBLE,
-    fiber_g        DOUBLE,
-    ash_g          DOUBLE,
-    sodium_mg      DOUBLE,
-    calcium_mg     DOUBLE,
-    iron_mg        DOUBLE,
-    phosphorus_mg  DOUBLE,
-    potassium_mg   DOUBLE,
-    vitamin_a_mcg  DOUBLE,
-    vitamin_b1_mg  DOUBLE,
-    vitamin_b2_mg  DOUBLE,
-    vitamin_b3_mg  DOUBLE,
-    folic_acid_mcg DOUBLE,
-    vitamin_c_mg   DOUBLE,
-    vitamin_d_mcg  DOUBLE,
-    vitamin_e_mg   DOUBLE
+    dish_id            INT PRIMARY KEY AUTO_INCREMENT,
+    dish_name          VARCHAR(100)   NOT NULL,
+    calorie_kcal       DOUBLE,
+    carbohydrate_g     DOUBLE DEFAULT 0,  -- 총 탄수화물
+    sugar_g            DOUBLE,            -- 당류
+    fiber_g            DOUBLE,            -- 식이섬유
+    protein_g          DOUBLE DEFAULT 0,  -- 단백질
+    fat_g              DOUBLE DEFAULT 0,  -- 지방
+    saturated_fat_g    DOUBLE DEFAULT 0,  -- 포화지방
+    trans_fat_g        DOUBLE DEFAULT 0,  -- 트랜스지방
+    ash_g              DOUBLE,
+    sodium_mg          DOUBLE,            -- 나트륨
+    calcium_mg         DOUBLE,            -- 칼슘
+    iron_mg            DOUBLE,
+    phosphorus_mg      DOUBLE,
+    potassium_mg       DOUBLE,
+    vitamin_a_mcg      DOUBLE,
+    vitamin_b1_mg      DOUBLE,
+    vitamin_b2_mg      DOUBLE,
+    vitamin_b3_mg      DOUBLE,
+    folic_acid_mcg     DOUBLE,
+    vitamin_c_mg       DOUBLE,
+    vitamin_d_mcg      DOUBLE,
+    vitamin_e_mg       DOUBLE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `dish` (
@@ -147,13 +152,11 @@ CREATE TABLE `schedule_dish` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
-  -- 2025-05-10 A (id=1)
   (1,1,1,'메인: 우동'),
   (1,6,2,'사이드: 볶음밥'),
   (1,2,3,'반찬: 김치'),
   (1,7,4,'반찬: 채소볶음'),
   (1,5,5,'반찬: 야채튀김'),
-  -- 2025-05-10 B (id=2)
   (2,4,1,'메인: 만두'),
   (2,3,2,'사이드: 샐러드'),
   (2,8,3,'사이드: 스테이크'),
@@ -177,7 +180,7 @@ CREATE TABLE `dish_record` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
-  (1,1,1),(1,1,6),(2,2,4),(2,2,3);
+  (1,1,1),(1,1,6);
 
 /* ====================================================================== */
 /* 8. TODAY=2025-05-12용 추가 더미 & A코스 선택 기록(user_id=4)            */
@@ -203,49 +206,57 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
 INSERT IGNORE INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
   (@user_id,@schedA,1),
   (@user_id,@schedA,3);
+  
+  
+# 오늘 식단 넣기
+  
+-- 오늘 날짜 변수 설정 (필요에 따라 '2025-05-12' 등으로 직접 지정할 수 있습니다)
+SET @today := CURDATE();
 
-/* ====================================================================== */
-/* 9. 확인 쿼리                                                         */
-/* ====================================================================== */
--- (1) 날짜별 선택 코스
-SELECT cs.schedule_date, cs.course_type
-  FROM `dish_record` dr
-  JOIN `course_schedule` cs USING(schedule_id)
- WHERE dr.user_id = @user_id
- GROUP BY cs.schedule_date, cs.course_type
- ORDER BY cs.schedule_date, cs.course_type;
+-- 0) 이미 존재하는 오늘(A, B) 코스가 있으면 삭제 (course_schedule의 ON DELETE CASCADE로 schedule_dish도 함께 삭제됩니다)
+DELETE FROM `course_schedule`
+ WHERE schedule_date = @today
+   AND course_type IN ('A','B');
 
--- (2) 오늘 섭취 음식
-SELECT d.dish_id, d.dish_name, d.calorie_kcal, d.sugar_g, d.fiber_g
-  FROM `dish_record` dr
-  JOIN `course_schedule` cs USING(schedule_id)
-  JOIN `dish` d          USING(dish_id)
- WHERE dr.user_id = @user_id
-   AND cs.schedule_date = @today
- ORDER BY d.dish_id;
+-- 1) 오늘 코스 A/B 재삽입
+INSERT INTO `course_schedule` (schedule_date, course_type, course_name)
+VALUES
+  (@today, 'A', 'A코스: 샘플 메뉴 5종'),
+  (@today, 'B', 'B코스: 샘플 메뉴 5종');
 
--- (3) 오늘 총 영양소
-SELECT
-  SUM(d.calorie_kcal) AS total_calories,
-  SUM(d.sugar_g)      AS total_sugar,
-  SUM(d.fiber_g)      AS total_fiber,
-  SUM(d.ash_g)        AS total_ash,
-  SUM(d.sodium_mg)    AS total_sodium,
-  SUM(d.calcium_mg)   AS total_calcium,
-  SUM(d.iron_mg)      AS total_iron,
-  SUM(d.vitamin_c_mg) AS total_vitamin_c
-FROM `dish_record` dr
-JOIN `course_schedule` cs USING(schedule_id)
-JOIN `dish` d          USING(dish_id)
-WHERE dr.user_id = @user_id
-  AND cs.schedule_date = @today;
+-- 2) 방금 삽입된 schedule_id 조회
+SELECT @schedA := schedule_id
+  FROM `course_schedule`
+ WHERE schedule_date = @today
+   AND course_type = 'A'
+ LIMIT 1;
 
--- (4) 오늘 A/B 코스별 메뉴 & 칼로리
-SELECT cs.course_type, d.dish_id, d.dish_name, d.calorie_kcal
-  FROM `course_schedule` cs
-  JOIN `schedule_dish`   sd USING(schedule_id)
-  JOIN `dish`            d  USING(dish_id)
- WHERE cs.schedule_date = @today
- ORDER BY cs.course_type, sd.serving_order;
+SELECT @schedB := schedule_id
+  FROM `course_schedule`
+ WHERE schedule_date = @today
+   AND course_type = 'B'
+ LIMIT 1;
 
-select * from user;
+-- 3) A코스에 임의의 음식 5개 매핑 (dish_id는 기존에 정의된 ID 사용)
+INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
+  (@schedA, 1, 1, '메인: 우동'),
+  (@schedA, 2, 2, '반찬: 김치'),
+  (@schedA, 3, 3, '사이드: 샐러드'),
+  (@schedA, 4, 4, '사이드: 만두'),
+  (@schedA, 5, 5, '사이드: 야채튀김');
+
+-- 4) B코스에 임의의 음식 5개 매핑
+INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
+  (@schedB, 6, 1, '메인: 볶음밥'),
+  (@schedB, 7, 2, '반찬: 채소볶음'),
+  (@schedB, 8, 3, '메인: 스테이크'),
+  (@schedB, 9, 4, '사이드: 현미밥'),
+  (@schedB, 10,5, '사이드: 과일샐러드');
+  
+  
+  select * from schedule_dish;
+  
+  
+ select *
+ from course_schedule s
+ where schedule_date = date(now())
