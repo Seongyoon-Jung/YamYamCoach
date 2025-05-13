@@ -3,13 +3,20 @@
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>오늘의 식단</span>
-        <button class="btn btn-sm btn-outline-primary" @click="showModal = true">상세/코스 선택</button>
+        <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
+          상세/코스 선택
+        </button>
       </div>
       <div class="card-body">
         <div class="row">
           <div v-for="course in courses" :key="course.type" class="col-6 text-center">
             <div v-if="course.dishes && course.dishes.length > 0">
-              <img :src="getDishImage(course.dishes[0].name)" class="rounded mb-2" style="width: 120px; height: 80px; object-fit: cover" :alt="course.dishes[0].name" />
+              <img
+                :src="getDishImage(course.dishes[0].name)"
+                class="rounded mb-2"
+                style="width: 120px; height: 80px; object-fit: cover"
+                :alt="course.dishes[0].name"
+              />
             </div>
             <div class="fw-bold">{{ course.course_name }}</div>
           </div>
@@ -33,24 +40,50 @@
                 <div class="meal-selection mb-3">
                   <ul class="nav nav-tabs" id="modalCourseTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                      <button class="nav-link" :class="{ active: selectedCourse === 'A' }" @click="selectedCourse = 'A'">A 코스</button>
+                      <button
+                        class="nav-link"
+                        :class="{ active: selectedCourse === 'A' }"
+                        @click="selectedCourse = 'A'"
+                      >
+                        A 코스
+                      </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                      <button class="nav-link" :class="{ active: selectedCourse === 'B' }" @click="selectedCourse = 'B'">B 코스</button>
+                      <button
+                        class="nav-link"
+                        :class="{ active: selectedCourse === 'B' }"
+                        @click="selectedCourse = 'B'"
+                      >
+                        B 코스
+                      </button>
                     </li>
                   </ul>
 
                   <div class="tab-content mt-3">
-                    <div v-for="course in courses" :key="course.type" class="tab-pane" :class="{ active: selectedCourse === course.type }">
+                    <div
+                      v-for="course in courses"
+                      :key="course.type"
+                      class="tab-pane"
+                      :class="{ active: selectedCourse === course.type }"
+                    >
                       <div v-if="course.dishes && course.dishes.length > 0">
                         <div class="p-2 border-bottom text-end">
                           <div class="text-muted">총 {{ calculateTotalCalories(course) }}Kcal</div>
                         </div>
 
-                        <div v-for="dish in course.dishes" :key="dish.id" class="meal-item p-3 border-bottom d-flex align-items-center justify-content-between">
+                        <div
+                          v-for="dish in course.dishes"
+                          :key="dish.id"
+                          class="meal-item p-3 border-bottom d-flex align-items-center justify-content-between"
+                        >
                           <div class="d-flex align-items-center">
                             <div class="form-check">
-                              <input class="form-check-input" type="checkbox" :id="`dish-${dish.id}`" v-model="selectedDishes[dish.id]" />
+                              <input
+                                class="form-check-input"
+                                type="checkbox"
+                                :id="`dish-${dish.id}`"
+                                v-model="selectedDishes[dish.id]"
+                              />
                               <label class="form-check-label" :for="`dish-${dish.id}`">
                                 {{ dish.name }}
                               </label>
@@ -71,7 +104,11 @@
 
                   <!-- 영양소 그래프 - 누적 막대 차트 -->
                   <div class="chart-row">
-                    <div class="custom-chart-container" style="height: 250px" :key="`custom-chart-container-${_chartRenderKey}`">
+                    <div
+                      class="custom-chart-container"
+                      style="height: 250px"
+                      :key="`custom-chart-container-${_chartRenderKey}`"
+                    >
                       <!-- SVG 기반 누적 막대 그래프 -->
                       <div class="svg-chart" v-if="selectedDishesNutrients.length > 0">
                         <!-- 칼로리 막대 -->
@@ -86,7 +123,9 @@
                               }"
                             ></div>
                           </div>
-                          <div class="bar-value ml-2" style="width: 80px; text-align: right">{{ totalNutrientValues.calories.toFixed(1) }} kcal</div>
+                          <div class="bar-value ml-2" style="width: 80px; text-align: right">
+                            {{ totalNutrientValues.calories.toFixed(1) }} kcal
+                          </div>
                         </div>
 
                         <!-- 단백질 막대 -->
@@ -101,7 +140,9 @@
                               }"
                             ></div>
                           </div>
-                          <div class="bar-value ml-2" style="width: 80px; text-align: right">{{ totalNutrientValues.protein.toFixed(1) }} g</div>
+                          <div class="bar-value ml-2" style="width: 80px; text-align: right">
+                            {{ totalNutrientValues.protein.toFixed(1) }} g
+                          </div>
                         </div>
 
                         <!-- 탄수화물 막대 -->
@@ -116,7 +157,9 @@
                               }"
                             ></div>
                           </div>
-                          <div class="bar-value ml-2" style="width: 80px; text-align: right">{{ totalNutrientValues.carbohydrate.toFixed(1) }} g</div>
+                          <div class="bar-value ml-2" style="width: 80px; text-align: right">
+                            {{ totalNutrientValues.carbohydrate.toFixed(1) }} g
+                          </div>
                         </div>
 
                         <!-- 지방 막대 -->
@@ -131,7 +174,9 @@
                               }"
                             ></div>
                           </div>
-                          <div class="bar-value ml-2" style="width: 80px; text-align: right">{{ totalNutrientValues.fat.toFixed(1) }} g</div>
+                          <div class="bar-value ml-2" style="width: 80px; text-align: right">
+                            {{ totalNutrientValues.fat.toFixed(1) }} g
+                          </div>
                         </div>
 
                         <!-- 당 막대 -->
@@ -146,12 +191,17 @@
                               }"
                             ></div>
                           </div>
-                          <div class="bar-value ml-2" style="width: 80px; text-align: right">{{ totalNutrientValues.sugar.toFixed(1) }} g</div>
+                          <div class="bar-value ml-2" style="width: 80px; text-align: right">
+                            {{ totalNutrientValues.sugar.toFixed(1) }} g
+                          </div>
                         </div>
                       </div>
 
                       <!-- 데이터가 없을 때 -->
-                      <div v-else class="no-data-message d-flex justify-content-center align-items-center h-100">
+                      <div
+                        v-else
+                        class="no-data-message d-flex justify-content-center align-items-center h-100"
+                      >
                         <p class="text-muted">음식을 선택하면 영양소 정보가 표시됩니다</p>
                       </div>
                     </div>
@@ -164,31 +214,41 @@
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
                           <div class="label">칼로리</div>
-                          <div class="value text-primary">{{ totalNutrientValues.calories.toFixed(1) }} kcal</div>
+                          <div class="value text-primary">
+                            {{ totalNutrientValues.calories.toFixed(1) }} kcal
+                          </div>
                         </div>
                       </div>
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
                           <div class="label">단백질</div>
-                          <div class="value text-primary">{{ totalNutrientValues.protein.toFixed(1) }} g</div>
+                          <div class="value text-primary">
+                            {{ totalNutrientValues.protein.toFixed(1) }} g
+                          </div>
                         </div>
                       </div>
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
                           <div class="label">탄수화물</div>
-                          <div class="value text-primary">{{ totalNutrientValues.carbohydrate.toFixed(1) }} g</div>
+                          <div class="value text-primary">
+                            {{ totalNutrientValues.carbohydrate.toFixed(1) }} g
+                          </div>
                         </div>
                       </div>
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
                           <div class="label">지방</div>
-                          <div class="value text-primary">{{ totalNutrientValues.fat.toFixed(1) }} g</div>
+                          <div class="value text-primary">
+                            {{ totalNutrientValues.fat.toFixed(1) }} g
+                          </div>
                         </div>
                       </div>
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
                           <div class="label">당</div>
-                          <div class="value text-primary">{{ totalNutrientValues.sugar.toFixed(1) }} g</div>
+                          <div class="value text-primary">
+                            {{ totalNutrientValues.sugar.toFixed(1) }} g
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -233,38 +293,215 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import axios from '@/plugins/axios'
+
+const showModal = ref(false)
+const selectedCourse = ref('A')
+const courses = ref([])
+const selectedDishes = reactive({})
+const selectedCourses = reactive({})
+const selectAllMeals = ref(false)
+const totalCalories = ref(750)
+const _chartRenderKey = ref(0)
+
+const colors = [
+  'rgba(255, 99, 132, 0.7)',
+  'rgba(54, 162, 235, 0.7)',
+  'rgba(255, 206, 86, 0.7)',
+  'rgba(75, 192, 192, 0.7)',
+  'rgba(153, 102, 255, 0.7)',
+]
+
+const getCurrentCourseName = computed(() => {
+  const found = courses.value.find((c) => c.type === selectedCourse.value)
+  return found ? found.course_name : ''
+})
+
+const currentCourseDishes = computed(() => {
+  const found = courses.value.find((c) => c.type === selectedCourse.value)
+  return found ? found.dishes : []
+})
+
+const selectedDishesNutrients = computed(() => {
+  const result = []
+  courses.value.forEach((course) => {
+    course.dishes.forEach((dish) => {
+      if (selectedDishes[dish.id]) {
+        result.push({
+          name: dish.name,
+          calories: Number(dish.calorie || 0),
+          protein: Number(dish.protein || 0),
+          carbohydrate: Number(dish.carbohydrate || 0),
+          fat: Number(dish.fat || 0),
+          sugar: Number(dish.sugarG || 0),
+        })
+      }
+    })
+  })
+  return result
+})
+
+const totalNutrientValues = computed(() => {
+  return selectedDishesNutrients.value.reduce(
+    (totals, dish) => {
+      totals.calories += dish.calories
+      totals.protein += dish.protein
+      totals.carbohydrate += dish.carbohydrate
+      totals.fat += dish.fat
+      totals.sugar += dish.sugar
+      return totals
+    },
+    { calories: 0, protein: 0, carbohydrate: 0, fat: 0, sugar: 0 },
+  )
+})
+
+const maxValues = computed(() => {
+  const max = { calories: 0, protein: 0, carbohydrate: 0, fat: 0, sugar: 0 }
+  selectedDishesNutrients.value.forEach((dish) => {
+    max.calories = Math.max(max.calories, dish.calories)
+    max.protein = Math.max(max.protein, dish.protein)
+    max.carbohydrate = Math.max(max.carbohydrate, dish.carbohydrate)
+    max.fat = Math.max(max.fat, dish.fat)
+    max.sugar = Math.max(max.sugar, dish.sugar)
+  })
+  return {
+    calories: max.calories || 100,
+    protein: max.protein || 20,
+    carbohydrate: max.carbohydrate || 20,
+    fat: max.fat || 20,
+    sugar: max.sugar || 20,
+  }
+})
+
+const fetchTodayCourses = async () => {
+  try {
+    const response = await axios.get('/api/courses/today')
+    courses.value = response.data.courses
+    console.log('courses', courses.value)
+    courses.value.forEach((course) => {
+      selectedCourses[course.type] = false
+      course.dishes.forEach((dish) => {
+        selectedDishes[dish.id] = false
+      })
+    })
+  } catch (error) {
+    console.error('오늘의 코스 조회 실패:', error)
+  }
+}
+
+const getDishImage = (dishName) =>
+  `https://via.placeholder.com/120x80?text=${encodeURIComponent(dishName)}`
+
+const calculateTotalCalories = (course) => course.dishes.reduce((t, d) => t + d.calorie, 0)
+
+const saveMealRecord = () => {
+  const selectedMeals = []
+  courses.value.forEach((course) => {
+    course.dishes.forEach((dish) => {
+      if (selectedDishes[dish.id]) {
+        selectedMeals.push({
+          dishId: dish.id,
+          dishName: dish.name,
+          calories: dish.calorie,
+          protein: dish.protein,
+          carbohydrate: dish.carbohydrate,
+          fat: dish.fat,
+          sugar: dish.sugarG,
+          courseType: course.type,
+          courseName: course.course_name,
+        })
+      }
+    })
+  })
+  console.log('저장된 식사 기록:', selectedMeals)
+  showModal.value = false
+}
+
+onMounted(fetchTodayCourses)
+
+watch(
+  () => selectAllMeals.value,
+  (newValue) => {
+    courses.value.forEach((course) => {
+      selectedCourses[course.type] = newValue
+      course.dishes.forEach((dish) => {
+        selectedDishes[dish.id] = newValue
+      })
+    })
+  },
+)
+
+watch(
+  selectedDishes,
+  () => {
+    courses.value.forEach((course) => {
+      const all = course.dishes.every((dish) => selectedDishes[dish.id])
+      const none = course.dishes.every((dish) => !selectedDishes[dish.id])
+      selectedCourses[course.type] = all ? true : none ? false : selectedCourses[course.type]
+    })
+    selectAllMeals.value = courses.value.every((c) => selectedCourses[c.type])
+    _chartRenderKey.value++
+  },
+  { deep: true },
+)
+
+watch(
+  () => selectedCourse.value,
+  () => {
+    courses.value.forEach((course) => {
+      course.dishes.forEach((dish) => (selectedDishes[dish.id] = false))
+      selectedCourses[course.type] = false
+    })
+    selectAllMeals.value = false
+    _chartRenderKey.value++
+  },
+)
+
+watch(
+  () => showModal.value,
+  (val) => {
+    if (val) _chartRenderKey.value++
+  },
+)
+</script>
+
+<!-- <script>
+import axios from 'axios'
 
 export default {
   data() {
     return {
-      account: {
-        username: this.$store.state.account.username,
-      },
       showModal: false,
-      selectedCourse: "A",
+      selectedCourse: 'A',
       courses: [],
       selectedDishes: {},
       selectedCourses: {},
       selectAllMeals: false,
       totalCalories: 750,
       _chartRenderKey: 0, // 강제 리렌더링을 위한 키
-      colors: ["rgba(255, 99, 132, 0.7)", "rgba(54, 162, 235, 0.7)", "rgba(255, 206, 86, 0.7)", "rgba(75, 192, 192, 0.7)", "rgba(153, 102, 255, 0.7)"],
-    };
+      colors: [
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+      ],
+    }
   },
   computed: {
     getCurrentCourseName() {
-      const selectedCourse = this.courses.find((c) => c.type === this.selectedCourse);
-      return selectedCourse ? selectedCourse.course_name : "";
+      const selectedCourse = this.courses.find((c) => c.type === this.selectedCourse)
+      return selectedCourse ? selectedCourse.course_name : ''
     },
     currentCourseDishes() {
-      const selectedCourse = this.courses.find((c) => c.type === this.selectedCourse);
-      return selectedCourse ? selectedCourse.dishes : [];
+      const selectedCourse = this.courses.find((c) => c.type === this.selectedCourse)
+      return selectedCourse ? selectedCourse.dishes : []
     },
     selectedDishesCalories() {
       // 깊은 복사 없이 배열 생성 (최적화)
-      const dishesData = [];
+      const dishesData = []
 
       for (const course of this.courses) {
         for (const dish of course.dishes) {
@@ -272,16 +509,16 @@ export default {
             dishesData.push({
               name: dish.name,
               calories: Number(dish.calorie || 0),
-            });
+            })
           }
         }
       }
 
-      return dishesData;
+      return dishesData
     },
     // 선택한 음식의 모든 영양소 데이터를 음식별로 반환
     selectedDishesNutrients() {
-      const dishesData = [];
+      const dishesData = []
 
       for (const course of this.courses) {
         for (const dish of course.dishes) {
@@ -293,12 +530,12 @@ export default {
               carbohydrate: Number(dish.carbohydrate || 0),
               fat: Number(dish.fat || 0),
               sugar: Number(dish.sugarG || 0),
-            });
+            })
           }
         }
       }
 
-      return dishesData;
+      return dishesData
     },
     // 모든 영양소의 총합
     totalNutrientValues() {
@@ -308,17 +545,17 @@ export default {
         carbohydrate: 0,
         fat: 0,
         sugar: 0,
-      };
-
-      for (const dish of this.selectedDishesNutrients) {
-        totals.calories += dish.calories;
-        totals.protein += dish.protein;
-        totals.carbohydrate += dish.carbohydrate;
-        totals.fat += dish.fat;
-        totals.sugar += dish.sugar;
       }
 
-      return totals;
+      for (const dish of this.selectedDishesNutrients) {
+        totals.calories += dish.calories
+        totals.protein += dish.protein
+        totals.carbohydrate += dish.carbohydrate
+        totals.fat += dish.fat
+        totals.sugar += dish.sugar
+      }
+
+      return totals
     },
     // 각 영양소의 최대값 계산 (그래프 스케일링용)
     maxValues() {
@@ -328,106 +565,106 @@ export default {
         carbohydrate: 0,
         fat: 0,
         sugar: 0,
-      };
+      }
 
       for (const dish of this.selectedDishesNutrients) {
-        max.calories = Math.max(max.calories, dish.calories);
-        max.protein = Math.max(max.protein, dish.protein);
-        max.carbohydrate = Math.max(max.carbohydrate, dish.carbohydrate);
-        max.fat = Math.max(max.fat, dish.fat);
-        max.sugar = Math.max(max.sugar, dish.sugar);
+        max.calories = Math.max(max.calories, dish.calories)
+        max.protein = Math.max(max.protein, dish.protein)
+        max.carbohydrate = Math.max(max.carbohydrate, dish.carbohydrate)
+        max.fat = Math.max(max.fat, dish.fat)
+        max.sugar = Math.max(max.sugar, dish.sugar)
       }
 
       // 최소값 설정 (0으로 나누기 방지)
-      max.calories = max.calories || 100;
-      max.protein = max.protein || 20;
-      max.carbohydrate = max.carbohydrate || 20;
-      max.fat = max.fat || 20;
-      max.sugar = max.sugar || 20;
+      max.calories = max.calories || 100
+      max.protein = max.protein || 20
+      max.carbohydrate = max.carbohydrate || 20
+      max.fat = max.fat || 20
+      max.sugar = max.sugar || 20
 
-      return max;
+      return max
     },
   },
   watch: {
     selectAllMeals(newValue) {
       this.courses.forEach((course) => {
-        this.selectedCourses[course.type] = newValue;
+        this.selectedCourses[course.type] = newValue
         course.dishes.forEach((dish) => {
-          this.selectedDishes[dish.id] = newValue;
-        });
-      });
+          this.selectedDishes[dish.id] = newValue
+        })
+      })
     },
     selectedDishes: {
       deep: true,
       handler() {
         this.courses.forEach((course) => {
-          const allSelected = course.dishes.every((dish) => this.selectedDishes[dish.id]);
-          const noneSelected = course.dishes.every((dish) => !this.selectedDishes[dish.id]);
+          const allSelected = course.dishes.every((dish) => this.selectedDishes[dish.id])
+          const noneSelected = course.dishes.every((dish) => !this.selectedDishes[dish.id])
 
           if (allSelected) {
-            this.selectedCourses[course.type] = true;
+            this.selectedCourses[course.type] = true
           } else if (noneSelected) {
-            this.selectedCourses[course.type] = false;
+            this.selectedCourses[course.type] = false
           }
 
           // 전체 선택 상태 갱신
-          const allCoursesSelected = this.courses.every((c) => this.selectedCourses[c.type]);
+          const allCoursesSelected = this.courses.every((c) => this.selectedCourses[c.type])
           if (allCoursesSelected !== this.selectAllMeals) {
-            this.selectAllMeals = allCoursesSelected;
+            this.selectAllMeals = allCoursesSelected
           }
-        });
+        })
 
         // 그래프 강제 업데이트
-        this._chartRenderKey++;
+        this._chartRenderKey++
       },
     },
     selectedCourse(newVal) {
       // 코스 선택 시 선택된 음식과 차트 초기화
       this.courses.forEach((course) => {
         course.dishes.forEach((dish) => {
-          this.selectedDishes[dish.id] = false;
-        });
-        this.selectedCourses[course.type] = false;
-      });
-      this.selectAllMeals = false;
-      this._chartRenderKey++;
+          this.selectedDishes[dish.id] = false
+        })
+        this.selectedCourses[course.type] = false
+      })
+      this.selectAllMeals = false
+      this._chartRenderKey++
     },
     showModal(val) {
       if (val) {
         // 모달이 열리면 강제 리렌더링
-        this._chartRenderKey++;
+        this._chartRenderKey++
       }
     },
   },
   methods: {
-    async fetchTodayCourses() {
-      try {
-        const response = await axios.get("/api/courses/today");
-        this.courses = response.data.courses;
+    fetchTodayCourses() {
+      const response = axios.get('/api/courses/today')
+      console.log(response)
+      this.courses = response.data.courses
 
-        // 초기화: 모든 요리에 대한 선택 상태를 설정
-        this.courses.forEach((course) => {
-          this.selectedCourses[course.type] = false;
-          course.dishes.forEach((dish) => {
-            this.selectedDishes[dish.id] = false;
-          });
-        });
+      // 초기화: 모든 요리에 대한 선택 상태를 설정
+      this.courses.forEach((course) => {
+        this.selectedCourses[course.type] = false
+        course.dishes.forEach((dish) => {
+          this.selectedDishes[dish.id] = false
+        })
+      })
 
-        console.log("오늘의 코스 데이터:", this.courses);
-      } catch (error) {
-        console.error("오늘의 코스 조회 실패:", error);
-      }
+      console.log('오늘의 코스 데이터:', this.courses)
+      // } catch (error) {
+      //   console.error('오늘의 코스 조회 실패:', error)
+      // }
     },
     getDishImage(dishName) {
       // 실제 이미지 URL로 대체 필요
-      return `https://via.placeholder.com/120x80?text=${encodeURIComponent(dishName)}`;
+      return `https://via.placeholder.com/120x80?text=${encodeURIComponent(dishName)}`
     },
     calculateTotalCalories(course) {
-      return course.dishes.reduce((total, dish) => total + dish.calorie, 0);
+      return course.dishes.reduce((total, dish) => total + dish.calorie, 0)
     },
     saveMealRecord() {
       // 선택한 음식 정보 수집
-      const selectedMeals = [];
+      const selectedMeals = []
 
       this.courses.forEach((course) => {
         course.dishes.forEach((dish) => {
@@ -442,38 +679,38 @@ export default {
               sugar: dish.sugarG,
               courseType: course.type,
               courseName: course.course_name,
-            });
+            })
           }
-        });
-      });
+        })
+      })
 
-      console.log("저장된 식사 기록:", selectedMeals);
+      console.log('저장된 식사 기록:', selectedMeals)
 
       // 여기에 API 호출 코드 추가 가능
       // axios.post('/api/meal-records', { meals: selectedMeals });
 
-      this.showModal = false;
+      this.showModal = false
     },
     increaseTotalCalories() {
-      this.totalCalories += 50;
+      this.totalCalories += 50
     },
     decreaseTotalCalories() {
       if (this.totalCalories > 50) {
-        this.totalCalories -= 50;
+        this.totalCalories -= 50
       }
     },
     toggleCourseDishes(course) {
-      const isSelected = this.selectedCourses[course.type];
+      const isSelected = this.selectedCourses[course.type]
       course.dishes.forEach((dish) => {
-        this.selectedDishes[dish.id] = isSelected;
-      });
+        this.selectedDishes[dish.id] = isSelected
+      })
     },
   },
   mounted() {
-    this.fetchTodayCourses();
+    this.fetchTodayCourses()
   },
-};
-</script>
+}
+</script> -->
 
 <style scoped>
 .dish-item {
