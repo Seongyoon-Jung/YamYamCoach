@@ -34,7 +34,6 @@ INDEX VERSION 1.134+C:\Users\SSAFY\Desktop\YamYamCoach\.metadata\.plugins\org.ec
 3245173538.index
 2592449802.index
 2373312834.index
-1965174767.index
 3856462279.index
 393375302.index
 3378592672.index
