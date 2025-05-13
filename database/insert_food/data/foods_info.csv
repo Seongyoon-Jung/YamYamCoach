@@ -1,4 +1,4 @@
-식품코드,식품명,대표식품명,식품대분류명,식품중분류명,식품소분류명,식품기원명
+food_code,food_name,main_food_name,food_large_category,food_medium_category,food_small_category,food_origin
 G00001,국밥_돼지머리,국밥,밥류,돼지머리,,가정식(분석 함량)
 G00002,국밥_순대국밥,국밥,밥류,순대국밥,,가정식(분석 함량)
 G00003,국밥_콩나물,국밥,밥류,콩나물,,가정식(분석 함량)
