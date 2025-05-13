@@ -10,6 +10,9 @@
         <li class="nav-item">
           <RouterLink class="nav-link text-decoration-none" to="/features">기능 소개</RouterLink>
         </li>
+        <li class="nav-item">
+          <RouterLink class="nav-link text-decoration-none" to="/community">커뮤니티</RouterLink>
+        </li>
       </ul>
 
       <!-- 토글버튼 (모바일) -->
