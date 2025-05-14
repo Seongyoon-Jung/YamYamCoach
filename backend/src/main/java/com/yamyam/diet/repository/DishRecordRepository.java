@@ -9,6 +9,12 @@ import java.util.List;
 
 @Repository
 public interface DishRecordRepository extends JpaRepository<DishRecord, Integer> {
-    List<DishRecord> findByUserIdAndRecordedAtBetween(int userId, LocalDateTime start, LocalDateTime end);
-    void deleteByUserIdAndRecordedAtBetween(int userId, LocalDateTime start, LocalDateTime end);
+    // 오늘의 기록 조회
+    List<DishRecord> findByUserIdAndRecordedAtBetween(Integer userId, LocalDateTime start, LocalDateTime end);
+    
+    // 중복 체크를 위한 메서드 추가
+    List<DishRecord> findByUserIdAndScheduleIdIn(Integer userId, List<Integer> scheduleIds);
+    
+    // 오늘의 기록 삭제
+    void deleteByUserIdAndRecordedAtBetween(Integer userId, LocalDateTime start, LocalDateTime end);
 }

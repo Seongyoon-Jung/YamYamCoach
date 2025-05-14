@@ -1,5 +1,6 @@
 package com.yamyam.diet.service;
 
+import com.yamyam.dto.request.DishRecordRequest;
 import com.yamyam.diet.entity.DishRecord;
 import com.yamyam.diet.repository.DishRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DishRecordService {
@@ -16,29 +18,49 @@ public class DishRecordService {
     @Autowired
     private DishRecordRepository dishRecordRepository;
 
-    public List<DishRecord> getTodayRecords(int userId) {
-        LocalDate today = LocalDate.now();
-        LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = today.plusDays(1).atStartOfDay();
-        return dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, start, end);
-    }
+    @Transactional
+    public void saveRecords(Integer userId, String courseType, List<DishRecord> records) {
+        if (records == null || records.isEmpty()) {
+            throw new RuntimeException("선택된 음식이 없습니다.");
+        }
 
-    public void saveRecords(int userId, String courseType, List<DishRecord> records) {
-        LocalDateTime now = LocalDateTime.now();
+        // 기존 기록 삭제
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        dishRecordRepository.deleteByUserIdAndRecordedAtBetween(userId, startOfDay, endOfDay);
+
+        // 새로운 기록 저장
         for (DishRecord record : records) {
             record.setUserId(userId);
             record.setCourseType(courseType);
-            record.setRecordedAt(now);
+            record.setRecordedAt(LocalDateTime.now());
         }
         dishRecordRepository.saveAll(records);
     }
 
     @Transactional
-    public void updateTodayRecords(int userId, String courseType, List<DishRecord> records) {
-        LocalDate today = LocalDate.now();
-        LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = today.plusDays(1).atStartOfDay();
-        dishRecordRepository.deleteByUserIdAndRecordedAtBetween(userId, start, end);
-        saveRecords(userId, courseType, records);
+    public void updateTodayRecords(Integer userId, String courseType, List<DishRecord> records) {
+        if (records == null || records.isEmpty()) {
+            throw new RuntimeException("선택된 음식이 없습니다.");
+        }
+
+        // 기존 기록 삭제
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        dishRecordRepository.deleteByUserIdAndRecordedAtBetween(userId, startOfDay, endOfDay);
+
+        // 새로운 기록 저장
+        for (DishRecord record : records) {
+            record.setUserId(userId);
+            record.setCourseType(courseType);
+            record.setRecordedAt(LocalDateTime.now());
+        }
+        dishRecordRepository.saveAll(records);
+    }
+
+    public List<DishRecord> getTodayRecords(Integer userId) {
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        return dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, startOfDay, endOfDay);
     }
 }
