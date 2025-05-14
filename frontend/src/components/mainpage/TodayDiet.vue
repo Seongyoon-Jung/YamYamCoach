@@ -397,27 +397,86 @@ const getDishImage = (dishName) =>
 
 const calculateTotalCalories = (course) => course.dishes.reduce((t, d) => t + d.calorie, 0)
 
-const saveMealRecord = () => {
-  const selectedMeals = []
-  courses.value.forEach((course) => {
-    course.dishes.forEach((dish) => {
-      if (selectedDishes[dish.id]) {
-        selectedMeals.push({
-          dishId: dish.id,
-          dishName: dish.name,
-          calories: dish.calorie,
-          protein: dish.protein,
-          carbohydrate: dish.carbohydrate,
-          fat: dish.fat,
-          sugar: dish.sugarG,
-          courseType: course.type,
-          courseName: course.course_name,
-        })
-      }
+const saveMealRecord = async () => {
+  try {
+    // 선택된 음식들만 필터링
+    const selectedMeals = []
+
+    console.log('selectedDishes 상태:', selectedDishes)
+    let checkedCount = 0
+    Object.keys(selectedDishes).forEach((key) => {
+      if (selectedDishes[key]) checkedCount++
     })
-  })
-  console.log('저장된 식사 기록:', selectedMeals)
-  showModal.value = false
+    console.log('선택된 체크박스 수:', checkedCount)
+
+    // 현재 날짜 구하기 (서버와 일치시키기 위함)
+    const today = new Date()
+    const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    console.log('현재 날짜:', formattedDate)
+
+    // 수동으로 schedule_id 할당
+    const getScheduleIdForCourse = (courseType) => {
+      // 오늘 날짜의 A코스는 항상 홀수, B코스는 항상 짝수로 설정
+      // 실제 데이터베이스 값과 일치하도록 적절히 조정 필요
+      const baseId = (Number(formattedDate.replace(/-/g, '')) % 10) + 1
+      return courseType === 'A' ? baseId : baseId + 1
+    }
+
+    // 코스별로 처리
+    courses.value.forEach((course) => {
+      // 현재 코스에 schedule_id가 없으면 자동 할당
+      const scheduleId = course.schedule_id || getScheduleIdForCourse(course.type)
+      console.log(`코스 ${course.type}에 schedule_id ${scheduleId} 할당됨`)
+
+      course.dishes.forEach((dish) => {
+        if (selectedDishes[dish.id]) {
+          const dishId = parseInt(dish.id)
+
+          console.log('선택된 음식:', {
+            name: dish.name,
+            dish_id: dishId,
+            course_type: course.type,
+            schedule_id: scheduleId,
+          })
+
+          if (!isNaN(dishId)) {
+            selectedMeals.push({
+              schedule_id: scheduleId,
+              dish_id: dishId,
+            })
+          }
+        }
+      })
+    })
+
+    console.log('최종 선택된 음식:', selectedMeals)
+
+    if (selectedMeals.length === 0) {
+      alert('최소 하나 이상의 음식을 선택해주세요.')
+      return
+    }
+
+    // 백엔드 API 호출
+    const response = await axios.post('/api/meal-records', {
+      courseType: selectedCourse.value,
+      meals: selectedMeals,
+    })
+
+    if (response.data.success) {
+      alert('식단이 저장되었습니다.')
+      showModal.value = false
+      // 선택 초기화
+      Object.keys(selectedDishes).forEach((key) => {
+        selectedDishes[key] = false
+      })
+      // 데이터 새로고침
+      await fetchTodayCourses()
+    }
+  } catch (error) {
+    console.error('식단 저장 실패:', error)
+    console.error('오류 상세 정보:', error.response?.data)
+    alert(error.response?.data?.message || '식단 저장 중 오류가 발생했습니다.')
+  }
 }
 
 onMounted(fetchTodayCourses)
