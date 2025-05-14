@@ -25,7 +25,7 @@ public class SecurityConfig {
 			.formLogin(form -> form.disable())   			  // 🔒 폼 로그인 비활성화 (JWT 또는 SPA 연동 시)
 			
 			.authorizeHttpRequests((auth) -> auth
-						.requestMatchers("/","/api/auth/login","/api/users","/api/users/check-email","/api/users/check-username","/api/users/me").permitAll()// /,/login은 모든 사용자가 접근 가능
+						.requestMatchers("/","/api/auth/login","/api/users","/api/users/check-email","/api/users/check-username","/api/users/me","/api/board").permitAll()// /,/login은 모든 사용자가 접근 가능
 						.requestMatchers("/my/**").hasAnyRole("USER") // my/ 뒤에 페이지는 사용자가 접근 가능
 						.anyRequest().authenticated() // 위에 두개의 이외는 전부 불가능
 						)
