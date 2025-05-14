@@ -302,7 +302,7 @@ INSERT INTO board (
     NOW(), NOW(),
     10,
     1,
-    'https://example.com/image1.jpg'
+    'https://cdn.pixabay.com/photo/2020/03/16/12/46/food-4936947_1280.jpg'
 ),
 (
     1,
@@ -311,7 +311,7 @@ INSERT INTO board (
     NOW(), NOW(),
     0,
     0,
-    'https://example.com/image2.jpg'
+    'https://cdn.pixabay.com/photo/2021/11/01/15/52/spring-roll-6760871_1280.jpg'
 );
 
 INSERT INTO comment (
@@ -324,8 +324,10 @@ INSERT INTO comment (
     NOW(), NOW()
 ),
 (
-    2,
+    1,
     1,
     '두 번째 게시글에 달린 첫번째 댓글이에요!',
     NOW(), NOW()
 );
+
+select * from board;
