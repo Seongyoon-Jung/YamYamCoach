@@ -27,6 +27,13 @@ const routes = [
     meta: { title: '커뮤니티' },
   },
   {
+    path: '/board/:id',
+    name: 'BoardDetailView',
+    component: () => import('../views/board/BoardDetailView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  }, // 상세 페이지 라우트
+  {
     path: '/survey',
     name: 'SurveyView',
     component: () => import('../views/user/SurveyView.vue'),
