@@ -50,6 +50,16 @@ public class CommentEntity {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+    
+    public CommentEntity() {
+		// TODO Auto-generated constructor stub
+	}
+    
+	public CommentEntity(BoardEntity board, UserEntity user, String content) {
+		this.board = board;
+		this.user = user;
+		this.content = content;
+	}
 
 	public int getCommentId() {
 		return commentId;

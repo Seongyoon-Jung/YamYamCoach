@@ -54,11 +54,4 @@ public class BoardController {
 		
 		return ResponseEntity.ok(boardService.getBoard(boardId));
 	}
-	
-	// 게시판 댓글
-	@GetMapping("/{boardId}/comments")
-	public ResponseEntity<List<CommentResponse>> getAllComments(@PathVariable("boardId") int boardId) {
-		
-		return ResponseEntity.ok(boardService.getAllComment(boardId));
-	}
 }
