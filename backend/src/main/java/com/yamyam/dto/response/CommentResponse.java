@@ -51,5 +51,11 @@ public class CommentResponse {
 		this.updatedAt = updatedAt;
 	}
 
+	@Override
+	public String toString() {
+		return "CommentResponse [userName=" + userName + ", content=" + content + ", createdAt=" + createdAt
+				+ ", updatedAt=" + updatedAt + "]";
+	}
+
 	
 }
