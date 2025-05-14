@@ -111,7 +111,8 @@ const login = async () => {
       isSurveyed: res.data.surveyed,
     })
 
-    goBack()
+    router.push("/")
+    // goBack()
   } catch (e) {
     warning.value = '이메일 또는 비밀번호가 일치하지 않습니다'
   }
