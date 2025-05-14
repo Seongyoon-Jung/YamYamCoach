@@ -43,16 +43,13 @@
 
         <!-- 댓글 입력 -->
         <div class="d-flex align-items-center mb-4">
-          <button class="btn btn-link p-0 me-2">
-            <i class="bi bi-camera" style="font-size: 1.4rem"></i>
-          </button>
           <input
             v-model="newComment"
-            type="text"
+            type="form-control text"
             class="form-control me-2"
             placeholder="댓글을 입력하세요."
           />
-          <button class="btn btn-dark px-3" @click="submitComment">확인</button>
+          <button type="button" class="btn btn-dark px-3" style="flex-shrink: 0;" @click="submitComment">확인</button>
         </div>
 
         <!-- 댓글 목록 -->
@@ -68,18 +65,21 @@
                   width="40"
                   height="40"
                 />
-                <div>
-                  <!-- 이름 + 내용 한 줄 -->
-                  <div>
+                <!-- 이름 + 내용 한 줄 -->
+                <div class="d-flex align-items-center">
                     <strong>{{ comment.userName }}</strong>
                     <span class="ms-2">{{ comment.content }}</span>
-                  </div>
                 </div>
+
+                
               </div>
 
               <!-- 오른쪽: 날짜 -->
-              <div class="text-muted small">
+              <div class="text-muted small text-end">
                 {{ formatDate(comment.createdAt) }}
+                <br>
+                <span class="btn btn-link small text-muted p-1">수정</span>
+                <span class="btn btn-link small text-muted p-1">삭제</span>
               </div>
             </div>
           </li>
@@ -96,6 +96,10 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/plugins/axios'
+import { userAccountStore } from '@/store/account'
+
+// pinia store을 사용하겠다
+const accountStore = userAccountStore()
 
 const route = useRoute() // 현재 라우트의 정보 (url 파라미터)
 const router = useRouter() // 라우팅으로 페이지 전환하기 위함
@@ -115,7 +119,7 @@ onMounted(async () => {
   }
 
   try {
-    const res = await axios.get(`/api/board/${id}/comments`)
+    const res = await axios.get(`/api/comment/${id}`)
     comments.value = res.data
     console.log(res.data)
   } catch (err) {
@@ -125,6 +129,26 @@ onMounted(async () => {
 
 const formatDate = (date) => {
   const d = new Date(date)
-  return `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getDate().toString().padStart(2, '0')}`
+  return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${(d.getHours()).toString().padStart(2, '0')}:${(d.getMinutes()).toString().padStart(2, '0')}`
+}
+
+const submitComment = async function() {
+  if(newComment.value === ''){
+    return
+  }
+  const post = {
+    boardId: route.params.id,
+    username : accountStore.username,
+    content : newComment.value,
+  }
+
+
+  try {
+    const res = await axios.post('/api/comment', post)
+    comments.value.unshift(res.data);
+    newComment.value = '';
+  } catch (err) {
+    router.push('/error')
+  }
 }
 </script>
