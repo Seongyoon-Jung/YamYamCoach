@@ -1,6 +1,7 @@
 package com.yamyam.dto.request;
 
 public class CommentRequest {
+	private int commentId;
 	private int boardId;
 	private String username;
 	private String content;
@@ -8,10 +9,19 @@ public class CommentRequest {
 	public CommentRequest() {
 	}
 
-	public CommentRequest(int boardId, String username, String content) {
+	public CommentRequest(int commentId, int boardId, String username, String content) {
+		this.commentId = commentId;
 		this.boardId = boardId;
 		this.username = username;
 		this.content = content;
+	}
+
+	public int getCommentId() {
+		return commentId;
+	}
+
+	public void setCommentId(int commentId) {
+		this.commentId = commentId;
 	}
 
 	public int getBoardId() {
@@ -40,10 +50,9 @@ public class CommentRequest {
 
 	@Override
 	public String toString() {
-		return "CommentRequest [boardId=" + boardId + ", username=" + username + ", content=" + content + "]";
+		return "CommentRequest [commentId=" + commentId + ", boardId=" + boardId + ", username=" + username
+				+ ", content=" + content + "]";
 	}
-	
-	
-	
+
 	
 }

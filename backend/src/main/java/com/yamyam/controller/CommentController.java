@@ -38,4 +38,11 @@ public class CommentController {
 	public ResponseEntity<CommentResponse> saveComment(@RequestBody CommentRequest request){
 		return ResponseEntity.ok(commentService.save(request));
 	}
+	
+	// 댓글 수정
+	@PutMapping("")
+	public ResponseEntity<CommentResponse> modfiyComment(@RequestBody CommentRequest request){
+		
+		return ResponseEntity.ok(commentService.modify(request));
+	}
 }

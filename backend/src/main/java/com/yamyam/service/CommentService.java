@@ -11,4 +11,7 @@ public interface CommentService {
 	
 	//댓글 저장
 	public CommentResponse save(CommentRequest request);
+	
+	//댓글 수정
+	public CommentResponse modify(CommentRequest request);
 }

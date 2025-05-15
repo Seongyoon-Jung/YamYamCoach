@@ -34,6 +34,7 @@ public class CommentServiceImpl implements CommentService{
 		
 		for (CommentEntity comment : list) {
 			data.add(new CommentResponse(
+					comment.getCommentId(),
 					comment.getUser().getUsername(),
 					comment.getContent(),
 					comment.getCreatedAt(),
@@ -53,8 +54,21 @@ public class CommentServiceImpl implements CommentService{
 		
 		
 		CommentEntity commentEntity = commentRepository.save(data);
-		CommentResponse commentResponse = new CommentResponse(request.getUsername(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
+		CommentResponse commentResponse = new CommentResponse(commentEntity.getCommentId() ,request.getUsername(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
 		
+		
+		return commentResponse;
+	}
+
+	@Override
+	public CommentResponse modify(CommentRequest request) {
+		CommentEntity commentEntity = commentRepository.findByCommentId(request.getCommentId());
+		
+		commentEntity.setContent(request.getContent());
+		
+		CommentEntity data = commentRepository.save(commentEntity);
+		
+		CommentResponse commentResponse = new CommentResponse(data.getCommentId() ,request.getUsername(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
 		
 		return commentResponse;
 	}

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class CommentResponse {
 //	board_id, user_id, content, created_at, updated_at
+	private int commentId;
 	private String userName;
 	private String content;
 	private LocalDateTime createdAt;
@@ -12,11 +13,21 @@ public class CommentResponse {
 	public CommentResponse() {
 	}
 
-	public CommentResponse(String userName, String content, LocalDateTime createdAt, LocalDateTime updatedAt) {
+	public CommentResponse(int commentId, String userName, String content, LocalDateTime createdAt,
+			LocalDateTime updatedAt) {
+		this.commentId = commentId;
 		this.userName = userName;
 		this.content = content;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+	}
+
+	public int getCommentId() {
+		return commentId;
+	}
+
+	public void setCommentId(int commentId) {
+		this.commentId = commentId;
 	}
 
 	public String getUserName() {
@@ -50,12 +61,7 @@ public class CommentResponse {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-
-	@Override
-	public String toString() {
-		return "CommentResponse [userName=" + userName + ", content=" + content + ", createdAt=" + createdAt
-				+ ", updatedAt=" + updatedAt + "]";
-	}
-
+	
+	
 	
 }
