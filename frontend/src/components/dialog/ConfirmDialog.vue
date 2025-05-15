@@ -6,7 +6,7 @@
       tabindex="-1"
       role="dialog"
       aria-modal="true"
-      style="display: block;"
+      style="display: block"
       v-if="visible"
     >
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -29,7 +29,49 @@
   </teleport>
 </template>
 
-<script>
+<script setup>
+import { ref, defineExpose } from 'vue'
+
+// 상태 변수 정의
+const visible = ref(false)
+const title = ref('')
+const message = ref('')
+const resolveFn = ref(null)
+
+// open 메서드는 Promise를 반환
+function open({ title: t = '확인', message: m = '' }) {
+  title.value = t
+  message.value = m
+  visible.value = true
+
+  return new Promise((resolve) => {
+    resolveFn.value = resolve
+  })
+}
+
+function confirm() {
+  visible.value = false
+  if (resolveFn.value) {
+    resolveFn.value(true)
+    resolveFn.value = null
+  }
+}
+
+function cancel() {
+  visible.value = false
+  if (resolveFn.value) {
+    resolveFn.value(false)
+    resolveFn.value = null
+  }
+}
+
+// 외부에서 open()을 호출할 수 있도록 노출
+defineExpose({
+  open,
+})
+</script>
+
+<!-- <script>
 export default {
   name: 'ConfirmDialog',
   data() {
@@ -61,7 +103,7 @@ export default {
     },
   },
 };
-</script>
+</script> -->
 
 <style scoped>
 /* 뷰포트 최상단에 뜨도록 fixed + z-index 최상위 계층 */
@@ -85,7 +127,7 @@ export default {
   z-index: 2040;
 }
 
-.modal-content{
-    z-index: 2060;
+.modal-content {
+  z-index: 2060;
 }
 </style>

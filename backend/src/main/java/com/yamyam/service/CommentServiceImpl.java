@@ -72,4 +72,9 @@ public class CommentServiceImpl implements CommentService{
 		
 		return commentResponse;
 	}
+
+	@Override
+	public void delete(CommentRequest request) {
+		commentRepository.deleteById(request.getCommentId());
+	}
 }
