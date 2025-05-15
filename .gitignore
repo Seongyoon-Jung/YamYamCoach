@@ -1,4 +1,7 @@
-/.metadata/
+.metadata/
+.vscode/
+node_modules/
+
 
 # Gradle 캐시 폴더 무시
 backend/.gradle/
