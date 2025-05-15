@@ -10,4 +10,6 @@ import com.yamyam.entity.CommentEntity;
 public interface CommentRepository extends JpaRepository<CommentEntity, Integer>{
 
 	List<CommentEntity> findAllByBoard_BoardIdOrderByCreatedAtDesc(int boardId);
+	
+	CommentEntity findByCommentId(int commentId);
 }

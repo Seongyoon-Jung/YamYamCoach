@@ -61,23 +61,4 @@ public class BoardServiceImpl implements BoardService{
 		
 		return data;
 	}
-
-
-	@Override
-	public List<CommentResponse> getAllComment(int boardId) {
-		
-		List<CommentEntity> list = commentRepository.findAllByBoard_BoardIdOrderByCreatedAtDesc(boardId);
-		List<CommentResponse> data = new ArrayList<>();
-		
-		for (CommentEntity comment : list) {
-			data.add(new CommentResponse(
-					comment.getUser().getUsername(),
-					comment.getContent(),
-					comment.getCreatedAt(),
-					comment.getUpdatedAt()
-					));
-		}
-		
-		return data;
-	}
 }

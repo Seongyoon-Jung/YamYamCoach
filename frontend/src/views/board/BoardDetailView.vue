@@ -49,37 +49,59 @@
             class="form-control me-2"
             placeholder="댓글을 입력하세요."
           />
-          <button type="button" class="btn btn-dark px-3" style="flex-shrink: 0;" @click="submitComment">확인</button>
+          <button
+            type="button"
+            class="btn btn-success px-3"
+            style="flex-shrink: 0"
+            @click="submitComment"
+          >
+            확인
+          </button>
         </div>
 
         <!-- 댓글 목록 -->
         <ul class="list-unstyled">
           <li v-for="(comment, index) in comments" :key="index" class="mb-4 border-bottom pb-3">
-            <div class="d-flex justify-content-between align-items-start">
-              <!-- 왼쪽: 프로필 + 본문 -->
-              <div class="d-flex">
-                <img
-                  :src="comment.avatarUrl || '/default-avatar.png'"
-                  alt="프로필"
-                  class="rounded-circle me-3"
-                  width="40"
-                  height="40"
+            <!-- 왼쪽: 프로필 + 본문 -->
+            <div class="d-flex align-items-center">
+              <img
+                :src="comment.avatarUrl || '/default-avatar.png'"
+                alt="프로필"
+                class="rounded-circle me-3"
+                width="40"
+                height="40"
+              />
+              <!-- 이름 + 내용 한 줄 -->
+              <div class="flex-grow-1 d-flex">
+                <strong class="align-self-center">{{ comment.userName }}</strong>
+                <textarea
+                  v-if="modify[index]"
+                  class="mx-3 flex-grow-1"
+                  v-model="comment.content"
+                  rows="2"
                 />
-                <!-- 이름 + 내용 한 줄 -->
-                <div class="d-flex align-items-center">
-                    <strong>{{ comment.userName }}</strong>
-                    <span class="ms-2">{{ comment.content }}</span>
-                </div>
-
-                
+                <span v-else class="flex-grow-1 ms-2 text-start">{{ comment.content }}</span>
               </div>
 
+              <button
+                v-if="modify[index]"
+                type="button"
+                class="btn btn-success px-2"
+                style="flex-shrink: 0"
+                @click="modifyComment(index)"
+              >
+                수정
+              </button>
               <!-- 오른쪽: 날짜 -->
-              <div class="text-muted small text-end">
+              <div v-else class="text-muted small text-end">
                 {{ formatDate(comment.createdAt) }}
-                <br>
-                <span class="btn btn-link small text-muted p-1">수정</span>
-                <span class="btn btn-link small text-muted p-1">삭제</span>
+                <br />
+                <div v-if="accountStore.username === comment.userName">
+                  <span @click="modifyStart(index)" class="btn btn-link small text-muted py-0 px-1"
+                    >수정</span
+                  >
+                  <span class="btn btn-link small text-muted py-0 px-1">삭제</span>
+                </div>
               </div>
             </div>
           </li>
@@ -106,6 +128,7 @@ const router = useRouter() // 라우팅으로 페이지 전환하기 위함
 const board = ref(null)
 const comments = ref([])
 const newComment = ref('')
+const modify = ref([])
 
 onMounted(async () => {
   const id = route.params.id
@@ -114,6 +137,7 @@ onMounted(async () => {
     const res = await axios.get(`/api/board/${id}`)
     board.value = res.data
     document.title = `${board.value.title} - 냠냠코치`
+    modify.value = new Array(board.value.length).fill(false)
   } catch (err) {
     router.push('/error')
   }
@@ -121,7 +145,6 @@ onMounted(async () => {
   try {
     const res = await axios.get(`/api/comment/${id}`)
     comments.value = res.data
-    console.log(res.data)
   } catch (err) {
     console.log('실패')
   }
@@ -129,24 +152,46 @@ onMounted(async () => {
 
 const formatDate = (date) => {
   const d = new Date(date)
-  return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${(d.getHours()).toString().padStart(2, '0')}:${(d.getMinutes()).toString().padStart(2, '0')}`
+  return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-const submitComment = async function() {
-  if(newComment.value === ''){
+const submitComment = async function () {
+  if (newComment.value === '') {
     return
   }
   const post = {
     boardId: route.params.id,
-    username : accountStore.username,
-    content : newComment.value,
+    username: accountStore.username,
+    content: newComment.value,
   }
-
 
   try {
     const res = await axios.post('/api/comment', post)
-    comments.value.unshift(res.data);
-    newComment.value = '';
+    comments.value.unshift(res.data)
+    modify.value.unshift(false)
+    newComment.value = ''
+  } catch (err) {
+    router.push('/error')
+  }
+}
+
+const modifyStart = function (index) {
+  modify.value[index] = true
+}
+
+const modifyComment = async function (index) {
+  modify.value[index] = false
+
+  const post = {
+    commentId: comments.value[index].commentId,
+    boardId: route.params.id,
+    username: accountStore.username,
+    content: comments.value[index].content,
+  }
+
+  try {
+    const res = await axios.put('/api/comment', post)
+    comments.value[index] = res.data
   } catch (err) {
     router.push('/error')
   }
