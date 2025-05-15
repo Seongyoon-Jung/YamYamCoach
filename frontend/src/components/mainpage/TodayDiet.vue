@@ -4,7 +4,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>오늘의 식단</span>
         <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
-          상세/코스 선택
+          {{ modalButtonText }}
         </button>
       </div>
       <div class="card-body">
@@ -32,7 +32,9 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">식사기록하기 - {{ getCurrentCourseName }}</h5>
+            <h5 class="modal-title">
+              {{ isEditMode ? '식사기록 수정하기' : '식사기록하기' }} - {{ getCurrentCourseName }}
+            </h5>
             <button type="button" class="btn-close" @click="showModal = false"></button>
           </div>
           <div class="modal-body">
@@ -85,6 +87,7 @@
                                 type="checkbox"
                                 :id="`dish-${dish.id}`"
                                 v-model="selectedDishes[dish.id]"
+                                @change="_chartRenderKey++"
                               />
                               <label class="form-check-label" :for="`dish-${dish.id}`">
                                 {{ dish.name }}
@@ -112,7 +115,7 @@
                       :key="`custom-chart-container-${_chartRenderKey}`"
                     >
                       <!-- SVG 기반 누적 막대 그래프 -->
-                      <div class="svg-chart" v-if="selectedDishesNutrients.length > 0">
+                      <div class="svg-chart">
                         <!-- 칼로리 막대 -->
                         <div class="bar-row d-flex align-items-center mb-3">
                           <div class="bar-label" style="width: 80px">칼로리:</div>
@@ -198,19 +201,11 @@
                           </div>
                         </div>
                       </div>
-
-                      <!-- 데이터가 없을 때 -->
-                      <div
-                        v-else
-                        class="no-data-message d-flex justify-content-center align-items-center h-100"
-                      >
-                        <p class="text-muted">음식을 선택하면 영양소 정보가 표시됩니다</p>
-                      </div>
                     </div>
                   </div>
 
                   <!-- 영양소 합계 정보 -->
-                  <div v-if="selectedDishesNutrients.length > 0" class="nutrition-summary mt-4 p-3">
+                  <div class="nutrition-summary mt-4 p-3">
                     <h6 class="mb-3 text-center">총 영양소 합계</h6>
                     <div class="row">
                       <div class="col-6 col-md-4 mb-2">
@@ -287,7 +282,9 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="showModal = false">취소</button>
-            <button type="button" class="btn btn-primary" @click="saveMealRecord">저장</button>
+            <button type="button" class="btn btn-primary" @click="saveMealRecord">
+              {{ isEditMode ? '수정하기' : '저장하기' }}
+            </button>
           </div>
         </div>
       </div>
@@ -307,6 +304,8 @@ const selectedCourses = reactive({})
 const selectAllMeals = ref(false)
 const totalCalories = ref(750)
 const _chartRenderKey = ref(0)
+const userRecords = ref([])
+const isEditMode = ref(false)
 
 const colors = [
   'rgba(255, 99, 132, 0.7)',
@@ -360,33 +359,71 @@ const totalNutrientValues = computed(() => {
 })
 
 const maxValues = computed(() => {
-  const max = { calories: 0, protein: 0, carbohydrate: 0, fat: 0, sugar: 0 }
-  selectedDishesNutrients.value.forEach((dish) => {
-    max.calories = Math.max(max.calories, dish.calories)
-    max.protein = Math.max(max.protein, dish.protein)
-    max.carbohydrate = Math.max(max.carbohydrate, dish.carbohydrate)
-    max.fat = Math.max(max.fat, dish.fat)
-    max.sugar = Math.max(max.sugar, dish.sugar)
-  })
+  // 사용자 요청에 따라 고정 최대값 설정
+  // 칼로리는 2000, 나머지는 300으로 설정
   return {
-    calories: max.calories || 100,
-    protein: max.protein || 20,
-    carbohydrate: max.carbohydrate || 20,
-    fat: max.fat || 20,
-    sugar: max.sugar || 20,
+    calories: 2000,
+    protein: 300,
+    carbohydrate: 300,
+    fat: 300,
+    sugar: 300,
   }
 })
 
 const fetchTodayCourses = async () => {
   try {
+    // 오늘의 코스 정보 가져오기
     const response = await axios.get('/api/courses/today')
     courses.value = response.data.courses
+
+    // 사용자의 이전 기록 가져오기
+    try {
+      const recordsResponse = await axios.get('/api/meal-records/today')
+      userRecords.value = recordsResponse.data || []
+      console.log('사용자의 이전 기록:', userRecords.value)
+
+      // 이전 기록이 있으면 수정 모드로 설정
+      isEditMode.value = userRecords.value.length > 0
+    } catch (error) {
+      console.error('사용자 기록 조회 실패:', error)
+      userRecords.value = []
+      isEditMode.value = false
+    }
+
+    // 모든 선택 상태 초기화
     courses.value.forEach((course) => {
       selectedCourses[course.type] = false
       course.dishes.forEach((dish) => {
         selectedDishes[dish.id] = false
       })
     })
+
+    // 사용자의 이전 기록에 있는 음식들 체크 표시
+    if (userRecords.value.length > 0) {
+      userRecords.value.forEach((record) => {
+        // console.log를 추가하여 실제 데이터 확인
+        console.log('검사할 기록:', record)
+        // 백엔드에서 dishId로 반환될 수 있으므로 둘 다 확인
+        const dishId = record.dishId || record.dish_id
+        console.log('사용할 dish ID:', dishId)
+        if (dishId) {
+          // 문자열로 변환하여 비교 (키가 문자열인 경우가 있을 수 있음)
+          selectedDishes[dishId.toString()] = true
+        }
+      })
+
+      // 코스 선택 상태 업데이트
+      courses.value.forEach((course) => {
+        const allSelected = course.dishes.every((dish) => selectedDishes[dish.id])
+        selectedCourses[course.type] = allSelected
+      })
+
+      // A 또는 B 코스 선택 (이전 기록의 첫 번째 항목 기준)
+      const firstRecord = userRecords.value[0]
+      if (firstRecord?.courseType) {
+        selectedCourse.value = firstRecord.courseType
+      }
+    }
   } catch (error) {
     console.error('오늘의 코스 조회 실패:', error)
   }
@@ -397,6 +434,22 @@ const getDishImage = (dishName) =>
 
 const calculateTotalCalories = (course) => course.dishes.reduce((t, d) => t + d.calorie, 0)
 
+// 중복 기록 정리 함수 추가
+const cleanupRecords = async () => {
+  try {
+    const response = await axios.post('/api/meal-records/cleanup')
+    if (response.data.success) {
+      console.log('기록 정리 완료:', response.data.message)
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('기록 정리 중 오류:', error)
+    return false
+  }
+}
+
+// saveMealRecord 함수 수정
 const saveMealRecord = async () => {
   try {
     // 선택된 음식들만 필터링
@@ -456,43 +509,96 @@ const saveMealRecord = async () => {
       return
     }
 
-    // 백엔드 API 호출
-    const response = await axios.post('/api/meal-records', {
-      courseType: selectedCourse.value,
-      meals: selectedMeals,
-    })
+    // 식단 저장 전에 먼저 정리 API 호출
+    await cleanupRecords()
 
-    if (response.data.success) {
-      alert('식단이 저장되었습니다.')
-      showModal.value = false
-      // 선택 초기화
-      Object.keys(selectedDishes).forEach((key) => {
-        selectedDishes[key] = false
+    // 백엔드 API 호출
+    try {
+      const response = await axios.post('/api/meal-records', {
+        courseType: selectedCourse.value,
+        meals: selectedMeals,
       })
-      // 데이터 새로고침
-      await fetchTodayCourses()
+
+      if (response.data.success) {
+        if (isEditMode.value) {
+          alert('식단이 성공적으로 수정되었습니다.')
+        } else {
+          alert('식단이 성공적으로 저장되었습니다.')
+        }
+        showModal.value = false
+
+        // 수정 후 모달이 다시 열릴 때 최신 데이터 표시를 위해 상태 업데이트
+        isEditMode.value = true
+      }
+    } catch (saveError) {
+      // 중복 키 오류인 경우 정리 후 재시도
+      if (saveError.response?.data?.message?.includes('Duplicate entry')) {
+        console.log('중복 키 오류 발생, 정리 후 재시도')
+        const cleaned = await cleanupRecords()
+
+        if (cleaned) {
+          // 정리 성공 후 저장 재시도
+          try {
+            const retryResponse = await axios.post('/api/meal-records', {
+              courseType: selectedCourse.value,
+              meals: selectedMeals,
+            })
+
+            if (retryResponse.data.success) {
+              if (isEditMode.value) {
+                alert('식단이 성공적으로 수정되었습니다.')
+              } else {
+                alert('식단이 성공적으로 저장되었습니다.')
+              }
+              showModal.value = false
+              isEditMode.value = true
+            }
+          } catch (retryError) {
+            console.error('재시도 중 오류:', retryError)
+            alert('식단 저장에 실패했습니다. 다시 시도해주세요.')
+          }
+        } else {
+          alert('식단 저장에 실패했습니다. 다시 시도해주세요.')
+        }
+      } else {
+        console.error('식단 저장/수정 실패:', saveError)
+        console.error('오류 상세 정보:', saveError.response?.data)
+        alert(saveError.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
+      }
     }
   } catch (error) {
-    console.error('식단 저장 실패:', error)
+    console.error('식단 저장/수정 실패:', error)
     console.error('오류 상세 정보:', error.response?.data)
-    alert(error.response?.data?.message || '식단 저장 중 오류가 발생했습니다.')
+    alert(error.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
   }
 }
 
 onMounted(fetchTodayCourses)
 
 watch(
-  () => selectAllMeals.value,
-  (newValue) => {
-    courses.value.forEach((course) => {
-      selectedCourses[course.type] = newValue
-      course.dishes.forEach((dish) => {
-        selectedDishes[dish.id] = newValue
+  () => showModal.value,
+  (val) => {
+    if (val) {
+      // 모달이 열릴 때마다 항상 최신 데이터 로드
+      fetchTodayCourses().then(() => {
+        console.log('모달 오픈 시 데이터 로드 완료')
+        // 차트 갱신
+        _chartRenderKey.value++
       })
-    })
+    }
   },
 )
 
+// 선택된 코스가 변경되었을 때
+watch(
+  () => selectedCourse.value,
+  () => {
+    // 차트만 갱신
+    _chartRenderKey.value++
+  },
+)
+
+// 선택된 음식들이 변경되었을 때
 watch(
   selectedDishes,
   () => {
@@ -507,24 +613,32 @@ watch(
   { deep: true },
 )
 
+// 전체 선택 체크박스가 변경되었을 때
 watch(
-  () => selectedCourse.value,
-  () => {
+  () => selectAllMeals.value,
+  (newValue) => {
     courses.value.forEach((course) => {
-      course.dishes.forEach((dish) => (selectedDishes[dish.id] = false))
-      selectedCourses[course.type] = false
+      selectedCourses[course.type] = newValue
+      course.dishes.forEach((dish) => {
+        selectedDishes[dish.id] = newValue
+      })
     })
-    selectAllMeals.value = false
-    _chartRenderKey.value++
   },
 )
 
-watch(
-  () => showModal.value,
-  (val) => {
-    if (val) _chartRenderKey.value++
-  },
-)
+// computed 속성 추가 - 기록이 있는지 확인
+const hasRecords = computed(() => {
+  // 비동기 데이터가 로드되기 전에는 false 반환
+  if (!courses.value || courses.value.length === 0) return false
+
+  // userRecords가 있으면 true
+  return userRecords.value && userRecords.value.length > 0
+})
+
+// 모달 타이틀 버튼 텍스트
+const modalButtonText = computed(() => {
+  return hasRecords.value ? '상세보기/수정' : '상세/코스 선택'
+})
 </script>
 
 <style scoped>
