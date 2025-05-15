@@ -3,3 +3,6 @@
 # Gradle 캐시 폴더 무시
 backend/.gradle/
 backend/build/
+
+# Ignore compiled Java classes
+backend/bin/
