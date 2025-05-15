@@ -47,7 +47,7 @@
                       <button
                         class="nav-link"
                         :class="{ active: selectedCourse === 'A' }"
-                        @click="selectedCourse = 'A'"
+                        @click="changeSelectedCourse('A')"
                       >
                         A 코스
                       </button>
@@ -56,7 +56,7 @@
                       <button
                         class="nav-link"
                         :class="{ active: selectedCourse === 'B' }"
-                        @click="selectedCourse = 'B'"
+                        @click="changeSelectedCourse('B')"
                       >
                         B 코스
                       </button>
@@ -88,6 +88,7 @@
                                 :id="`dish-${dish.id}`"
                                 v-model="selectedDishes[dish.id]"
                                 @change="_chartRenderKey++"
+                                :disabled="isOtherCourseSelected(course.type)"
                               />
                               <label class="form-check-label" :for="`dish-${dish.id}`">
                                 {{ dish.name }}
@@ -417,12 +418,6 @@ const fetchTodayCourses = async () => {
         const allSelected = course.dishes.every((dish) => selectedDishes[dish.id])
         selectedCourses[course.type] = allSelected
       })
-
-      // A 또는 B 코스 선택 (이전 기록의 첫 번째 항목 기준)
-      const firstRecord = userRecords.value[0]
-      if (firstRecord?.courseType) {
-        selectedCourse.value = firstRecord.courseType
-      }
     }
   } catch (error) {
     console.error('오늘의 코스 조회 실패:', error)
@@ -509,62 +504,48 @@ const saveMealRecord = async () => {
       return
     }
 
-    // 식단 저장 전에 먼저 정리 API 호출
-    await cleanupRecords()
+    // 식단 저장 전에 먼저 정리 API 호출 (옵션)
+    // await cleanupRecords()
 
-    // 백엔드 API 호출
+    // 백엔드 API 호출 - 수정 모드일 때는 update API를 호출
     try {
-      const response = await axios.post('/api/meal-records', {
-        courseType: selectedCourse.value,
-        meals: selectedMeals,
-      })
+      let response
+      if (isEditMode.value) {
+        // 수정 모드일 때 update API 사용
+        console.log('수정 모드로 API 호출')
+        response = await axios.post('/api/meal-records/update', {
+          courseType: selectedCourse.value,
+          meals: selectedMeals,
+        })
+      } else {
+        // 신규 저장 모드일 때
+        console.log('신규 저장 모드로 API 호출')
+        response = await axios.post('/api/meal-records', {
+          courseType: selectedCourse.value,
+          meals: selectedMeals,
+        })
+      }
 
       if (response.data.success) {
-        if (isEditMode.value) {
-          alert('식단이 성공적으로 수정되었습니다.')
-        } else {
-          alert('식단이 성공적으로 저장되었습니다.')
-        }
+        alert(
+          response.data.message ||
+            (isEditMode.value
+              ? '식단이 성공적으로 수정되었습니다.'
+              : '식단이 성공적으로 저장되었습니다.'),
+        )
         showModal.value = false
 
         // 수정 후 모달이 다시 열릴 때 최신 데이터 표시를 위해 상태 업데이트
         isEditMode.value = true
+
+        // 데이터 갱신
+        fetchTodayCourses()
       }
     } catch (saveError) {
-      // 중복 키 오류인 경우 정리 후 재시도
-      if (saveError.response?.data?.message?.includes('Duplicate entry')) {
-        console.log('중복 키 오류 발생, 정리 후 재시도')
-        const cleaned = await cleanupRecords()
-
-        if (cleaned) {
-          // 정리 성공 후 저장 재시도
-          try {
-            const retryResponse = await axios.post('/api/meal-records', {
-              courseType: selectedCourse.value,
-              meals: selectedMeals,
-            })
-
-            if (retryResponse.data.success) {
-              if (isEditMode.value) {
-                alert('식단이 성공적으로 수정되었습니다.')
-              } else {
-                alert('식단이 성공적으로 저장되었습니다.')
-              }
-              showModal.value = false
-              isEditMode.value = true
-            }
-          } catch (retryError) {
-            console.error('재시도 중 오류:', retryError)
-            alert('식단 저장에 실패했습니다. 다시 시도해주세요.')
-          }
-        } else {
-          alert('식단 저장에 실패했습니다. 다시 시도해주세요.')
-        }
-      } else {
-        console.error('식단 저장/수정 실패:', saveError)
-        console.error('오류 상세 정보:', saveError.response?.data)
-        alert(saveError.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
-      }
+      // 오류 처리
+      console.error('식단 저장/수정 실패:', saveError)
+      console.error('오류 상세 정보:', saveError.response?.data)
+      alert(saveError.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
     }
   } catch (error) {
     console.error('식단 저장/수정 실패:', error)
@@ -573,7 +554,87 @@ const saveMealRecord = async () => {
   }
 }
 
-onMounted(fetchTodayCourses)
+// 모달 타이틀 버튼 텍스트
+const modalButtonText = computed(() => {
+  return hasRecords.value ? '상세보기/수정' : '상세/코스 선택'
+})
+
+// 다른 코스에서 음식이 선택되었는지 확인하는 함수
+const isOtherCourseSelected = (courseType) => {
+  // 현재 보고 있는 코스가 아닌 다른 코스의 체크박스가 선택되어 있는지 확인
+  if (courseType !== selectedCourse.value) {
+    return false // 현재 보고 있는 코스에서는 선택 가능
+  }
+
+  // 다른 코스의 음식 중 하나라도 선택되어 있는지 확인
+  let otherCourseSelected = false
+  courses.value.forEach((course) => {
+    if (course.type !== courseType) {
+      course.dishes.forEach((dish) => {
+        if (selectedDishes[dish.id]) {
+          otherCourseSelected = true
+        }
+      })
+    }
+  })
+
+  return otherCourseSelected
+}
+
+// 코스 변경 시 다른 코스의 선택 항목 초기화
+const changeSelectedCourse = (newCourse) => {
+  // 현재 코스의 음식 중 하나라도 선택되어 있는지 확인
+  let hasCurrentCourseSelection = false
+
+  courses.value.forEach((course) => {
+    if (course.type === selectedCourse.value) {
+      course.dishes.forEach((dish) => {
+        if (selectedDishes[dish.id]) {
+          hasCurrentCourseSelection = true
+        }
+      })
+    }
+  })
+
+  // 현재 코스에 선택된 항목이 있고, 다른 코스로 변경하려고 할 때 확인
+  if (hasCurrentCourseSelection && selectedCourse.value !== newCourse) {
+    if (
+      confirm(
+        `코스를 ${selectedCourse.value} → ${newCourse} 변경하면 선택한 음식이 초기화됩니다. 계속하시겠습니까?`,
+      )
+    ) {
+      // 모든 선택 초기화
+      Object.keys(selectedDishes).forEach((key) => {
+        selectedDishes[key] = false
+      })
+      selectedCourse.value = newCourse
+    }
+  } else {
+    selectedCourse.value = newCourse
+  }
+}
+
+// 초기 코스 설정 (사용자의 기존 기록 기반)
+const setInitialCourse = () => {
+  if (userRecords.value && userRecords.value.length > 0) {
+    // 기존 기록이 있으면 해당 코스 선택
+    const firstRecord = userRecords.value[0]
+    if (firstRecord.courseType) {
+      selectedCourse.value = firstRecord.courseType
+      console.log(`기존 기록 기반으로 ${selectedCourse.value} 코스 선택됨`)
+    }
+  } else {
+    // 기본값은 A 코스
+    selectedCourse.value = 'A'
+  }
+}
+
+onMounted(() => {
+  fetchTodayCourses().then(() => {
+    // 초기 코스 설정
+    setInitialCourse()
+  })
+})
 
 watch(
   () => showModal.value,
@@ -582,6 +643,8 @@ watch(
       // 모달이 열릴 때마다 항상 최신 데이터 로드
       fetchTodayCourses().then(() => {
         console.log('모달 오픈 시 데이터 로드 완료')
+        // 초기 코스 설정
+        setInitialCourse()
         // 차트 갱신
         _chartRenderKey.value++
       })
@@ -592,7 +655,7 @@ watch(
 // 선택된 코스가 변경되었을 때
 watch(
   () => selectedCourse.value,
-  () => {
+  (newValue, oldValue) => {
     // 차트만 갱신
     _chartRenderKey.value++
   },
@@ -633,11 +696,6 @@ const hasRecords = computed(() => {
 
   // userRecords가 있으면 true
   return userRecords.value && userRecords.value.length > 0
-})
-
-// 모달 타이틀 버튼 텍스트
-const modalButtonText = computed(() => {
-  return hasRecords.value ? '상세보기/수정' : '상세/코스 선택'
 })
 </script>
 
