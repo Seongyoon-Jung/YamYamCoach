@@ -100,7 +100,9 @@
                   <span @click="modifyStart(index)" class="btn btn-link small text-muted py-0 px-1"
                     >수정</span
                   >
-                  <span class="btn btn-link small text-muted py-0 px-1">삭제</span>
+                  <span @click="handleDelete(index)" class="btn btn-link small text-muted py-0 px-1"
+                    >삭제</span
+                  >
                 </div>
               </div>
             </div>
@@ -112,6 +114,8 @@
       <p>게시글을 불러오는 중입니다...</p>
     </div>
   </div>
+  <!-- ConfirmDialog 컴포넌트를 ref 로 선언 -->
+  <ConfirmDialog ref="confirmDialog" />
 </template>
 
 <script setup>
@@ -119,6 +123,9 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/plugins/axios'
 import { userAccountStore } from '@/store/account'
+import ConfirmDialog from '@/components/dialog/ConfirmDialog.vue'
+
+const confirmDialog = ref(null)
 
 // pinia store을 사용하겠다
 const accountStore = userAccountStore()
@@ -192,6 +199,27 @@ const modifyComment = async function (index) {
   try {
     const res = await axios.put('/api/comment', post)
     comments.value[index] = res.data
+  } catch (err) {
+    router.push('/error')
+  }
+}
+
+async function handleDelete(index) {
+  const ok = await confirmDialog.value.open({
+    title: '삭제 확인',
+    message: `댓글을 삭제하시겠습니까?`,
+  })
+  if (!ok) return
+
+  const post = {
+    commentId: comments.value[index].commentId,
+  }
+
+  try {
+    const res = await axios.delete('/api/comment', {
+      data: post,
+    })
+    comments.value.splice(index, 1)
   } catch (err) {
     router.push('/error')
   }

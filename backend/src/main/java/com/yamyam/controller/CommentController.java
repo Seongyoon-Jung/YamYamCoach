@@ -45,4 +45,11 @@ public class CommentController {
 		
 		return ResponseEntity.ok(commentService.modify(request));
 	}
+	
+	// 댓글 삭제
+	@DeleteMapping("")
+	public ResponseEntity<?> deleteComment(@RequestBody CommentRequest request){
+		commentService.delete(request);
+		return ResponseEntity.ok().build();
+	}
 }

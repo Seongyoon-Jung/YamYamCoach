@@ -14,4 +14,6 @@ public interface CommentService {
 	
 	//댓글 수정
 	public CommentResponse modify(CommentRequest request);
+	
+	public void delete(CommentRequest request);
 }
