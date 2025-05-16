@@ -63,6 +63,16 @@ public class BoardEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public BoardEntity() {
+	}
+    
+	public BoardEntity(UserEntity user, String title, String content, String imageUrl) {
+		this.user = user;
+		this.title = title;
+		this.content = content;
+		this.imageUrl = imageUrl;
+	}
+
 	@Override
 	public String toString() {
 		return "BoardEntity [boardId=" + boardId + ", user=" + user + ", title=" + title + ", content=" + content

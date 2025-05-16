@@ -27,12 +27,25 @@ const routes = [
     meta: { title: '커뮤니티' },
   },
   {
+    path: '/board/create',
+    name: 'BoardCreateView',
+    component: () => import('../views/board/BoardCreateView.vue'),
+    meta: { title: '작성' },
+  },
+  {
     path: '/board/:id',
     name: 'BoardDetailView',
     component: () => import('../views/board/BoardDetailView.vue'),
     props: true,
     meta: { requiresAuth: true },
   }, // 상세 페이지 라우트
+  {
+    path: '/board/modify/:id',
+    name: 'BoardModifyView',
+    component: () => import('../views/board/BoardModifyView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  },
   {
     path: '/survey',
     name: 'SurveyView',

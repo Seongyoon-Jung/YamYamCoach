@@ -15,8 +15,14 @@
           width="40"
           height="40"
         />
-        <div>
-          <strong>{{ board.userName }}</strong>
+        <div class="flex-grow-1 text-start">
+          <strong>{{ board.username }}</strong>
+        </div>
+        <div v-if="accountStore.username === board.username">
+          <span @click="goToModify" class="btn btn-link small text-muted py-0 px-1">글 수정</span>
+          <span @click="handleBoardDelete(index)" class="btn btn-link small text-muted py-0 px-1"
+            >삭제</span
+          >
         </div>
       </div>
       <!-- 내용 -->
@@ -31,7 +37,7 @@
 
       <!-- 좋아요 -->
       <div class="mb-4 text-muted text-start">
-        좋아요 <strong>{{ board.likeCount }}</strong>
+        조회수 <strong>{{ board.viewCount }}</strong>
       </div>
 
       <hr />
@@ -73,7 +79,7 @@
               />
               <!-- 이름 + 내용 한 줄 -->
               <div class="flex-grow-1 d-flex">
-                <strong class="align-self-center">{{ comment.userName }}</strong>
+                <strong class="align-self-center">{{ comment.username }}</strong>
                 <textarea
                   v-if="modify[index]"
                   class="mx-3 flex-grow-1"
@@ -96,7 +102,7 @@
               <div v-else class="text-muted small text-end">
                 {{ formatDate(comment.createdAt) }}
                 <br />
-                <div v-if="accountStore.username === comment.userName">
+                <div v-if="accountStore.username === comment.username">
                   <span @click="modifyStart(index)" class="btn btn-link small text-muted py-0 px-1"
                     >수정</span
                   >
@@ -141,7 +147,7 @@ onMounted(async () => {
   const id = route.params.id
 
   try {
-    const res = await axios.get(`/api/board/${id}`)
+    const res = await axios.get(`/api/board/${id}?hit=true`)
     board.value = res.data
     document.title = `${board.value.title} - 냠냠코치`
     modify.value = new Array(board.value.length).fill(false)
@@ -223,5 +229,30 @@ async function handleDelete(index) {
   } catch (err) {
     router.push('/error')
   }
+}
+
+async function handleBoardDelete(index) {
+  const ok = await confirmDialog.value.open({
+    title: '삭제 확인',
+    message: `게시글을 삭제하시겠습니까?`,
+  })
+  if (!ok) return
+
+  const post = {
+    boardId: board.value.boardId,
+  }
+
+  try {
+    const res = await axios.delete('/api/board', {
+      data: post,
+    })
+    router.push('/board')
+  } catch (err) {
+    router.push('/error')
+  }
+}
+
+const goToModify = () => {
+  router.push(`/board/modify/${route.params.id}`)
 }
 </script>
