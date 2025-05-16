@@ -34,12 +34,14 @@ async function bootstrap() {
         userId: null,
         username: '',
         isSurveyed: false,
+        role: '',
       })
     } else {
       accountStore.setAccount({
         userId: res.data.userId,
         username: res.data.username,
         isSurveyed: res.data.surveyed,
+        role: res.data.role,
       })
     }
   } catch (e) {

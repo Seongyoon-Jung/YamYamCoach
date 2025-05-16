@@ -61,7 +61,7 @@ public class UserEntity {
     private String dietType;
 
     @Column(name = "role", length = 20, nullable = false)
-    private String role = "USER";
+    private String role = "ROLE_USER";
     
     // 기본 생성자 (필수적으로 필요)
     public UserEntity() {}

@@ -9,6 +9,12 @@ const routes = [
     meta: { title: '홈' },
   },
   {
+    path: '/admin',
+    name: 'AdminView',
+    component: () => import('../views/admin/AdminView.vue'),
+    meta: { title: '관리자페이지', requiresAuth: true, requiresRole: true },
+  },
+  {
     path: '/my',
     name: 'MyView',
     component: () => import('../views/user/MyView.vue'),
@@ -30,7 +36,7 @@ const routes = [
     path: '/board/create',
     name: 'BoardCreateView',
     component: () => import('../views/board/BoardCreateView.vue'),
-    meta: { title: '작성' },
+    meta: { title: '작성', requiresAuth: true },
   },
   {
     path: '/board/:id',
@@ -99,6 +105,11 @@ router.beforeEach((to, from, next) => {
       return next()
     } else {
       return next({ name: 'LoginView' })
+    }
+
+    if (to.meta.requiresRole) {
+      if (accountStore.role === 'ROLE_ADMIN') {
+      }
     }
   }
 
