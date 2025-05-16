@@ -46,7 +46,7 @@ public class AuthServiceImpl implements AuthService{
         
         UserEntity userEntity = userRepository.findByEmail(loginRequestDto.getEmail());
         
-        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
+        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed(),userEntity.getRole());
 
         return currentUserResponse;
         
