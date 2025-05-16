@@ -13,10 +13,8 @@
       <p class="card-text text-truncate-3">{{ board.content }}</p>
     </div>
 
-    <!-- 좋아요 -->
-    <div class="card-footer bg-white border-0 d-flex justify-content-end">
-      <i class="bi bi-heart"></i>
-      <span class="ms-1">{{ board.likeCount }}</span>
+    <div class="mb-4 me-4 text-muted text-end">
+      조회수 <strong>{{ board.viewCount }}</strong>
     </div>
   </div>
 </template>

@@ -15,11 +15,7 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CuteErrorPage',
-}
-</script>
+<script setup></script>
 
 <style scoped>
 .error-page {

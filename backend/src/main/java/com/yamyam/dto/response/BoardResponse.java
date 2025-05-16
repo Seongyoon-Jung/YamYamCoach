@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class BoardResponse {
 	private int boardId;
-	private String userName;
+	private String username;
 	private String title;
 	private String content;
 	private LocalDateTime createdAt;
@@ -16,10 +16,10 @@ public class BoardResponse {
 	public BoardResponse() {
 	}
 
-	public BoardResponse(int boardId, String userName, String title, String content, LocalDateTime createdAt,
+	public BoardResponse(int boardId, String username, String title, String content, LocalDateTime createdAt,
 			LocalDateTime updatedAt, int viewCount, int likeCount, String imageUrl) {
 		this.boardId = boardId;
-		this.userName = userName;
+		this.username = username;
 		this.title = title;
 		this.content = content;
 		this.createdAt = createdAt;
@@ -37,12 +37,12 @@ public class BoardResponse {
 		this.boardId = boardId;
 	}
 
-	public String getUserName() {
-		return userName;
+	public String getUsername() {
+		return username;
 	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public void setUsername(String userName) {
+		this.username = userName;
 	}
 
 	public String getTitle() {

@@ -4,6 +4,10 @@
     <!-- 제목 -->
     <h2 class="text-center mb-4">커뮤니티 게시판</h2>
 
+    <div class="text-end">
+      <router-link class="btn btn-success" to="/board/create">작성</router-link>
+    </div>
+
     <!-- 검색 바 -->
     <div class="d-flex justify-content-center mb-3">
       <div class="input-group w-75">
