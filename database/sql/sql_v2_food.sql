@@ -128,12 +128,6 @@ CREATE TABLE `course_schedule` (
     UNIQUE(schedule_date, course_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `course_schedule` (schedule_date, course_type, course_name) VALUES
-  ('2025-05-10','A','A코스: 우동 & 볶음밥'),
-  ('2025-05-10','B','B코스: 만두 & 샐러드'),
-  ('2025-05-11','A','A코스: 샐러드 백반'),
-  ('2025-05-11','B','B코스: 스테이크 정식');
-
 /* ====================================================================== */
 /* 6. SCHEDULE_DISH – 코스별 세부 메뉴 매핑                               */
 /* ====================================================================== */
@@ -151,18 +145,6 @@ CREATE TABLE `schedule_dish` (
     FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
-  (1,1,1,'메인: 우동'),
-  (1,6,2,'사이드: 볶음밥'),
-  (1,2,3,'반찬: 김치'),
-  (1,7,4,'반찬: 채소볶음'),
-  (1,5,5,'반찬: 야채튀김'),
-  (2,4,1,'메인: 만두'),
-  (2,3,2,'사이드: 샐러드'),
-  (2,8,3,'사이드: 스테이크'),
-  (2,2,4,'반찬: 김치'),
-  (2,1,5,'토핑: 우동');
-
 /* ====================================================================== */
 /* 7. DISH_RECORD – 사용자 섭취 기록                                     */
 /* ====================================================================== */
@@ -179,6 +161,7 @@ CREATE TABLE `dish_record` (
     FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+<<<<<<< Updated upstream
 INSERT INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
   (1,1,1),(1,1,6);
 
@@ -260,6 +243,8 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
  from course_schedule s
  where schedule_date = date(now());
 
+=======
+>>>>>>> Stashed changes
 /* ====================================================================== */
 /* 게시판 및 댓글 작성 테이블                                              */
 /* ====================================================================== */
@@ -328,4 +313,8 @@ INSERT INTO comment (
     1,
     '두 번째 게시글에 달린 첫번째 댓글이에요!',
     NOW(), NOW()
+<<<<<<< Updated upstream
 );
+=======
+);
+>>>>>>> Stashed changes

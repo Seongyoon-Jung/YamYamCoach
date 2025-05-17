@@ -48,6 +48,7 @@ public class CourseService {
                 dishInfo.put("protein", dish.getProteinG());
                 dishInfo.put("fat", dish.getFatG());
                 dishInfo.put("carbohydrate", dish.getCarbohydrateG());
+                dishInfo.put("sugar", dish.getSugarG());
                 dishes.add(dishInfo);
             });
             
