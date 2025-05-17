@@ -33,4 +33,11 @@ public interface DishRecordRepository extends JpaRepository<DishRecord, Integer>
     @Modifying
     @Query(value = "DELETE FROM dish_record WHERE user_id = :userId AND DATE(recorded_at) = CURRENT_DATE()", nativeQuery = true)
     void deleteAllTodayRecordsByUser(@Param("userId") Integer userId);
+
+    // 특정 스케줄의 모든 기록 조회
+    List<DishRecord> findByUserIdAndScheduleId(Integer userId, Integer scheduleId);
+
+    // 특정 스케줄의 모든 기록 삭제
+    @Modifying
+    void deleteByUserIdAndScheduleId(Integer userId, Integer scheduleId);
 }
