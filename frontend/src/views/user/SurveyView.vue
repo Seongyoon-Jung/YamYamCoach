@@ -71,11 +71,11 @@
           <!-- 4) 결과 화면 -->
           <div v-else class="card p-4 shadow-sm text-center result-card">
             <!-- 결과 타입 -->
-            <h3 class="text-primary mb-2">{{ results[dietType - 1].name }}</h3>
+            <h3 class="text-primary mb-2">{{ results[dietType].name }}</h3>
 
             <!-- 간단 설명 (dietType별로 다른 설명을 data나 computed로 관리해도 좋아요) -->
             <p class="mb-4 text-muted">
-              {{ results[dietType - 1].description }}
+              {{ results[dietType].description }}
             </p>
 
             <!-- 이미지: 캐릭터 일러스트 -->

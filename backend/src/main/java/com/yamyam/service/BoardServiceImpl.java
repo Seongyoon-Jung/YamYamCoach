@@ -28,7 +28,8 @@ public class BoardServiceImpl implements BoardService{
 
 	@Override
 	public List<BoardResponse> getAll() {
-		List<BoardEntity> list = boardRepository.findAll();
+
+		List<BoardEntity> list = boardRepository.findAllByOrderByCreatedAtDesc();
 		List<BoardResponse> data = new ArrayList<>();
 		
 		for (BoardEntity board : list) {
