@@ -27,26 +27,23 @@ async function bootstrap() {
 
   try {
     const res = await axios.get('/api/users/me')
-    console.log(res.data)
 
     if (res.data === 'anonymousUser') {
       accountStore.setAccount({
         userId: null,
         username: '',
-        isSurveyed: false,
+        personaId: null,
         role: '',
       })
     } else {
       accountStore.setAccount({
         userId: res.data.userId,
         username: res.data.username,
-        isSurveyed: res.data.surveyed,
+        personaId: res.data.personaId,
         role: res.data.role,
       })
     }
-  } catch (e) {
-    console.error('유저 정보 로딩 실패:', e)
-  }
+  } catch (e) {}
 
   app.use(router).mount('#app')
 }

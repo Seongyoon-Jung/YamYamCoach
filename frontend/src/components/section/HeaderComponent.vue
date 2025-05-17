@@ -108,9 +108,7 @@ async function logout() {
     await axios.post('/api/auth/logout')
     accountStore.clearAccount()
     router.push({ name: 'HomeView' })
-  } catch (e) {
-    alert('로그아웃에 실패했습니다.')
-  }
+  } catch (e) {}
 }
 </script>
 

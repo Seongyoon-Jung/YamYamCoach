@@ -22,7 +22,7 @@ public class DishRecord {
     @Column(length = 1)
     private String courseType; // A/B
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime recordedAt;
 
     public DishRecord() {}

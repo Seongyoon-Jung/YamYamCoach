@@ -43,10 +43,17 @@ public class AuthServiceImpl implements AuthService{
         request.getSession(true)
                .setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                              SecurityContextHolder.getContext());
-        
+        Integer personaId;
         UserEntity userEntity = userRepository.findByEmail(loginRequestDto.getEmail());
+        if(userEntity.getPersona() == null) {
+        	personaId = null;
+        }
+        else{
+        	personaId = userEntity.getPersona().getPersonaId();
+        }
         
-        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed(),userEntity.getRole());
+        
+        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), personaId, userEntity.getRole());
 
         return currentUserResponse;
         

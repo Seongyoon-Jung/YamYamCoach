@@ -56,7 +56,7 @@ const routes = [
     path: '/survey',
     name: 'SurveyView',
     component: () => import('../views/user/SurveyView.vue'),
-    meta: { title: '설문조사' },
+    meta: { title: '설문조사', requiresAuth: true },
   },
   {
     path: '/login',
@@ -105,11 +105,6 @@ router.beforeEach((to, from, next) => {
       return next()
     } else {
       return next({ name: 'LoginView' })
-    }
-
-    if (to.meta.requiresRole) {
-      if (accountStore.role === 'ROLE_ADMIN') {
-      }
     }
   }
 

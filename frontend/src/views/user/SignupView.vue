@@ -119,7 +119,7 @@
                 중복 확인
               </button>
             </div>
-            <span class="text-info warning">※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
+            <span class="text-info warning">※ 2~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
           </div>
 
           <div class="col-md-12">
@@ -520,7 +520,7 @@ function checkPasswordRule() {
 }
 
 function checkUsernameRule() {
-  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/
+  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{2,10}$/
   return pattern.test(result.username)
 }
 </script>
