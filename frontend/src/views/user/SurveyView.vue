@@ -71,11 +71,11 @@
           <!-- 4) 결과 화면 -->
           <div v-else class="card p-4 shadow-sm text-center result-card">
             <!-- 결과 타입 -->
-            <h3 class="text-primary mb-2">{{ results[dietType].name }}</h3>
+            <h3 class="text-primary mb-2">{{ results[dietType - 1].name }}</h3>
 
             <!-- 간단 설명 (dietType별로 다른 설명을 data나 computed로 관리해도 좋아요) -->
             <p class="mb-4 text-muted">
-              {{ results[dietType].description }}
+              {{ results[dietType - 1].description }}
             </p>
 
             <!-- 이미지: 캐릭터 일러스트 -->
@@ -87,9 +87,7 @@
             />
 
             <!-- 메인으로 돌아가기 버튼 -->
-            <router-link to="/home" class="btn btn-outline-secondary">
-              메인으로 돌아가기
-            </router-link>
+            <router-link to="/" class="btn btn-outline-secondary"> 메인으로 돌아가기 </router-link>
           </div>
         </div>
       </div>
@@ -110,7 +108,7 @@ const showIntro = ref(true)
 const showSurvey = ref(false)
 const currentStep = ref(0)
 const questions = ref([])
-const answers = ref(Array(10).fill(null))
+const answers = ref(Array(20).fill(null))
 
 const options = ['전혀 그렇지 않다', '그렇지 않다', '보통이다', '그렇다', '매우 그렇다']
 
@@ -135,8 +133,8 @@ onMounted(async () => {
   try {
     const res = await axios.get('/api/survey/results')
     results.value = res.data
-    console.log(results.value[0])
-    for (let i = 0; i < 10; i++) {
+
+    for (let i = 0; i < results.value.length; i++) {
       descriptions.value[res.data[i].name] = res.data[i].description
     }
   } catch (e) {
@@ -176,7 +174,7 @@ function validate() {
 
 async function submitSurvey() {
   dietType.value = result()
-
+  console.log(dietType.value, 'dietType')
   const data = {
     userId: accountStore.userId,
     personaId: dietType.value,
@@ -192,7 +190,7 @@ async function submitSurvey() {
     .catch((err) => {})
 
   const me = await axios.get('/api/users/me')
-  console.log(me.data)
+
   accountStore.setAccount({
     userId: me.data.userId,
     username: me.data.username,
@@ -203,10 +201,9 @@ async function submitSurvey() {
 
 //설문 결과를 바탕으로 타입을 특정하기 위한 함수
 function result() {
-  const personaList = results.value.map((p) => p.personaId)
+  const modifyAnswer = [0, 2, 5, 8, 10]
 
-  const diseaseList = results.value.map((p) => p.diseaseTags)
-
+  // 질병 초기 점수
   const diseaseScore = {
     obesity: 0,
     diabetes: 0,
@@ -214,63 +211,62 @@ function result() {
     hyperlipidemia: 0,
   }
 
-  const modify_answer = [0, 2, 5, 8, 10] // 5점 척도 변환
-
-  // 질문별 영향도 매핑 (질병 연관도 기준, 실제로는 DB 또는 상수로 분리 권장)
+  // 각 질문이 어떤 질병에 영향을 주는지 정의
   const weightMap = {
     1: ['obesity'],
-    2: ['obesity'],
+    2: ['obesity'], // *감점 질문*
     3: ['obesity'],
     4: ['obesity'],
     5: ['obesity', 'diabetes'],
-    6: ['hyperlipidemia'],
+    6: ['hyperlipidemia'], // *감점 질문*
     7: [],
     8: ['obesity', 'hyperlipidemia'],
     9: ['obesity', 'diabetes'],
-    10: ['diabetes'],
+    10: ['diabetes'], // *감점 질문*
     11: [],
     12: ['obesity', 'hypertension'],
     13: ['obesity'],
-    14: ['obesity'],
-    15: ['hypertension', 'diabetes'],
+    14: ['obesity'], // *감점 질문*
+    15: ['hypertension', 'diabetes'], // *감점 질문*
     16: ['obesity', 'diabetes', 'hypertension', 'hyperlipidemia'],
     17: ['hypertension'],
     18: ['hypertension', 'hyperlipidemia'],
     19: ['hypertension', 'hyperlipidemia'],
-    20: [],
+    20: [], // *감점 질문*
   }
 
-  // 0~4 (5점 척도)로 구성된 answers 배열이 있다고 가정
+  // 감점 기준 질문 번호
+  const negativeQuestions = [2, 6, 10, 14, 15, 20]
+
+  // 점수 계산
   for (let i = 0; i < 20; i++) {
-    const questionIndex = i + 1
-    const answerScore = modify_answer[answers.value[i]]
-    const related = weightMap[questionIndex]
+    const questionIdx = i + 1
+    const score = modifyAnswer[answers.value[i]]
+    const related = weightMap[questionIdx]
 
     for (const disease of related) {
-      if ([2, 6, 10, 14, 15, 20].includes(questionIndex)) {
-        // 긍정적 응답이 높은 점수를 주는 항목
-        diseaseScore[disease] -= answerScore
+      if (negativeQuestions.includes(questionIdx)) {
+        diseaseScore[disease] -= score
       } else {
-        diseaseScore[disease] += answerScore
+        diseaseScore[disease] += score
       }
     }
   }
 
-  // 점수 기준에 따라 질병 위험군 추정 (가중치 기준은 실제 분석에 따라 조정)
+  // 위험군 추출
   const riskDiseases = Object.entries(diseaseScore)
     .filter(([_, score]) => score >= 20)
-    .map(([key]) => key)
+    .map(([d]) => d)
+    .sort()
+    .join(',')
 
-  // 페르소나 매핑
+  // 결과 페르소나 매핑 (results.value에서 동적으로 구성)
   const personaMap = {}
-
-  for (let i = 0; i < results.value.length; i++) {
-    personaMap[results.value[i].diseaseTags] = results.value[i].personaId
+  for (const p of results.value) {
+    personaMap[p.diseaseTags || ''] = p.personaId
   }
 
-  const key = riskDiseases.sort().join(',')
-
-  return personaMap[key] || 1
+  return personaMap[riskDiseases] || 1 // 기본형: 헬시 히어로
 }
 </script>
 
