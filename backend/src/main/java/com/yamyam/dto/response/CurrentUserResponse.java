@@ -1,19 +1,22 @@
 package com.yamyam.dto.response;
 
+import com.yamyam.entity.PersonaEntity;
+
 public class CurrentUserResponse {
 	private int userId;
 	private String username;
-	private boolean isSurveyed;
+	private Integer personaId;
+	private String role;
 	
 	public CurrentUserResponse() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public CurrentUserResponse(int userId, String username, boolean isSurveyed) {
-		super();
+	public CurrentUserResponse(int userId, String username, Integer personaId, String role) {
 		this.userId = userId;
 		this.username = username;
-		this.isSurveyed = isSurveyed;
+		this.personaId = personaId;
+		this.role = role;
 	}
 
 	public int getUserId() {
@@ -32,20 +35,25 @@ public class CurrentUserResponse {
 		this.username = username;
 	}
 
-	public boolean isSurveyed() {
-		return isSurveyed;
+	public Integer getPersonaId() {
+		return personaId;
 	}
 
-	public void setSurveyed(boolean isSurveyed) {
-		this.isSurveyed = isSurveyed;
+	public void setPersonaId(Integer personaId) {
+		this.personaId = personaId;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
 	}
 
 	@Override
 	public String toString() {
-		return "LoginResponse [userId=" + userId + ", username=" + username + ", isSurveyed=" + isSurveyed + "]";
+		return "CurrentUserResponse [userId=" + userId + ", username=" + username + ", personaId=" + personaId
+				+ ", role=" + role + "]";
 	}
-
-	
-	
-	
 }

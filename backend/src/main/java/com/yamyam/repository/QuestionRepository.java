@@ -11,6 +11,5 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Intege
 	
 	//질문리스트를 뽑기 위한 메서드
 	List<QuestionEntity> findAllByStepLevel(int stepLevel);
-	
-	
+
 }

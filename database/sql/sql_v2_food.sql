@@ -154,6 +154,7 @@ CREATE TABLE `dish_record` (
     user_id     INT           NOT NULL,
     schedule_id INT           NOT NULL,
     dish_id     INT           NOT NULL,
+    course_type CHAR(1),      -- A 또는 B 코스 타입 추가
     recorded_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, schedule_id, dish_id),
     FOREIGN KEY (user_id)     REFERENCES `user`(user_id)          ON DELETE CASCADE,
@@ -161,9 +162,13 @@ CREATE TABLE `dish_record` (
     FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-<<<<<<< Updated upstream
+
 INSERT INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
   (1,1,1),(1,1,6);
+
+INSERT INTO `dish_record` (user_id, schedule_id, dish_id, course_type) VALUES
+  (1, 1, 1, 'A'), (1, 1, 6, 'A');
+
 
 /* ====================================================================== */
 /* 8. TODAY=2025-05-12용 추가 더미 & A코스 선택 기록(user_id=4)            */
@@ -186,9 +191,9 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
   (@schedA,3,3,'사이드: 샐러드');
 
 -- user_id=4가 today A코스에서 dish_id 1,3을 체크
-INSERT IGNORE INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
-  (@user_id,@schedA,1),
-  (@user_id,@schedA,3);
+INSERT IGNORE INTO `dish_record` (user_id, schedule_id, dish_id, course_type) VALUES
+  (@user_id, @schedA, 1, 'A'),
+  (@user_id, @schedA, 3, 'A');
   
   
 # 오늘 식단 넣기
@@ -243,8 +248,7 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
  from course_schedule s
  where schedule_date = date(now());
 
-=======
->>>>>>> Stashed changes
+
 /* ====================================================================== */
 /* 게시판 및 댓글 작성 테이블                                              */
 /* ====================================================================== */
@@ -287,7 +291,7 @@ INSERT INTO board (
     NOW(), NOW(),
     10,
     1,
-    'https://example.com/image1.jpg'
+    'https://cdn.pixabay.com/photo/2020/03/16/12/46/food-4936947_1280.jpg'
 ),
 (
     1,
@@ -296,7 +300,7 @@ INSERT INTO board (
     NOW(), NOW(),
     0,
     0,
-    'https://example.com/image2.jpg'
+    'https://cdn.pixabay.com/photo/2021/11/01/15/52/spring-roll-6760871_1280.jpg'
 );
 
 INSERT INTO comment (
@@ -309,12 +313,14 @@ INSERT INTO comment (
     NOW(), NOW()
 ),
 (
-    2,
+    1,
     1,
     '두 번째 게시글에 달린 첫번째 댓글이에요!',
     NOW(), NOW()
-<<<<<<< Updated upstream
+
 );
-=======
+
 );
->>>>>>> Stashed changes
+);
+
+select * from board;

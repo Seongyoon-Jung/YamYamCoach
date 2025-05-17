@@ -1,27 +1,42 @@
 <!-- src/components/PostCard.vue -->
 <template>
-  <div class="card h-100 shadow-sm border-0">
+  <div class="card h-100 shadow-sm border-0" @click="goToDetail" style="cursor: pointer">
     <!-- 대표 이미지 -->
-    <img :src="post.image" class="card-img-top" alt="post image" />
+    <img :src="board.imageUrl" class="card-img-top" alt="post image" />
 
     <!-- 카드 본문 -->
     <div class="card-body">
-      <div class="d-flex justify-content-between mb-2">
-        <div class="fw-semibold">{{ post.author }}</div>
-        <small class="text-muted">{{ post.date }}</small>
+      <div class="d-flex align-items-center mb-2">
+        <img
+          src="/default-avatar.png"
+          alt="프로필"
+          class="rounded-circle me-2"
+          width="40"
+          height="40"
+        />
+        <div class="flex-grow-1 text-start">
+          <strong>{{ board.username }}</strong>
+          <div class="text-muted small text-start">
+            {{ formatDate(board.createdAt) }}
+          </div>
+        </div>
       </div>
-      <p class="card-text text-truncate-3">{{ post.excerpt }}</p>
+      <hr />
+      <div class="text-start">
+        <p class="card-text text-start fw-bold text-truncate-1">{{ board.title }}</p>
+        <p class="card-text text-truncate-3">{{ board.content }}</p>
+      </div>
     </div>
 
-    <!-- 좋아요 -->
-    <div class="card-footer bg-white border-0 d-flex justify-content-end">
-      <i class="bi bi-heart"></i>
-      <span class="ms-1">{{ post.likes }}</span>
+    <div class="mb-4 me-4 text-muted text-end">
+      조회수 <strong>{{ board.viewCount }}</strong>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+
 const props = defineProps({
   board: {
     type: Object,
@@ -29,19 +44,15 @@ const props = defineProps({
   },
 })
 
-// 필요한 필드를 개별 ref 로 분리할 경우
-// const { image, author, date, excerpt, likes } = toRefs(props.post)
-</script>
+const router = useRouter()
 
-<script>
-export default {
-  name: 'PostCard',
-  props: {
-    post: {
-      type: Object,
-      required: true,
-    },
-  },
+const goToDetail = () => {
+  router.push(`/board/${props.board.boardId}`)
+}
+
+const formatDate = (date) => {
+  const d = new Date(date)
+  return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 </script>
 

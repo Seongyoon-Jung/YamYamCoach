@@ -1,7 +1,0 @@
-package com.yamyam.dto.response;
-
-public class LoginResponseDto {
-	private String username;
-
-	
-}

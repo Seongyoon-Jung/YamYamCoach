@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yamyam.dto.request.SurveyRequest;
+import com.yamyam.dto.response.PersonaResponse;
 import com.yamyam.dto.response.QuestionResponse;
 import com.yamyam.service.SurveyService;
 
@@ -27,12 +28,18 @@ public class SurveyController {
 	// 설문조사 목록 리스트 반환
 	@GetMapping("/questions")
 	public ResponseEntity<List<QuestionResponse>> questions(@RequestParam("stepLevel") int stepLevel) {
-		
 		return ResponseEntity.ok(surveyService.getAllQuestions(stepLevel));
 	}
 	
+	// 설문조사 걸과 리스트 반환
+	@GetMapping("/results")
+	public ResponseEntity<List<PersonaResponse>> results() {
+		return ResponseEntity.ok(surveyService.getAllResults());
+	}
+	
+	
 	//설문조사 결과 저장
-	@PostMapping("/submit")
+	@PostMapping("/")
 	public ResponseEntity<?> submit(@RequestBody SurveyRequest surveyRequest) {
 		if(surveyService.insertSurveyResult(surveyRequest)) {
 			return ResponseEntity.ok().build();

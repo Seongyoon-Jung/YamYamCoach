@@ -92,6 +92,7 @@ public class UserController {
 	@GetMapping("/me")
 	// @AuthenticationPrincipal SecurityAccount principal 현재 로그인 정보를 불러오기 위한 것
 	public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal SecurityAccount principal) {
+		System.out.println("hello : " +principal);
 		if(principal == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
