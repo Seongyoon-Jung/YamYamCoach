@@ -212,6 +212,24 @@ public class DishRecordController {
         throw new IllegalArgumentException("지원하지 않는 " + fieldName + " 타입입니다: " + value.getClass().getName() + " (값: '" + value + "')");
     }
 
+    // 5일간의 식단 기록 조회 엔드포인트 추가
+    @GetMapping("/last-5-days")
+    public ResponseEntity<?> getLast5DaysRecords(@AuthenticationPrincipal SecurityAccount principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "인증되지 않은 사용자입니다."));
+        }
+        try {
+            int userId = principal.getUserId();
+            List<Map<String, Object>> records = dishRecordService.getLast5DaysRecords(userId);
+            logger.info("사용자 ID [{}]의 5일간 식단 영양소 기록 조회 완료: {} 일치", userId, records.size());
+            return ResponseEntity.ok(records);
+        } catch (Exception e) {
+            logger.error("5일간 식단 기록 조회 중 오류 발생 (사용자 ID: {})", principal.getUserId(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "기록 조회 중 오류 발생: " + e.getMessage()));
+        }
+    }
+
     // toggle 및 cleanup 엔드포인트는 현재 프론트엔드 사용 방식과 맞지 않거나 불필요해 보이므로 검토 후 제거 또는 수정
     // @PostMapping("/toggle") ...
     // @PostMapping("/cleanup") ...
