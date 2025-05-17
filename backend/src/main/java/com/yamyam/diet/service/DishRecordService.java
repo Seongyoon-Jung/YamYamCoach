@@ -2,9 +2,11 @@ package com.yamyam.diet.service;
 
 import com.yamyam.dto.request.DishRecordRequest;
 import com.yamyam.diet.entity.CourseSchedule;
+import com.yamyam.diet.entity.Dish;
 import com.yamyam.diet.entity.DishRecord;
 import com.yamyam.diet.repository.CourseScheduleRepository;
 import com.yamyam.diet.repository.DishRecordRepository;
+import com.yamyam.diet.repository.DishRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +17,11 @@ import org.springframework.transaction.annotation.Propagation;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +36,9 @@ public class DishRecordService {
 
     @Autowired
     private CourseScheduleRepository courseScheduleRepository;
+
+    @Autowired
+    private DishRepository dishRepository;
 
     /**
      * 특정 사용자의 오늘 모든 기록을 삭제합니다.
@@ -357,5 +365,80 @@ public class DishRecordService {
             logger.error("식단 수정 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException("식단 수정 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    // 5일간의 기록을 가져오는 메소드 추가
+    public List<Map<String, Object>> getLast5DaysRecords(Integer userId) {
+        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+        LocalDateTime startOf5DaysAgo = endOfToday.minusDays(4).withHour(0).withMinute(0).withSecond(0);
+        
+        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, startOf5DaysAgo, endOfToday);
+        
+        // 날짜별로 그룹화하여 결과 생성
+        Map<String, Map<String, Double>> dailyNutrients = new HashMap<>();
+        
+        // 일자별, 영양소별 합계 데이터 구성
+        for (DishRecord record : records) {
+            // 날짜만 추출 (yyyy-MM-dd 형식)
+            String dateKey = record.getRecordedAt().toLocalDate().toString();
+            
+            // 해당 날짜의 영양소 맵을 가져오거나 새로 생성
+            Map<String, Double> dayNutrients = dailyNutrients.getOrDefault(dateKey, new HashMap<>());
+            
+            // 음식 정보 조회
+            Optional<Dish> dishOpt = dishRepository.findById(record.getDishId());
+            
+            if (dishOpt.isPresent()) {
+                Dish dish = dishOpt.get();
+                
+                // 영양소 값 누적
+                dayNutrients.put("calories", dayNutrients.getOrDefault("calories", 0.0) + (dish.getCalorieKcal() != null ? dish.getCalorieKcal() : 0.0));
+                dayNutrients.put("protein", dayNutrients.getOrDefault("protein", 0.0) + (dish.getProteinG() != null ? dish.getProteinG() : 0.0));
+                dayNutrients.put("carbohydrate", dayNutrients.getOrDefault("carbohydrate", 0.0) + (dish.getCarbohydrateG() != null ? dish.getCarbohydrateG() : 0.0));
+                dayNutrients.put("fat", dayNutrients.getOrDefault("fat", 0.0) + (dish.getFatG() != null ? dish.getFatG() : 0.0));
+                dayNutrients.put("sugar", dayNutrients.getOrDefault("sugar", 0.0) + (dish.getSugarG() != null ? dish.getSugarG() : 0.0));
+            }
+            
+            dailyNutrients.put(dateKey, dayNutrients);
+        }
+        
+        // 날짜순으로 정렬된 결과 리스트 생성
+        List<String> dateKeys = new ArrayList<>(dailyNutrients.keySet());
+        Collections.sort(dateKeys);
+        
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String dateKey : dateKeys) {
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("date", dateKey);
+            dayData.put("nutrients", dailyNutrients.get(dateKey));
+            result.add(dayData);
+        }
+        
+        // 최근 5일 데이터가 없는 날짜는 빈 값으로 채우기
+        LocalDate today = LocalDate.now();
+        for (int i = 0; i < 5; i++) {
+            LocalDate dateToCheck = today.minusDays(i);
+            String dateKey = dateToCheck.toString();
+            
+            if (!dailyNutrients.containsKey(dateKey)) {
+                Map<String, Object> emptyDayData = new HashMap<>();
+                emptyDayData.put("date", dateKey);
+                
+                Map<String, Double> emptyNutrients = new HashMap<>();
+                emptyNutrients.put("calories", 0.0);
+                emptyNutrients.put("protein", 0.0);
+                emptyNutrients.put("carbohydrate", 0.0);
+                emptyNutrients.put("fat", 0.0);
+                emptyNutrients.put("sugar", 0.0);
+                
+                emptyDayData.put("nutrients", emptyNutrients);
+                result.add(emptyDayData);
+            }
+        }
+        
+        // 날짜순 정렬
+        result.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
+        
+        return result;
     }
 }

@@ -306,6 +306,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import axios from '@/plugins/axios'
+import eventBus from '@/utils/eventBus'
 
 // 개발 환경에서는 true, 운영 환경에서는 false로 설정
 const isDebugMode = ref(false) // 디버깅 모드 설정 (개발 중에만 true로 변경)
@@ -535,6 +536,9 @@ const handleSave = async () => {
       showModal.value = false
       isEditMode.value = true
       fetchTodayCourses() // 데이터 갱신
+      
+      // 이벤트 발생 - 영양 데이터 업데이트 알림
+      eventBus.emit('meal-data-updated')
     } else {
       alert(response.data.message || '식단 저장에 실패했습니다.')
     }
@@ -573,6 +577,9 @@ const handleUpdate = async () => {
       alert(response.data.message || '식단이 성공적으로 수정되었습니다.')
       showModal.value = false
       fetchTodayCourses() // 데이터 갱신
+      
+      // 이벤트 발생 - 영양 데이터 업데이트 알림
+      eventBus.emit('meal-data-updated')
     } else {
       alert(response.data.message || '식단 수정에 실패했습니다.')
     }
