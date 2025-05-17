@@ -146,7 +146,6 @@ public class DishRecordService {
         } catch (Exception e) {
             System.err.println("레코드 저장 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
-            throw e;
         }
     }
 

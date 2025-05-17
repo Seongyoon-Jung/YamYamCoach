@@ -37,10 +37,10 @@ public class BoardEntity {
 	@Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 	
-	@Column(name = "created_at", updatable = false)
+	@Column(name = "created_at", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @Column(name = "view_count")

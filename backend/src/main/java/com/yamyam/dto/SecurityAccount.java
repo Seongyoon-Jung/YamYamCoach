@@ -6,6 +6,7 @@ import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.yamyam.entity.PersonaEntity;
 import com.yamyam.entity.UserEntity;
 
 
@@ -56,8 +57,8 @@ public class SecurityAccount implements UserDetails{
 		return userEntity.getUserId();
 	}
 	
-	public boolean isSurveyed() {
-		return userEntity.isSurveyed();
+	public PersonaEntity getPersona() {
+		return userEntity.getPersona();
 	}
 	
 }
