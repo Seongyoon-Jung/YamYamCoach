@@ -42,3 +42,6 @@ out/
 # Gradle build cache
 .gradle/
 build/
+
+# API KEY 숨기기
+application-API-KEY.properties
