@@ -1,4 +1,5 @@
 -- persona
+SELECT * FROM `persona`;
 INSERT INTO persona (persona_id, name, disease_tags, description, recommendation) VALUES
 (0, '헬시 히어로', '', '건강 관리가 잘 되어 있는 이상적인 상태입니다. 식단과 운동 습관이 균형 잡혀 있습니다.', '지금의 습관을 유지하세요! 정기 검진과 꾸준한 활동을 추천합니다.'),
 (1, '야식폭주 초식이', 'obesity', '과식, 야식, 운동 부족으로 체중 증가 위험이 있는 타입입니다.', '저녁 식사 이후 간식을 줄이고, 하루 30분 이상 걷기 운동을 시작해보세요.'),
@@ -21,8 +22,8 @@ SELECT * FROM user;
 INSERT INTO `user`
   (email, password, username, gender, birth_date, height, weight, target_weight, role, persona_id)
 VALUES
-  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자1', 0, '2000-01-01', '180', '90', '40','ROLE_ADIMN', NULL),
-  ('admin1@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '건강이1', 0, '2000-01-01', '180', '90', '40','ROLE_USER', NULL);
+  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자', 0, '2000-01-01', '180', '90', '40','ROLE_ADIMN', NULL),
+  ('admin1@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '건강이', 0, '2000-01-01', '180', '90', '40','ROLE_USER', NULL);
 
 -- question
 INSERT INTO `question` (step_level, question_text) VALUES
@@ -93,8 +94,8 @@ INSERT INTO `dish_record` (user_id, schedule_id, dish_id, course_type) VALUES
 INSERT INTO board (
     user_id, title, content, view_count, like_count, image_url
 ) VALUES
-(1, '첫 번째 게시글 제목', '안녕하세요! 이것은 첫 번째 게시글 내용입니다.', 10, 1, 'https://cdn.pixabay.com/photo/2020/03/16/12/46/food-4936947_1280.jpg'),
-(2, '두 번째 게시글 제목', '이것은 두 번째 게시글 내용입니다', 0, 0, 'https://cdn.pixabay.com/photo/2021/11/01/15/52/spring-roll-6760871_1280.jpg');
+(1, '첫 번째 게시글 제목', '안녕하세요! 이것은 세 번째 게시글 내용입니다.', 10, 1, 'https://cdn.pixabay.com/photo/2020/03/16/12/46/food-4936947_1280.jpg'),
+(2, '두 번째 게시글 제목', '이것은 네 번째 게시글 내용입니다', 0, 0, 'https://cdn.pixabay.com/photo/2021/11/01/15/52/spring-roll-6760871_1280.jpg');
 
 -- comment
 INSERT INTO comment (
