@@ -402,38 +402,30 @@ public class DishRecordService {
             dailyNutrients.put(dateKey, dayNutrients);
         }
         
-        // 날짜순으로 정렬된 결과 리스트 생성
-        List<String> dateKeys = new ArrayList<>(dailyNutrients.keySet());
-        Collections.sort(dateKeys);
-        
+        // 최근 5일 데이터 준비 (오늘부터 5일 전까지)
         List<Map<String, Object>> result = new ArrayList<>();
-        for (String dateKey : dateKeys) {
+        LocalDate today = LocalDate.now();
+        
+        // 최근 5일치 날짜를 먼저 생성
+        for (int i = 4; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            String dateKey = date.toString();
+            
             Map<String, Object> dayData = new HashMap<>();
             dayData.put("date", dateKey);
-            dayData.put("nutrients", dailyNutrients.get(dateKey));
-            result.add(dayData);
-        }
-        
-        // 최근 5일 데이터가 없는 날짜는 빈 값으로 채우기
-        LocalDate today = LocalDate.now();
-        for (int i = 0; i < 5; i++) {
-            LocalDate dateToCheck = today.minusDays(i);
-            String dateKey = dateToCheck.toString();
             
-            if (!dailyNutrients.containsKey(dateKey)) {
-                Map<String, Object> emptyDayData = new HashMap<>();
-                emptyDayData.put("date", dateKey);
-                
-                Map<String, Double> emptyNutrients = new HashMap<>();
-                emptyNutrients.put("calories", 0.0);
-                emptyNutrients.put("protein", 0.0);
-                emptyNutrients.put("carbohydrate", 0.0);
-                emptyNutrients.put("fat", 0.0);
-                emptyNutrients.put("sugar", 0.0);
-                
-                emptyDayData.put("nutrients", emptyNutrients);
-                result.add(emptyDayData);
-            }
+            // 해당 날짜의 데이터가 있으면 사용, 없으면 빈 값 (0) 설정
+            Map<String, Double> nutrients = dailyNutrients.getOrDefault(dateKey, new HashMap<>());
+            
+            // 모든 필요한 영양소 키가 있는지 확인하고, 없으면 0으로 설정
+            if (!nutrients.containsKey("calories")) nutrients.put("calories", 0.0);
+            if (!nutrients.containsKey("protein")) nutrients.put("protein", 0.0);
+            if (!nutrients.containsKey("carbohydrate")) nutrients.put("carbohydrate", 0.0);
+            if (!nutrients.containsKey("fat")) nutrients.put("fat", 0.0);
+            if (!nutrients.containsKey("sugar")) nutrients.put("sugar", 0.0);
+            
+            dayData.put("nutrients", nutrients);
+            result.add(dayData);
         }
         
         // 날짜순 정렬

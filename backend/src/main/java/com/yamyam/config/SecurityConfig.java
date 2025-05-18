@@ -26,6 +26,7 @@ public class SecurityConfig {
 			
 			.authorizeHttpRequests((auth) -> auth
 						.requestMatchers("/","/api/auth/login","/api/users","/api/users/check-email","/api/users/check-username","/api/board").permitAll()// /,/login은 모든 사용자가 접근 가능
+						.requestMatchers("/api/health-log/**").permitAll() // health-log API는 모든 사용자 접근 가능 (테스트용)
 						.requestMatchers("/my/**").hasAnyRole("USER") // my/ 뒤에 페이지는 사용자가 접근 가능
 						.anyRequest().authenticated() // 위에 두개의 이외는 전부 불가능
 						)

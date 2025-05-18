@@ -313,8 +313,20 @@ INSERT INTO comment (
     1,
     '두 번째 게시글에 달린 첫번째 댓글이에요!',
     NOW(), NOW()
-<<<<<<< Updated upstream
 );
-=======
-);
->>>>>>> Stashed changes
+
+
+DROP TABLE IF EXISTS `daily_health_log`;
+CREATE TABLE `daily_health_log` (
+    log_id              INT PRIMARY KEY AUTO_INCREMENT,
+    user_id             INT NOT NULL,
+    log_date            DATE NOT NULL DEFAULT (CURDATE()),  -- 괄호 추가 및 CURDATE() 함수 사용
+    exercise_minutes    INT DEFAULT 0,                      -- 운동시간 (분)
+    water_intake_ml     INT DEFAULT 0,                      -- 물 섭취량 (ml)
+    sleep_minutes       INT DEFAULT 0,                      -- 수면시간 (분)
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    UNIQUE (user_id, log_date),                             -- 사용자별 날짜당 하나의 기록만 허용
+    FOREIGN KEY (user_id) REFERENCES `user`(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
