@@ -1,0 +1,5 @@
+flask==2.3.3
+Werkzeug==2.3.7
+jsonify==0.5
+python-dotenv==1.0.0
+flask-cors==4.0.0 
