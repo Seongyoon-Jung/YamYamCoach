@@ -7,7 +7,8 @@ import jakarta.persistence.*;
 public class PersonaEntity {
 
     @Id
-    @Column(name = "persona_id", length = 10)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "persona_id")
     private Integer personaId;
 
     @Column(nullable = false, length = 50)
