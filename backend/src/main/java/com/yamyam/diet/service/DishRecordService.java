@@ -139,7 +139,12 @@ public class DishRecordService {
             deleteTodayRecords(userId);
             
             // 트랜잭션이 제대로 적용되도록 잠시 대기
-            Thread.sleep(100);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("처리 중 인터럽트가 발생했습니다.", ie);
+            }
             
             // 새로운 기록 저장 준비
             List<DishRecord> newRecords = new ArrayList<>();
@@ -163,7 +168,7 @@ public class DishRecordService {
                     System.out.println("중복 레코드 발견, 건너뜀: " + record);
                 }
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("레코드 저장 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
         }
