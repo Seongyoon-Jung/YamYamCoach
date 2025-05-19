@@ -230,6 +230,28 @@ public class DishRecordController {
         }
     }
 
+    // 오늘의 영양소 정보 조회 엔드포인트 추가
+    @GetMapping("/nutrients/today")
+    public ResponseEntity<?> getTodayNutrients(@AuthenticationPrincipal SecurityAccount principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                   .body(Map.of("success", false, "message", "인증되지 않은 사용자입니다."));
+        }
+        try {
+            int userId = principal.getUserId();
+            Map<String, Object> nutrients = dishRecordService.getTodayNutrients(userId);
+            logger.info("사용자 ID [{}]의 오늘 영양소 정보 조회 완료", userId);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "nutrients", nutrients
+            ));
+        } catch (Exception e) {
+            logger.error("오늘의 영양소 정보 조회 중 오류 발생 (사용자 ID: {})", principal.getUserId(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "영양소 정보 조회 중 오류 발생: " + e.getMessage()));
+        }
+    }
+
     // toggle 및 cleanup 엔드포인트는 현재 프론트엔드 사용 방식과 맞지 않거나 불필요해 보이므로 검토 후 제거 또는 수정
     // @PostMapping("/toggle") ...
     // @PostMapping("/cleanup") ...

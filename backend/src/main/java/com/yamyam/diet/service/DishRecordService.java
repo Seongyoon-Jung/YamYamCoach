@@ -433,4 +433,54 @@ public class DishRecordService {
         
         return result;
     }
+
+    /**
+     * 오늘 사용자가 섭취한 영양소 정보를 조회합니다.
+     */
+    public Map<String, Object> getTodayNutrients(Integer userId) {
+        // 오늘의 시작과 끝 시간 계산
+        LocalDateTime startOfToday = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+        
+        // 오늘의 식단 기록 조회
+        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, startOfToday, endOfToday);
+        
+        // 영양소 합계를 위한 변수 초기화
+        double totalCalories = 0.0;
+        double totalProtein = 0.0;
+        double totalCarbohydrate = 0.0;
+        double totalFat = 0.0;
+        double totalSugar = 0.0;
+        
+        // 음식별 영양소 합산
+        for (DishRecord record : records) {
+            // 음식 정보 조회
+            Optional<Dish> dishOpt = dishRepository.findById(record.getDishId());
+            
+            if (dishOpt.isPresent()) {
+                Dish dish = dishOpt.get();
+                
+                // 영양소 합산 (null 체크 포함)
+                totalCalories += (dish.getCalorieKcal() != null ? dish.getCalorieKcal() : 0.0);
+                totalProtein += (dish.getProteinG() != null ? dish.getProteinG() : 0.0);
+                totalCarbohydrate += (dish.getCarbohydrateG() != null ? dish.getCarbohydrateG() : 0.0);
+                totalFat += (dish.getFatG() != null ? dish.getFatG() : 0.0);
+                totalSugar += (dish.getSugarG() != null ? dish.getSugarG() : 0.0);
+            }
+        }
+        
+        // 결과 맵 생성
+        Map<String, Object> nutrientsMap = new HashMap<>();
+        nutrientsMap.put("calories", totalCalories);
+        nutrientsMap.put("protein", totalProtein);
+        nutrientsMap.put("carbohydrate", totalCarbohydrate);
+        nutrientsMap.put("fat", totalFat);
+        nutrientsMap.put("sugar", totalSugar);
+        nutrientsMap.put("mealCount", records.size());
+        
+        logger.info("사용자 ID [{}]의 오늘 영양소 정보 조회 완료: 칼로리 {}kcal, 단백질 {}g, 탄수화물 {}g, 지방 {}g, 당 {}g", 
+            userId, totalCalories, totalProtein, totalCarbohydrate, totalFat, totalSugar);
+        
+        return nutrientsMap;
+    }
 }

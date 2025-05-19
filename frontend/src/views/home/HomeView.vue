@@ -73,9 +73,14 @@
         </div>
 
         <!-- 오늘의 칼럼 & 오늘의 식단 -->
-        <div class="row gx-4">
+        <div class="row gx-4 mb-4">
           <TodayColumn ref="TodayColumn" />
           <TodayDiet ref="TodayDiet" />
+        </div>
+        
+        <!-- 저녁 메뉴 추천 -->
+        <div class="row gx-4">
+          <DinnerRecommendation ref="DinnerRecommendation" />
         </div>
       </main>
     </div>
@@ -88,6 +93,7 @@ import Calendar from '@/components/mainpage/Calendar.vue'
 import Information from '@/components/mainpage/Information.vue'
 import TodayColumn from '@/components/mainpage/TodayColumn.vue'
 import TodayDiet from '@/components/mainpage/TodayDiet.vue'
+import DinnerRecommendation from '@/components/mainpage/DinnerRecommendation.vue'
 
 import { computed } from 'vue'
 import { userAccountStore } from '@/store/account'

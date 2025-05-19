@@ -4,9 +4,19 @@
             <!-- 헤더 -->
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">건강 정보</h6>
-                <button class="btn btn-sm btn-outline-primary" @click="openDetailModal">
-                    활동 로그 보기
-                </button>
+                <div>
+                    <button v-if="hasMealRecord" class="btn btn-sm btn-outline-success me-2" 
+                            @click="requestDinnerRecommendation" :disabled="recommendLoading">
+                        <span v-if="recommendLoading">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            추천 중...
+                        </span>
+                        <span v-else>저녁 추천</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" @click="openDetailModal">
+                        활동 로그 보기
+                    </button>
+                </div>
             </div>
 
             <!-- 본문 -->
@@ -120,7 +130,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue';
 import DonutChart from '@/components/common/DonutChart.vue';
 import axios from '@/plugins/axios';
 import { Chart, registerables } from 'chart.js';
@@ -472,9 +482,59 @@ const updateChart = async () => {
     }
 };
 
+// 저녁 추천 상태
+const hasMealRecord = ref(false);
+const recommendLoading = ref(false);
+const recommendResult = ref(null);
+
+// 식단 기록 확인
+const checkMealRecord = async () => {
+    try {
+        const response = await axios.get('/api/meal-records/today');
+        hasMealRecord.value = response.data && response.data.length > 0;
+        console.log('식단 기록 확인 결과:', hasMealRecord.value);
+    } catch (err) {
+        console.error('식단 기록 확인 중 오류 발생:', err);
+        hasMealRecord.value = false;
+    }
+};
+
+// 저녁 추천 요청
+const requestDinnerRecommendation = async () => {
+    recommendLoading.value = true;
+    recommendResult.value = null;
+    
+    try {
+        const response = await axios.post('/api/recommendation/dinner');
+        console.log('추천 결과:', response.data);
+        
+        if (response.data && response.data.success) {
+            recommendResult.value = response.data.data;
+            // 추천 결과 모달 등을 표시하는 로직 추가 가능
+            alert('저녁 메뉴가 추천되었습니다!\n\n' + response.data.data.recommendation);
+        } else {
+            alert(response.data?.message || '추천을 가져오는 데 실패했습니다.');
+        }
+    } catch (err) {
+        console.error('저녁 추천 요청 중 오류 발생:', err);
+        alert('추천 시스템에 연결할 수 없습니다. 나중에 다시 시도해주세요.');
+    } finally {
+        recommendLoading.value = false;
+    }
+};
+
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
     fetchTodayHealthLog();
+    checkMealRecord(); // 식단 기록 확인
+    
+    // 이벤트 리스너 등록 - 식단 데이터가 업데이트되었을 때 식단 기록 상태 업데이트
+    window.addEventListener('meal-data-updated', checkMealRecord);
+});
+
+// 컴포넌트 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+    window.removeEventListener('meal-data-updated', checkMealRecord);
 });
 </script>
 

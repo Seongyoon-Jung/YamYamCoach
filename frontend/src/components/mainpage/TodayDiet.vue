@@ -1,11 +1,13 @@
 <template>
-  <div class="col-md-6 mb-4">
+  <div class="col-md-6 mb-4 today-diet-component">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>오늘의 식단</span>
-        <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
-          {{ modalButtonText }}
-        </button>
+        <div>
+          <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
+            {{ modalButtonText }}
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <div class="row">
@@ -537,8 +539,11 @@ const handleSave = async () => {
       isEditMode.value = true
       fetchTodayCourses() // 데이터 갱신
       
-      // 이벤트 발생 - 영양 데이터 업데이트 알림
-      eventBus.emit('meal-data-updated')
+      // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
+      setTimeout(() => {
+        console.log('식단 데이터 업데이트 이벤트 발생')
+        eventBus.emit('meal-data-updated')
+      }, 500)
     } else {
       alert(response.data.message || '식단 저장에 실패했습니다.')
     }
@@ -578,8 +583,11 @@ const handleUpdate = async () => {
       showModal.value = false
       fetchTodayCourses() // 데이터 갱신
       
-      // 이벤트 발생 - 영양 데이터 업데이트 알림
-      eventBus.emit('meal-data-updated')
+      // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
+      setTimeout(() => {
+        console.log('식단 데이터 업데이트 이벤트 발생')
+        eventBus.emit('meal-data-updated')
+      }, 500)
     } else {
       alert(response.data.message || '식단 수정에 실패했습니다.')
     }
@@ -593,7 +601,7 @@ const handleUpdate = async () => {
 
 // 모달 타이틀 버튼 텍스트
 const modalButtonText = computed(() => {
-  return '상세보기'; // 항상 '상세보기'로 표시
+  return userRecords.value.length > 0 ? '식단 수정하기' : '식단 기록하기'
 })
 
 // 다른 코스에서 음식이 선택되었는지 확인하는 함수
@@ -682,6 +690,11 @@ onMounted(() => {
   fetchTodayCourses().then(() => {
     // 초기 코스 설정
     setInitialCourse()
+  })
+
+  // DinnerRecommendation에서 보내는 이벤트 수신
+  eventBus.on('open-today-diet-modal', () => {
+    showModal.value = true
   })
 })
 
