@@ -112,7 +112,9 @@ const login = async () => {
       role: res.data.role,
     })
 
-    if (res.data.personaId) {
+    if (res.data.role === 'ROLE_ADMIN') {
+      router.push('/admin')
+    } else if (res.data.personaId) {
       router.push('/')
     } else {
       router.push('/survey')

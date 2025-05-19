@@ -13,6 +13,20 @@ const routes = [
     name: 'AdminView',
     component: () => import('../views/admin/AdminView.vue'),
     meta: { title: '관리자페이지', requiresAuth: true, requiresRole: true },
+    children: [
+      {
+        path: '',
+        component: () => import('../components/admin/AdminDashboard.vue'),
+      },
+      {
+        path: 'users',
+        component: () => import('../components/admin/AdminUsers.vue'),
+      },
+      {
+        path: 'diet-upload',
+        component: () => import('../components/admin/AdminDietUpload.vue'),
+      },
+    ],
   },
   {
     path: '/my',
@@ -101,10 +115,18 @@ router.beforeEach((to, from, next) => {
   const accountStore = userAccountStore()
 
   if (to.meta.requiresAuth) {
-    if (accountStore.username) {
-      return next()
+    if (to.meta.requiresRole) {
+      if (accountStore.role === 'ROLE_ADMIN') {
+        return next()
+      } else {
+        return next({ name: 'notFound' })
+      }
     } else {
-      return next({ name: 'LoginView' })
+      if (accountStore.username) {
+        return next()
+      } else {
+        return next({ name: 'LoginView' })
+      }
     }
   }
 
