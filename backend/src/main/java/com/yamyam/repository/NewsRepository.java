@@ -8,4 +8,6 @@ import com.yamyam.entity.NewsEntity;
 
 public interface NewsRepository extends JpaRepository<NewsEntity, Integer> {
 	List<NewsEntity> findAllByOrderByDateDesc();
+	
+	List<NewsEntity> findAllByTagsOrderByDateDesc(String tags);
 }
