@@ -1,4 +1,3 @@
-// src/main/java/com/yamyam/service/ClovaServiceImpl.java
 package com.yamyam.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
