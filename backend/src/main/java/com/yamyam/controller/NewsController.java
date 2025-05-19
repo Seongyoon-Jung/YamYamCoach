@@ -27,7 +27,6 @@ public class NewsController {
 	
 	@GetMapping("/{personaId}")
 	public ResponseEntity<List<NewsResponse>> getAllPersonaNews(@PathVariable("personaId") int personaId){
-		System.out.println(newsService.getAllPersonaNews(personaId).toString());
 		return ResponseEntity.ok(newsService.getAllPersonaNews(personaId));
 	}
 }
