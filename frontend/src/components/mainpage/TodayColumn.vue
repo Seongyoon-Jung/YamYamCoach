@@ -30,6 +30,7 @@ onMounted(async () => {
 
   try {
     const res = await axios.get(`/api/news/${personaId}`)
+    console.log(res.data)
   } catch (err) {
     console.log(err)
   }
