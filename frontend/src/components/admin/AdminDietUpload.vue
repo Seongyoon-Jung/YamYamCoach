@@ -3,10 +3,10 @@
     <input type="file" @change="handleFile" />
     <button @click="sendToServer">분석 요청</button>
 
-    <table v-if="parsed2D.length" class="table table-bordered mt-4">
-      <tr v-for="(row, rowIndex) in parsed2D" :key="rowIndex">
+    <table v-if="formData.length" class="table table-bordered mt-4">
+      <tr v-for="(row, rowIndex) in formData" :key="rowIndex">
         <td v-for="(cell, colIndex) in row" :key="colIndex">
-          <pre class="mb-0">{{ cell }}</pre>
+          <input type="text" class="form-control p-1" v-model="formData[rowIndex][colIndex]" />
         </td>
       </tr>
     </table>
@@ -6231,4 +6231,27 @@ const parsed2D = computed(() => {
 
   return table
 })
+
+// 편집 가능한 복사본
+const formData = ref([])
+
+// parsed2D가 바뀔 때마다 formData에 복사
+watch(
+  parsed2D,
+  (newTable) => {
+    formData.value = newTable.map((row) => [...row])
+  },
+  { immediate: true },
+)
+
+// (옵션) 수정된 값을 백으로 보내려면 formData를 순회해서 POST
+async function saveEdited() {
+  // 예시: formData 전체를 서버로 전송
+  try {
+    // await axios.post('/api/course_schedule/bulk', { data: formData.value })
+    alert('저장 완료!')
+  } catch {
+    alert('저장 실패')
+  }
+}
 </script>
