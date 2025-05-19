@@ -55,7 +55,7 @@
 
             <!-- 네비게이션 버튼 -->
             <div class="d-flex justify-content-between mt-4">
-              <button class="btn btn-secondary" @click="prevStep" :disabled="isFirst">이전</button>
+              <button class="btn btn-secondary" @click="prevStep">이전</button>
               <button class="btn btn-primary" @click="isLast ? submitSurvey() : nextStep()">
                 {{ isLast ? '제출' : '다음' }}
               </button>
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/plugins/axios'
 import { userAccountStore } from '@/store/account'
@@ -161,7 +161,12 @@ function nextStep() {
 }
 
 function prevStep() {
-  if (currentStep.value > 0) currentStep.value--
+  if (currentStep.value === 0) {
+    showSurvey.value = false
+    showIntro.value = true
+  } else {
+    currentStep.value--
+  }
 }
 
 function validate() {
@@ -268,6 +273,34 @@ function result() {
 
   return personaMap[riskDiseases] || 1 // 기본형: 헬시 히어로
 }
+
+function handleEnterKey(e) {
+  if (e.key !== 'Enter') return
+
+  // 인트로 화면이면 설문 시작
+  if (showIntro.value) {
+    startSurvey()
+    return
+  }
+
+  // 설문 진행 중이면 다음 또는 제출
+  if (showSurvey.value) {
+    if (!validate()) return
+    if (isLast.value) {
+      submitSurvey()
+    } else {
+      nextStep()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEnterKey)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleEnterKey)
+})
 </script>
 
 <style scoped>

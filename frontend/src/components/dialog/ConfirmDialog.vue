@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, defineExpose } from 'vue'
+import { ref, defineExpose, onMounted, onUnmounted, watch } from 'vue'
 
 // 상태 변수 정의
 const visible = ref(false)
@@ -69,41 +69,21 @@ function cancel() {
 defineExpose({
   open,
 })
-</script>
 
-<!-- <script>
-export default {
-  name: 'ConfirmDialog',
-  data() {
-    return {
-      visible: false,
-      title: '',
-      message: '',
-      resolveFn: null,
-    };
-  },
-  methods: {
-    open({ title = '확인', message = '' }) {
-      this.title = title;
-      this.message = message;
-      this.visible = true;
-      return new Promise((resolve) => {
-        this.resolveFn = resolve;
-      });
-    },
-    confirm() {
-      this.visible = false;
-      this.resolveFn && this.resolveFn(true);
-      this.resolveFn = null;
-    },
-    cancel() {
-      this.visible = false;
-      this.resolveFn && this.resolveFn(false);
-      this.resolveFn = null;
-    },
-  },
-};
-</script> -->
+function onKeydown(e) {
+  if (visible.value && e.key === 'Enter') {
+    confirm()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
+</script>
 
 <style scoped>
 /* 뷰포트 최상단에 뜨도록 fixed + z-index 최상위 계층 */

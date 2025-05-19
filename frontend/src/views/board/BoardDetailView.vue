@@ -54,6 +54,7 @@
             type="form-control text"
             class="form-control me-2"
             placeholder="댓글을 입력하세요."
+            @keyup.enter="submitComment"
           />
           <button
             type="button"
@@ -85,6 +86,7 @@
                   class="mx-3 flex-grow-1"
                   v-model="comment.content"
                   rows="2"
+                  @keyup.enter="modifyComment(index)"
                 />
                 <span v-else class="flex-grow-1 ms-2 text-start">{{ comment.content }}</span>
               </div>
