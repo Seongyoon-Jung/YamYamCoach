@@ -60,3 +60,88 @@
 2025-05-20 12:42:15,399 [INFO] 127.0.0.1 - - [20/May/2025 12:42:15] "OPTIONS /recommend HTTP/1.1" 200 -
 2025-05-20 12:42:15,649 [INFO] 응답 전송: {'recommendation': '연어 스테이크와 구운 야채, 그리고 과일 디저트', 'reason': '30-40대에게는 오메가3가 풍부한 생선과 섬유질 위주의 균형잡힌 식사를 추천합니다. 여성에게는 칼슘과 철분이 풍부한 식단이 좋습니다. 현재 BMI가 정상 범위이므로 균형 잡힌 식단을 유지하는 것이 좋습니다.', 'timestamp': '2025-05-20T12:42:15.649965'}
 2025-05-20 12:42:15,649 [INFO] 127.0.0.1 - - [20/May/2025 12:42:15] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 12:53:30,485 [INFO] 127.0.0.1 - - [20/May/2025 12:53:30] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:53:30,757 [INFO] 응답 전송: {'recommendation': '연어 스테이크와 구운 야채, 그리고 과일 디저트', 'reason': '30-40대에게는 오메가3가 풍부한 생선과 섬유질 위주의 균형잡힌 식사를 추천합니다. 여성에게는 칼슘과 철분이 풍부한 식단이 좋습니다. 현재 BMI가 정상 범위이므로 균형 잡힌 식단을 유지하는 것이 좋습니다.', 'timestamp': '2025-05-20T12:53:30.757679'}
+2025-05-20 12:53:30,757 [INFO] 127.0.0.1 - - [20/May/2025 12:53:30] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 12:57:16,131 [INFO] 127.0.0.1 - - [20/May/2025 12:57:16] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:57:16,394 [INFO] 응답 전송: {'recommendation': '연어 스테이크와 구운 야채, 그리고 과일 디저트', 'reason': '30-40대에게는 오메가3가 풍부한 생선과 섬유질 위주의 균형잡힌 식사를 추천합니다. 여성에게는 칼슘과 철분이 풍부한 식단이 좋습니다. 현재 BMI가 정상 범위이므로 균형 잡힌 식단을 유지하는 것이 좋습니다.', 'timestamp': '2025-05-20T12:57:16.394634'}
+2025-05-20 12:57:16,394 [INFO] 127.0.0.1 - - [20/May/2025 12:57:16] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 12:59:45,846 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:59:45,848 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:59:46,265 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:59:46,575 [WARNING]  * Debugger is active!
+2025-05-20 12:59:46,580 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 13:01:04,834 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T13:01:04.834708'}
+2025-05-20 13:01:04,834 [INFO] 127.0.0.1 - - [20/May/2025 13:01:04] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 13:59:33,511 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T13:59:33.511996'}
+2025-05-20 13:59:33,512 [INFO] 127.0.0.1 - - [20/May/2025 13:59:33] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:13:10,357 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:13:10.357540'}
+2025-05-20 14:13:10,358 [INFO] 127.0.0.1 - - [20/May/2025 14:13:10] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:14:07,338 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:14:07.338526'}
+2025-05-20 14:14:07,339 [INFO] 127.0.0.1 - - [20/May/2025 14:14:07] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:14:57,246 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:14:57.246032'}
+2025-05-20 14:14:57,246 [INFO] 127.0.0.1 - - [20/May/2025 14:14:57] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:15:52,187 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:15:52,187 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:15:52,637 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 14:15:52,965 [WARNING]  * Debugger is active!
+2025-05-20 14:15:52,965 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 14:15:55,892 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:15:55.891650'}
+2025-05-20 14:15:55,893 [INFO] 127.0.0.1 - - [20/May/2025 14:15:55] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:23:37,935 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:23:37.935045'}
+2025-05-20 14:23:37,936 [INFO] 127.0.0.1 - - [20/May/2025 14:23:37] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:27:20,095 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:27:20,095 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:27:20,237 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 14:27:20,551 [WARNING]  * Debugger is active!
+2025-05-20 14:27:20,556 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 14:27:37,735 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:27:37,736 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:27:37,736 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 14:27:38,653 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 14:27:38,963 [WARNING]  * Debugger is active!
+2025-05-20 14:27:38,968 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 14:29:06,222 [INFO] 응답 전송: {'recommendation': '그릴 치킨 샐러드와 호박스프, 그리고 통곡물 빵', 'reason': '대사량이 좋은 20대에게는 단백질이 충분한 가볍고 건강한 식사를 추천합니다. 남성에게는 충분한 단백질과 탄수화물의 균형이 중요합니다. 현재 BMI가 높은 편이므로 칼로리를 줄이고 채소와 건강한 단백질 위주로 추천합니다.', 'timestamp': '2025-05-20T14:29:06.222242'}
+2025-05-20 14:29:06,223 [INFO] 127.0.0.1 - - [20/May/2025 14:29:06] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 14:43:11,456 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\__init__.py', reloading
+2025-05-20 14:43:11,456 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\__init__.py', reloading
+2025-05-20 14:43:11,457 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\__init__.py', reloading
+2025-05-20 14:43:11,457 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\_auth.py', reloading
+2025-05-20 14:43:11,458 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\_auth.py', reloading
+2025-05-20 14:43:11,459 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\charset.py', reloading
+2025-05-20 14:43:11,459 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\charset.py', reloading
+2025-05-20 14:43:11,460 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\connections.py', reloading
+2025-05-20 14:43:11,460 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\connections.py', reloading
+2025-05-20 14:43:11,460 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\converters.py', reloading
+2025-05-20 14:43:11,461 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\converters.py', reloading
+2025-05-20 14:43:11,461 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\cursors.py', reloading
+2025-05-20 14:43:11,462 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\cursors.py', reloading
+2025-05-20 14:43:11,462 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\err.py', reloading
+2025-05-20 14:43:11,463 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\err.py', reloading
+2025-05-20 14:43:11,463 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\optionfile.py', reloading
+2025-05-20 14:43:11,465 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\optionfile.py', reloading
+2025-05-20 14:43:11,465 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\protocol.py', reloading
+2025-05-20 14:43:11,466 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\protocol.py', reloading
+2025-05-20 14:43:11,466 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\times.py', reloading
+2025-05-20 14:43:11,466 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\times.py', reloading
+2025-05-20 14:43:11,467 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CLIENT.py', reloading
+2025-05-20 14:43:11,467 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\COMMAND.py', reloading
+2025-05-20 14:43:11,468 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CR.py', reloading
+2025-05-20 14:43:11,468 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CLIENT.py', reloading
+2025-05-20 14:43:11,469 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CLIENT.py', reloading
+2025-05-20 14:43:11,469 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\COMMAND.py', reloading
+2025-05-20 14:43:11,470 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\COMMAND.py', reloading
+2025-05-20 14:43:11,470 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CR.py', reloading
+2025-05-20 14:43:11,471 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\CR.py', reloading
+2025-05-20 14:43:11,471 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\ER.py', reloading
+2025-05-20 14:43:11,472 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\ER.py', reloading
+2025-05-20 14:43:11,472 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\FIELD_TYPE.py', reloading
+2025-05-20 14:43:11,473 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\FIELD_TYPE.py', reloading
+2025-05-20 14:43:11,473 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\FLAG.py', reloading
+2025-05-20 14:43:11,474 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\FLAG.py', reloading
+2025-05-20 14:43:11,474 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\SERVER_STATUS.py', reloading
+2025-05-20 14:43:11,474 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\SERVER_STATUS.py', reloading
+2025-05-20 14:43:11,475 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\anaconda3\\Lib\\site-packages\\pymysql\\constants\\__init__.py', reloading
+2025-05-20 14:43:12,289 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 14:43:12,834 [WARNING]  * Debugger is active!
+2025-05-20 14:43:12,838 [INFO]  * Debugger PIN: 112-860-005

@@ -88,6 +88,7 @@ const recommendation = ref(null)
 const recommendationError = ref(null)
 const userRecords = ref([])
 const dishIds = ref([])
+const userInfo = ref(null) // 실제 사용자 정보
 const totalNutrients = reactive({
   calories: 0,
   protein: 0,
@@ -96,6 +97,7 @@ const totalNutrients = reactive({
   sugar: 0,
 })
 const componentKey = ref(0) // 컴포넌트 강제 리렌더링용 키
+const todayDietNutrients = ref(null) // TodayDiet 컴포넌트로부터 받은 영양소 정보
 
 // 오늘 기록이 있는지 확인
 const hasRecords = computed(() => {
@@ -108,32 +110,90 @@ const hasRecords = computed(() => {
 const fetchNutritionData = async () => {
   try {
     isLoading.value = true
+    console.log('영양소 및 식단 데이터 가져오기 시작...')
+
     // 기록 여부 먼저 확인
     const recordsResponse = await axios.get('/api/meal-records/today')
-    console.log('사용자의 식단 기록 데이터:', recordsResponse.data)
+    console.log('식단 기록 API 응답:', recordsResponse.data)
     userRecords.value = recordsResponse.data || []
 
     // 식단 정보에서 음식 ID 추출
     dishIds.value = userRecords.value
       .map((record) => record.dishId || record.dish_id)
       .filter((id) => id)
+    console.log('추출된 음식 ID 목록:', dishIds.value)
 
     // 기록이 있는 경우에만 영양소 정보 요청
     if (userRecords.value.length > 0) {
+      console.log('영양소 정보 요청 시작...')
       const response = await axios.get('/api/meal-records/nutrients/today')
-      console.log('오늘의 영양소 정보:', response.data)
+      console.log('영양소 정보 API 응답:', response.data)
 
       if (response.data && response.data.nutrients) {
+        console.log('영양소 정보 적용 전:', totalNutrients)
         Object.assign(totalNutrients, response.data.nutrients)
+        console.log('영양소 정보 적용 후:', totalNutrients)
+      } else {
+        console.warn('영양소 정보가 없거나 형식이 다릅니다:', response.data)
       }
+
+      // 사용자 정보 가져오기
+      await fetchUserInfo()
     } else {
-      console.log('오늘의 식단 기록이 없습니다.')
+      console.log('오늘의 식단 기록이 없습니다. 영양소 정보를 가져오지 않습니다.')
       recommendation.value = null
+      // 기본 영양소 데이터 설정
+      Object.assign(totalNutrients, {
+        calories: 0,
+        protein: 0,
+        carbohydrate: 0,
+        fat: 0,
+        sugar: 0,
+      })
     }
   } catch (error) {
-    console.error('데이터 조회 실패:', error)
+    console.error('영양소 데이터 조회 실패:', error)
+    console.error('에러 상세:', error.response || error.message)
   } finally {
     isLoading.value = false
+  }
+}
+
+// 사용자 정보 가져오기
+const fetchUserInfo = async () => {
+  try {
+    console.log('사용자 정보 요청 시작...')
+    const response = await axios.get('/api/user/profile')
+    console.log('사용자 정보 응답 전체:', response)
+
+    if (response.data && response.data.success && response.data.user) {
+      console.log('사용자 정보 가져오기 성공:', response.data.user)
+      userInfo.value = response.data.user
+      return true
+    } else {
+      console.warn('사용자 정보를 가져올 수 없습니다. 응답:', response.data)
+      // 기본 사용자 정보 설정
+      userInfo.value = {
+        gender: true, // true는 여성, false는 남성
+        age: 30,
+        height: 165,
+        weight: 60,
+        targetWeight: 55,
+      }
+      console.log('기본 사용자 정보 사용:', userInfo.value)
+    }
+  } catch (error) {
+    console.error('사용자 정보 조회 실패:', error)
+    console.error('에러 상세 정보:', error.response || error.message)
+    // 기본 사용자 정보 설정
+    userInfo.value = {
+      gender: true, // true는 여성, false는 남성
+      age: 30,
+      height: 165,
+      weight: 60,
+      targetWeight: 55,
+    }
+    console.log('오류로 인한 기본 사용자 정보 사용:', userInfo.value)
   }
 }
 
@@ -143,29 +203,68 @@ const getDinnerRecommendation = async () => {
     isLoading.value = true
     recommendationError.value = null
 
-    // API 요청 데이터 구성 - 하드코딩된 사용자 정보 사용
+    // 사용자 정보와 영양소 정보 업데이트
+    console.log('추천 요청 전 데이터 새로고침 시작...')
+    await fetchNutritionData()
+
+    // TodayDiet 컴포넌트에서 영양소 정보 요청
+    eventBus.emit('request-today-diet-nutrients')
+
+    // 잠시 대기하여 TodayDiet 컴포넌트가 응답할 시간을 줌
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    // 사용자 정보 확인 및 업데이트
+    if (!userInfo.value) {
+      console.log('사용자 정보가 없어 가져오기 시도...')
+      await fetchUserInfo()
+    }
+
+    console.log('추천에 사용될 사용자 정보:', userInfo.value)
+    console.log('API에서 가져온 영양소 정보:', totalNutrients)
+    console.log('TodayDiet에서 가져온 영양소 정보:', todayDietNutrients.value)
+    console.log('추천에 사용될 음식 ID 목록:', dishIds.value)
+    console.log('추천에 사용될 식사 횟수:', userRecords.value.length)
+
+    // 사용할 영양소 정보 결정 (TodayDiet 정보가 있으면 그것을 우선 사용)
+    const nutrientsToUse = todayDietNutrients.value || totalNutrients
+
+    // API 요청 데이터 구성 - 실제 사용자 정보 사용
     const requestData = {
-      user: {
-        gender: true, // true는 여성, false는 남성
-        age: 30,
-        height: 165,
-        weight: 60,
-        targetWeight: 55,
-      },
+      user: userInfo.value,
       nutrients: {
-        calories: totalNutrients.calories,
-        protein: totalNutrients.protein,
-        carbohydrate: totalNutrients.carbohydrate,
-        fat: totalNutrients.fat,
-        sugar: totalNutrients.sugar,
+        calories: nutrientsToUse.calories || 0,
+        protein: nutrientsToUse.protein || 0,
+        carbohydrate: nutrientsToUse.carbohydrate || 0,
+        fat: nutrientsToUse.fat || 0,
+        sugar: nutrientsToUse.sugar || 0,
       },
-      mealCount: userRecords.value.length,
-      dishIds: dishIds.value,
+      mealCount: userRecords.value.length || 0,
+      dishIds: dishIds.value || [],
     }
 
     console.log('추천 요청 데이터:', JSON.stringify(requestData, null, 2))
 
+    try {
+      // 백엔드 API를 통한 요청 시도
+      console.log('백엔드 API를 통한 추천 요청 시도...')
+      const backendResponse = await axios.post('/api/recommendation/dinner')
+      console.log('백엔드 API 응답:', backendResponse.data)
+
+      if (backendResponse.data && backendResponse.data.success && backendResponse.data.data) {
+        recommendation.value = {
+          recommendation: backendResponse.data.data.recommendation,
+          reason: backendResponse.data.data.reason,
+        }
+        return
+      } else {
+        console.warn('백엔드 API 응답이 유효하지 않아 Python 서버 직접 호출 시도')
+      }
+    } catch (backendError) {
+      console.error('백엔드 API 호출 실패, Python 서버 직접 호출 시도:', backendError)
+    }
+
     // Python 서버로 직접 요청
+    console.log('Python 서버 직접 호출 시도...')
     const pythonResponse = await axios.post('http://localhost:5001/recommend', requestData, {
       headers: {
         'Content-Type': 'application/json',
@@ -214,25 +313,38 @@ const goToTodayDiet = () => {
 }
 
 // 컴포넌트 초기화
-onMounted(() => {
-  // 컴포넌트 마운트 시 초기 데이터 로드 (사용자 정보 제외)
-  fetchNutritionData()
+onMounted(async () => {
+  try {
+    // 사용자 정보 먼저 로드
+    await fetchUserInfo()
+    // 컴포넌트 마운트 시 초기 데이터 로드
+    await fetchNutritionData()
 
-  // 식단 기록이 업데이트될 때만 데이터 다시 로드
-  eventBus.on('meal-data-updated', () => {
-    console.log('식단 데이터 업데이트 이벤트 감지')
-    fetchNutritionData()
-  })
+    // 식단 기록이 업데이트될 때만 데이터 다시 로드
+    eventBus.on('meal-data-updated', async () => {
+      console.log('식단 데이터 업데이트 이벤트 감지')
+      await fetchNutritionData()
+    })
 
-  // TodayDiet에서 보내는 추천 요청 이벤트 수신
-  eventBus.on('open-dinner-recommendation', () => {
-    getDinnerRecommendation()
-  })
+    // TodayDiet에서 보내는 추천 요청 이벤트 수신
+    eventBus.on('open-dinner-recommendation', () => {
+      getDinnerRecommendation()
+    })
+
+    // TodayDiet에서 보내는 영양소 정보 수신
+    eventBus.on('today-diet-nutrients', (nutrients) => {
+      console.log('TodayDiet로부터 영양소 정보 수신:', nutrients)
+      todayDietNutrients.value = nutrients
+    })
+  } catch (error) {
+    console.error('컴포넌트 초기화 중 오류:', error)
+  }
 
   // 이벤트 리스너 정리
   return () => {
     eventBus.off('meal-data-updated')
     eventBus.off('open-dinner-recommendation')
+    eventBus.off('today-diet-nutrients')
   }
 })
 </script>

@@ -3,6 +3,7 @@ package com.yamyam.diet.controller;
 import com.yamyam.diet.entity.Dish;
 import com.yamyam.diet.entity.DishRecord;
 import com.yamyam.diet.repository.DishRecordRepository;
+import com.yamyam.diet.repository.DishRepository;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.entity.UserEntity;
 import com.yamyam.repository.UserRepository;
@@ -38,6 +39,9 @@ public class RecommendationController {
     
     @Autowired
     private DishRecordRepository dishRecordRepository;
+    
+    @Autowired
+    private DishRepository dishRepository;
     
     @Autowired
     private RestTemplate restTemplate;
@@ -121,16 +125,54 @@ public class RecommendationController {
             userInfo.put("weight", user.getWeight());
             userInfo.put("targetWeight", user.getTargetWeight());
             
-            // 오늘 섭취한 영양소 정보
-            Map<String, Double> nutrients = new HashMap<>();
-            nutrients.put("calories", 0.0);
-            nutrients.put("protein", 0.0);
-            nutrients.put("carbohydrate", 0.0);
-            nutrients.put("fat", 0.0);
-            nutrients.put("sugar", 0.0);
+            // 오늘 섭취한 영양소 정보 실제 계산
+            double totalCalories = 0.0;
+            double totalProtein = 0.0;
+            double totalCarbohydrate = 0.0;
+            double totalFat = 0.0;
+            double totalSugar = 0.0;
             
-            // 임시로 영양소 합계 계산 대신 목록 제공
-            // 실제 영양소를 계산하려면 Dish 엔티티를 조회하거나 식사 기록에 함께 저장된 영양소 정보를 활용해야 함
+            // 식사 기록을 순회하면서 영양소 합산
+            for (DishRecord record : todayRecords) {
+                try {
+                    // 음식 정보 조회 - DishRepository를 통해 Dish 엔티티 조회
+                    Integer dishId = record.getDishId();
+                    Dish dish = findDishById(dishId);
+                    
+                    if (dish != null) {
+                        // 기본 portion은 1.0으로 설정 (실제로는 record에서 가져와야 할 수도 있음)
+                        double portion = 1.0;
+                        
+                        // dish 엔티티의 필드명은 calorieKcal, proteinG, carbohydrateG, fatG, sugarG임
+                        totalCalories += (dish.getCalorieKcal() != null ? dish.getCalorieKcal() : 0) * portion;
+                        totalProtein += (dish.getProteinG() != null ? dish.getProteinG() : 0) * portion;
+                        totalCarbohydrate += (dish.getCarbohydrateG() != null ? dish.getCarbohydrateG() : 0) * portion;
+                        totalFat += (dish.getFatG() != null ? dish.getFatG() : 0) * portion;
+                        totalSugar += (dish.getSugarG() != null ? dish.getSugarG() : 0) * portion;
+                        
+                        logger.debug("음식 [{}], 양 [{}], 칼로리 [{}], 단백질 [{}], 탄수화물 [{}], 지방 [{}], 당 [{}]", 
+                                dish.getDishName(), portion, 
+                                dish.getCalorieKcal() * portion, 
+                                dish.getProteinG() * portion,
+                                dish.getCarbohydrateG() * portion, 
+                                dish.getFatG() * portion, 
+                                dish.getSugarG() * portion);
+                    }
+                } catch (Exception e) {
+                    // 개별 음식 처리 중 오류가 발생해도 전체 처리는 계속
+                    logger.error("음식 정보 처리 중 오류: {}", e.getMessage());
+                }
+            }
+            
+            Map<String, Double> nutrients = new HashMap<>();
+            nutrients.put("calories", totalCalories);
+            nutrients.put("protein", totalProtein);
+            nutrients.put("carbohydrate", totalCarbohydrate);
+            nutrients.put("fat", totalFat);
+            nutrients.put("sugar", totalSugar);
+            
+            logger.info("사용자 ID [{}]의 오늘 섭취한 영양소 합계: 칼로리 [{}], 단백질 [{}], 탄수화물 [{}], 지방 [{}], 당 [{}]", 
+                    userId, totalCalories, totalProtein, totalCarbohydrate, totalFat, totalSugar);
             
             requestData.put("user", userInfo);
             requestData.put("nutrients", nutrients);
@@ -186,5 +228,34 @@ public class RecommendationController {
             return 0;
         }
         return LocalDate.now().getYear() - birthDate.getYear();
+    }
+    
+    /**
+     * 음식 ID로 Dish 엔티티 찾기
+     * DishRepository를 사용하여 실제 DB에서 음식 정보 조회
+     */
+    private Dish findDishById(Integer dishId) {
+        if (dishId == null) {
+            return null;
+        }
+        
+        Optional<Dish> dishOptional = dishRepository.findById(dishId);
+        if (dishOptional.isPresent()) {
+            return dishOptional.get();
+        }
+        
+        // DB에서 찾을 수 없는 경우 로그 출력
+        logger.warn("음식 ID [{}]에 해당하는 음식 정보를 찾을 수 없습니다", dishId);
+        
+        // 찾을 수 없는 경우 기본 음식 정보 생성
+        Dish defaultDish = new Dish();
+        defaultDish.setDishId(dishId);
+        defaultDish.setDishName("알 수 없는 음식 " + dishId);
+        defaultDish.setCalorieKcal(0.0);
+        defaultDish.setProteinG(0.0);
+        defaultDish.setCarbohydrateG(0.0);
+        defaultDish.setFatG(0.0);
+        defaultDish.setSugarG(0.0);
+        return defaultDish;
     }
 } 
