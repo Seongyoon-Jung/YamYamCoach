@@ -1,74 +1,182 @@
 <template>
-  <div class="container py-5">
-    <!-- <input type="file" @change="handleFile" /> -->
-
-    <ImageCropper @cropped="onCroppedFile"></ImageCropper>
-    <button v-if="imageFile" class="btn btn-primary" @click="sendToServer">분석 요청</button>
-
-    <div class="table-responsive" style="max-width: 100%">
-      <table
-        class="table table-bordered mt-4 text-center align-middle"
-      >
-        <thead class="table-primary">
-          <tr>
-            <th
-              v-for="(day, colIndex) in tableData[0]"
-              :key="'head-' + colIndex"
-              style="white-space: nowrap; padding: 0.5rem"
-            >
-              <div class="fw-bold fs-6">{{ day }}</div>
-            </th>
-          </tr>
-          <tr>
-            <th
-              v-for="(day, colIndex) in tableData[1]"
-              :key="'head-' + colIndex"
-              style="white-space: nowrap; padding: 0.5rem"
-            >
-              <div class="fw-bold fs-6">{{ day }}</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, rowIndex) in tableData.slice(2)" :key="'row-' + rowIndex">
-            <td
-              v-for="(cell, colIndex) in row"
-              :key="'cell-' + colIndex"
-              style="padding: 0.25rem; max-width: 140px"
-            >
-              <input
-                type="text"
-                v-model="tableData[rowIndex + 2][colIndex]"
-                class="form-control border-0 p-0"
-                style="
-                  width: 100%;
-                  min-width: 0;
-                  height: auto;
-                  resize: none;
-                  overflow-wrap: break-word;
-                  white-space: pre-line;
-                  font-size: 0.85rem;
-                  background-color: transparent;
-                "
-              ></input>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="container">
+    <!-- 업로드 영역 -->
+    <div
+      class="drop-area border rounded p-4 mb-3 text-center"
+      :class="{ 'bg-light': isDragging }"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
+    >
+      <p class="mb-2">이미지를 드래그 앤 드롭하거나 클릭하여 선택하세요</p>
+      <input
+        type="file"
+        class="form-control"
+        accept="image/*"
+        @change="handleFile"
+        ref="fileInput"
+        hidden
+      />
+      <button class="btn btn-secondary" @click="() => fileInput.click()">파일 선택</button>
     </div>
-    <button v-if="tableData.length" type="button" class="btn btn-primary" @click="save">
-      수정완료
-    </button>
+
+    <h5 v-if="tableData.length > 0" class="text-danger">음식이 아닌 것은 꼭 지워주세요!</h5>
+    <!-- 이미지 + 테이블 나란히 -->
+    <div class="d-flex gap-3" style="width: 100%">
+      <!-- 이미지 영역 -->
+      <div
+        ref="imageScrollBox"
+        v-if="previewUrl"
+        style="flex: 1; max-width: 50%; overflow-x: auto; overflow-y: hidden"
+        @scroll="syncScroll('image')"
+      >
+        <img
+          ref="previewImage"
+          :src="previewUrl"
+          class="rounded"
+          style="display: block; max-height: 700px; height: auto; width: auto; max-width: none"
+          @load="syncTableWidth"
+        />
+      </div>
+
+      <!-- 테이블 영역 -->
+      <div
+        v-if="tableData.length > 0"
+        :style="{ flex: 1, maxWidth: '50%', overflowX: 'auto', width: tableWidth + 'px' }"
+      >
+        <div
+          ref="tableScrollBox"
+          class="table-responsive"
+          style="overflow-x: auto"
+          @scroll="syncScroll('table')"
+        >
+          <table
+            class="table table-bordered mt-2 text-center align-middle"
+            :style="{ width: tableWidth + 'px' }"
+          >
+            <thead class="table-primary">
+              <tr>
+                <th v-for="(day, colIndex) in tableData[0]" :key="'head-' + colIndex">
+                  <div class="fw-bold fs-6">{{ day }}</div>
+                </th>
+              </tr>
+              <tr>
+                <th v-for="(day, colIndex) in tableData[1]" :key="'head2-' + colIndex">
+                  <div class="fw-bold fs-6">{{ day }}</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, rowIndex) in tableData.slice(2)" :key="'row-' + rowIndex">
+                <td v-for="(cell, colIndex) in row" :key="'cell-' + colIndex">
+                  <input
+                    type="text"
+                    v-model="tableData[rowIndex + 2][colIndex]"
+                    class="form-control border-0 p-0"
+                    style="font-size: 0.85rem"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 버튼 -->
+    <div class="mt-3">
+      <button
+        v-if="imageFile && tableData.length == 0"
+        class="btn btn-primary"
+        @click="sendToServer"
+      >
+        분석 요청
+      </button>
+      <button
+        v-if="tableData.length"
+        type="button"
+        class="btn btn-primary ms-2"
+        @click="handleUpload"
+      >
+        업로드
+      </button>
+    </div>
   </div>
+  <ConfirmDialog ref="confirmDialog" />
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import axios from '@/plugins/axios'
 import ImageCropper from '@/components/admin/ImageCropper.vue'
+import ConfirmDialog from '@/components/dialog/ConfirmDialog.vue'
 
-const imageFile = ref(null)
 const result = ref(null)
+const imageFile = ref(null)
+const previewUrl = ref(null)
+const isDragging = ref(false)
+const fileInput = ref(null)
+
+const previewImage = ref(null)
+const imageScrollBox = ref(null)
+const tableScrollBox = ref(null)
+const tableWidth = ref(null)
+
+const confirmDialog = ref(null)
+
+let isSyncingScroll = false
+
+function syncTableWidth() {
+  if (previewImage.value) {
+    tableWidth.value = previewImage.value.clientWidth
+  }
+}
+
+function syncScroll(source) {
+  if (isSyncingScroll) return
+
+  isSyncingScroll = true
+  const imageBox = imageScrollBox.value
+  const tableBox = tableScrollBox.value
+
+  if (!imageBox || !tableBox) return
+
+  if (source === 'image') {
+    tableBox.scrollLeft = imageBox.scrollLeft
+  } else {
+    imageBox.scrollLeft = tableBox.scrollLeft
+  }
+
+  // 1프레임 뒤에 동기화 잠금 해제
+  requestAnimationFrame(() => {
+    isSyncingScroll = false
+  })
+}
+
+function handleFile(e) {
+  const file = e.target.files?.[0]
+  if (file && file.type.startsWith('image/')) {
+    imageFile.value = file
+    previewUrl.value = URL.createObjectURL(file)
+  }
+}
+
+function onDrop(e) {
+  const file = e.dataTransfer.files?.[0]
+  if (file && file.type.startsWith('image/')) {
+    imageFile.value = file
+    previewUrl.value = URL.createObjectURL(file)
+  }
+  isDragging.value = false
+}
+
+function onDragOver() {
+  isDragging.value = true
+}
+
+function onDragLeave() {
+  isDragging.value = false
+}
 
 function onCroppedFile(file) {
   imageFile.value = file
@@ -102,16 +210,16 @@ async function sendToServer() {
 
     result.value = {
       version: 'V2',
-      requestId: '608c0788f52b4e1aa72b0a78b958a78c',
-      timestamp: 1747703197888,
+      requestId: '487bb08b687c4186b8384f7ebff16a27',
+      timestamp: 1747741229175,
       images: [
         {
-          uid: '7b60309a921246018c5cdaf0611f248c',
+          uid: '26c6f8472dd641439519835ade129398',
           name: 'demo',
           inferResult: 'SUCCESS',
           message: 'SUCCESS',
           validationResult: { result: 'NO_REQUESTED' },
-          convertedImageInfo: { width: 2987, height: 1237, pageIndex: 0, longImage: false },
+          convertedImageInfo: { width: 3399, height: 1483, pageIndex: 0, longImage: false },
           tables: [
             {
               cells: [
@@ -120,51 +228,39 @@ async function sendToServer() {
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 224.0, y: 51.0 },
-                          { x: 376.0, y: 51.0 },
-                          { x: 376.0, y: 88.0 },
-                          { x: 224.0, y: 88.0 },
+                          { x: 42.0, y: 328.0 },
+                          { x: 140.0, y: 328.0 },
+                          { x: 140.0, y: 376.0 },
+                          { x: 42.0, y: 376.0 },
                         ],
                       },
-                      inferConfidence: 0.99975,
+                      inferConfidence: 0.9509,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 224.0, y: 51.0 },
-                              { x: 299.0, y: 51.0 },
-                              { x: 299.0, y: 88.0 },
-                              { x: 224.0, y: 88.0 },
+                              { x: 42.0, y: 328.0 },
+                              { x: 140.0, y: 328.0 },
+                              { x: 140.0, y: 376.0 },
+                              { x: 42.0, y: 376.0 },
                             ],
                           },
-                          inferText: '05월',
-                          inferConfidence: 0.9997,
-                        },
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 309.0, y: 51.0 },
-                              { x: 376.0, y: 51.0 },
-                              { x: 376.0, y: 88.0 },
-                              { x: 309.0, y: 88.0 },
-                            ],
-                          },
-                          inferText: '19일',
-                          inferConfidence: 0.9998,
+                          inferText: '구분',
+                          inferConfidence: 0.9509,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 5.0 },
-                      { x: 597.0, y: 5.0 },
-                      { x: 597.0, y: 128.0 },
-                      { x: 7.0, y: 128.0 },
+                      { x: 12.0, y: 252.0 },
+                      { x: 169.0, y: 252.0 },
+                      { x: 169.0, y: 452.0 },
+                      { x: 12.0, y: 452.0 },
                     ],
                   },
-                  inferConfidence: 0.99975,
-                  rowSpan: 1,
+                  inferConfidence: 0.9509,
+                  rowSpan: 2,
                   rowIndex: 0,
                   columnSpan: 1,
                   columnIndex: 0,
@@ -174,10 +270,516 @@ async function sendToServer() {
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 253.0, y: 147.0 },
-                          { x: 349.0, y: 147.0 },
-                          { x: 349.0, y: 189.0 },
-                          { x: 253.0, y: 189.0 },
+                          { x: 52.0, y: 923.0 },
+                          { x: 140.0, y: 923.0 },
+                          { x: 140.0, y: 965.0 },
+                          { x: 52.0, y: 965.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9992,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 52.0, y: 923.0 },
+                              { x: 140.0, y: 923.0 },
+                              { x: 140.0, y: 965.0 },
+                              { x: 52.0, y: 965.0 },
+                            ],
+                          },
+                          inferText: '[20F]',
+                          inferConfidence: 0.9992,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 12.0, y: 452.0 },
+                      { x: 169.0, y: 452.0 },
+                      { x: 169.0, y: 966.0 },
+                      { x: 12.0, y: 966.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9992,
+                  rowSpan: 8,
+                  rowIndex: 2,
+                  columnSpan: 1,
+                  columnIndex: 0,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 42.0, y: 968.0 },
+                          { x: 146.0, y: 968.0 },
+                          { x: 146.0, y: 1014.0 },
+                          { x: 42.0, y: 1014.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9993,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 42.0, y: 968.0 },
+                              { x: 146.0, y: 968.0 },
+                              { x: 146.0, y: 1014.0 },
+                              { x: 42.0, y: 1014.0 },
+                            ],
+                          },
+                          inferText: '일반식',
+                          inferConfidence: 0.9993,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 12.0, y: 966.0 },
+                      { x: 169.0, y: 966.0 },
+                      { x: 169.0, y: 1480.0 },
+                      { x: 12.0, y: 1480.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9993,
+                  rowSpan: 10,
+                  rowIndex: 10,
+                  columnSpan: 1,
+                  columnIndex: 0,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 252.0 },
+                      { x: 416.0, y: 252.0 },
+                      { x: 416.0, y: 452.0 },
+                      { x: 169.0, y: 452.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 2,
+                  rowIndex: 0,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 452.0 },
+                      { x: 416.0, y: 452.0 },
+                      { x: 416.0, y: 571.0 },
+                      { x: 169.0, y: 571.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 2,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 571.0 },
+                      { x: 416.0, y: 571.0 },
+                      { x: 416.0, y: 618.0 },
+                      { x: 169.0, y: 618.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 3,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 618.0 },
+                      { x: 416.0, y: 618.0 },
+                      { x: 416.0, y: 664.0 },
+                      { x: 169.0, y: 664.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 4,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 231.0, y: 686.0 },
+                          { x: 352.0, y: 686.0 },
+                          { x: 352.0, y: 731.0 },
+                          { x: 231.0, y: 731.0 },
+                        ],
+                      },
+                      inferConfidence: 0.99875,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 231.0, y: 686.0 },
+                              { x: 282.0, y: 686.0 },
+                              { x: 282.0, y: 731.0 },
+                              { x: 231.0, y: 731.0 },
+                            ],
+                          },
+                          inferText: 'A.',
+                          inferConfidence: 0.9997,
+                        },
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 282.0, y: 686.0 },
+                              { x: 352.0, y: 686.0 },
+                              { x: 352.0, y: 731.0 },
+                              { x: 282.0, y: 731.0 },
+                            ],
+                          },
+                          inferText: '한식',
+                          inferConfidence: 0.9978,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 664.0 },
+                      { x: 416.0, y: 664.0 },
+                      { x: 416.0, y: 711.0 },
+                      { x: 169.0, y: 711.0 },
+                    ],
+                  },
+                  inferConfidence: 0.99875,
+                  rowSpan: 1,
+                  rowIndex: 5,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 711.0 },
+                      { x: 416.0, y: 711.0 },
+                      { x: 416.0, y: 758.0 },
+                      { x: 169.0, y: 758.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 6,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 758.0 },
+                      { x: 416.0, y: 758.0 },
+                      { x: 416.0, y: 805.0 },
+                      { x: 169.0, y: 805.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 7,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 805.0 },
+                      { x: 416.0, y: 805.0 },
+                      { x: 416.0, y: 851.0 },
+                      { x: 169.0, y: 851.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 8,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 851.0 },
+                      { x: 416.0, y: 851.0 },
+                      { x: 416.0, y: 966.0 },
+                      { x: 169.0, y: 966.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 9,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 966.0 },
+                      { x: 416.0, y: 966.0 },
+                      { x: 416.0, y: 1034.0 },
+                      { x: 169.0, y: 1034.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 10,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1034.0 },
+                      { x: 416.0, y: 1034.0 },
+                      { x: 416.0, y: 1085.0 },
+                      { x: 169.0, y: 1085.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 11,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1085.0 },
+                      { x: 416.0, y: 1085.0 },
+                      { x: 416.0, y: 1132.0 },
+                      { x: 169.0, y: 1132.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 12,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1132.0 },
+                      { x: 416.0, y: 1132.0 },
+                      { x: 416.0, y: 1183.0 },
+                      { x: 169.0, y: 1183.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 13,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1183.0 },
+                      { x: 416.0, y: 1183.0 },
+                      { x: 416.0, y: 1225.0 },
+                      { x: 169.0, y: 1225.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 14,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 240.0, y: 1205.0 },
+                          { x: 352.0, y: 1205.0 },
+                          { x: 352.0, y: 1247.0 },
+                          { x: 240.0, y: 1247.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9986,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 240.0, y: 1205.0 },
+                              { x: 352.0, y: 1205.0 },
+                              { x: 352.0, y: 1247.0 },
+                              { x: 240.0, y: 1247.0 },
+                            ],
+                          },
+                          inferText: 'B. 일품',
+                          inferConfidence: 0.9986,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1225.0 },
+                      { x: 416.0, y: 1225.0 },
+                      { x: 416.0, y: 1272.0 },
+                      { x: 169.0, y: 1272.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9986,
+                  rowSpan: 1,
+                  rowIndex: 15,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1272.0 },
+                      { x: 416.0, y: 1272.0 },
+                      { x: 416.0, y: 1323.0 },
+                      { x: 169.0, y: 1323.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 16,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1323.0 },
+                      { x: 416.0, y: 1323.0 },
+                      { x: 416.0, y: 1370.0 },
+                      { x: 169.0, y: 1370.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 17,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1370.0 },
+                      { x: 416.0, y: 1370.0 },
+                      { x: 416.0, y: 1416.0 },
+                      { x: 169.0, y: 1416.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 18,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 169.0, y: 1416.0 },
+                      { x: 416.0, y: 1416.0 },
+                      { x: 416.0, y: 1480.0 },
+                      { x: 169.0, y: 1480.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 19,
+                  columnSpan: 1,
+                  columnIndex: 1,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 628.0, y: 288.0 },
+                          { x: 798.0, y: 288.0 },
+                          { x: 798.0, y: 340.0 },
+                          { x: 628.0, y: 340.0 },
+                        ],
+                      },
+                      inferConfidence: 0.99945,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 628.0, y: 291.0 },
+                              { x: 719.0, y: 291.0 },
+                              { x: 719.0, y: 340.0 },
+                              { x: 628.0, y: 340.0 },
+                            ],
+                          },
+                          inferText: '05월',
+                          inferConfidence: 0.9992,
+                        },
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 713.0, y: 288.0 },
+                              { x: 798.0, y: 288.0 },
+                              { x: 798.0, y: 340.0 },
+                              { x: 713.0, y: 340.0 },
+                            ],
+                          },
+                          inferText: '19일',
+                          inferConfidence: 0.9997,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 416.0, y: 252.0 },
+                      { x: 1011.0, y: 252.0 },
+                      { x: 1011.0, y: 376.0 },
+                      { x: 416.0, y: 376.0 },
+                    ],
+                  },
+                  inferConfidence: 0.99945,
+                  rowSpan: 1,
+                  rowIndex: 0,
+                  columnSpan: 1,
+                  columnIndex: 2,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 668.0, y: 395.0 },
+                          { x: 762.0, y: 395.0 },
+                          { x: 762.0, y: 434.0 },
+                          { x: 668.0, y: 434.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -185,10 +787,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 253.0, y: 147.0 },
-                              { x: 349.0, y: 147.0 },
-                              { x: 349.0, y: 189.0 },
-                              { x: 253.0, y: 189.0 },
+                              { x: 668.0, y: 395.0 },
+                              { x: 762.0, y: 395.0 },
+                              { x: 762.0, y: 434.0 },
+                              { x: 668.0, y: 434.0 },
                             ],
                           },
                           inferText: 'MON',
@@ -199,43 +801,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 128.0 },
-                      { x: 597.0, y: 128.0 },
-                      { x: 597.0, y: 207.0 },
-                      { x: 7.0, y: 207.0 },
+                      { x: 416.0, y: 376.0 },
+                      { x: 1011.0, y: 376.0 },
+                      { x: 1011.0, y: 452.0 },
+                      { x: 416.0, y: 452.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
                   rowIndex: 1,
                   columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 207.0 },
-                      { x: 597.0, y: 207.0 },
-                      { x: 597.0, y: 274.0 },
-                      { x: 7.0, y: 274.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 2,
-                  columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 248.0, y: 277.0 },
-                          { x: 352.0, y: 277.0 },
-                          { x: 352.0, y: 320.0 },
-                          { x: 248.0, y: 320.0 },
+                          { x: 662.0, y: 525.0 },
+                          { x: 765.0, y: 525.0 },
+                          { x: 765.0, y: 568.0 },
+                          { x: 662.0, y: 568.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -243,10 +829,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 248.0, y: 277.0 },
-                              { x: 352.0, y: 277.0 },
-                              { x: 352.0, y: 320.0 },
-                              { x: 248.0, y: 320.0 },
+                              { x: 662.0, y: 525.0 },
+                              { x: 765.0, y: 525.0 },
+                              { x: 765.0, y: 568.0 },
+                              { x: 662.0, y: 568.0 },
                             ],
                           },
                           inferText: '비빔밥',
@@ -257,195 +843,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 274.0 },
-                      { x: 597.0, y: 274.0 },
-                      { x: 597.0, y: 322.0 },
-                      { x: 7.0, y: 322.0 },
+                      { x: 416.0, y: 452.0 },
+                      { x: 1011.0, y: 452.0 },
+                      { x: 1011.0, y: 571.0 },
+                      { x: 416.0, y: 571.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 3,
+                  rowIndex: 2,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 195.0, y: 325.0 },
-                          { x: 403.0, y: 325.0 },
-                          { x: 403.0, y: 368.0 },
-                          { x: 195.0, y: 368.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9985,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 195.0, y: 325.0 },
-                              { x: 403.0, y: 325.0 },
-                              { x: 403.0, y: 368.0 },
-                              { x: 195.0, y: 368.0 },
-                            ],
-                          },
-                          inferText: '(우육:호주산)',
-                          inferConfidence: 0.9985,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 322.0 },
-                      { x: 597.0, y: 322.0 },
-                      { x: 597.0, y: 371.0 },
-                      { x: 7.0, y: 371.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9985,
-                  rowSpan: 1,
-                  rowIndex: 4,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 216.0, y: 371.0 },
-                          { x: 387.0, y: 371.0 },
-                          { x: 387.0, y: 413.0 },
-                          { x: 216.0, y: 413.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 216.0, y: 371.0 },
-                              { x: 387.0, y: 371.0 },
-                              { x: 387.0, y: 413.0 },
-                              { x: 216.0, y: 413.0 },
-                            ],
-                          },
-                          inferText: '가다랭이국',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 371.0 },
-                      { x: 597.0, y: 371.0 },
-                      { x: 597.0, y: 416.0 },
-                      { x: 7.0, y: 416.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 5,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 197.0, y: 419.0 },
-                          { x: 400.0, y: 419.0 },
-                          { x: 400.0, y: 461.0 },
-                          { x: 197.0, y: 461.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 197.0, y: 419.0 },
-                              { x: 400.0, y: 419.0 },
-                              { x: 400.0, y: 461.0 },
-                              { x: 197.0, y: 461.0 },
-                            ],
-                          },
-                          inferText: '도토리묵무침',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 416.0 },
-                      { x: 597.0, y: 416.0 },
-                      { x: 597.0, y: 464.0 },
-                      { x: 7.0, y: 464.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 6,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 184.0, y: 464.0 },
-                          { x: 416.0, y: 464.0 },
-                          { x: 416.0, y: 509.0 },
-                          { x: 184.0, y: 509.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9938,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 184.0, y: 464.0 },
-                              { x: 416.0, y: 464.0 },
-                              { x: 416.0, y: 509.0 },
-                              { x: 184.0, y: 509.0 },
-                            ],
-                          },
-                          inferText: '시래기된장지짐',
-                          inferConfidence: 0.9938,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 464.0 },
-                      { x: 597.0, y: 464.0 },
-                      { x: 597.0, y: 513.0 },
-                      { x: 7.0, y: 513.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9938,
-                  rowSpan: 1,
-                  rowIndex: 7,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 216.0, y: 512.0 },
-                          { x: 387.0, y: 512.0 },
-                          { x: 387.0, y: 555.0 },
-                          { x: 216.0, y: 555.0 },
+                          { x: 604.0, y: 568.0 },
+                          { x: 822.0, y: 568.0 },
+                          { x: 822.0, y: 619.0 },
+                          { x: 604.0, y: 619.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -453,10 +871,178 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 216.0, y: 512.0 },
-                              { x: 387.0, y: 512.0 },
-                              { x: 387.0, y: 555.0 },
-                              { x: 216.0, y: 555.0 },
+                              { x: 604.0, y: 568.0 },
+                              { x: 822.0, y: 568.0 },
+                              { x: 822.0, y: 619.0 },
+                              { x: 604.0, y: 619.0 },
+                            ],
+                          },
+                          inferText: '(우육:호주산)',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 416.0, y: 571.0 },
+                      { x: 1011.0, y: 571.0 },
+                      { x: 1011.0, y: 618.0 },
+                      { x: 416.0, y: 618.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 3,
+                  columnSpan: 1,
+                  columnIndex: 2,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 631.0, y: 619.0 },
+                          { x: 798.0, y: 619.0 },
+                          { x: 798.0, y: 662.0 },
+                          { x: 631.0, y: 662.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 631.0, y: 619.0 },
+                              { x: 798.0, y: 619.0 },
+                              { x: 798.0, y: 662.0 },
+                              { x: 631.0, y: 662.0 },
+                            ],
+                          },
+                          inferText: '가다랭이국',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 416.0, y: 618.0 },
+                      { x: 1011.0, y: 618.0 },
+                      { x: 1011.0, y: 664.0 },
+                      { x: 416.0, y: 664.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 4,
+                  columnSpan: 1,
+                  columnIndex: 2,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 607.0, y: 662.0 },
+                          { x: 819.0, y: 662.0 },
+                          { x: 819.0, y: 713.0 },
+                          { x: 607.0, y: 713.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 607.0, y: 662.0 },
+                              { x: 819.0, y: 662.0 },
+                              { x: 819.0, y: 713.0 },
+                              { x: 607.0, y: 713.0 },
+                            ],
+                          },
+                          inferText: '도토리묵무침',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 416.0, y: 664.0 },
+                      { x: 1011.0, y: 664.0 },
+                      { x: 1011.0, y: 711.0 },
+                      { x: 416.0, y: 711.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 5,
+                  columnSpan: 1,
+                  columnIndex: 2,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 595.0, y: 710.0 },
+                          { x: 829.0, y: 710.0 },
+                          { x: 829.0, y: 756.0 },
+                          { x: 595.0, y: 756.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9972,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 595.0, y: 710.0 },
+                              { x: 829.0, y: 710.0 },
+                              { x: 829.0, y: 756.0 },
+                              { x: 595.0, y: 756.0 },
+                            ],
+                          },
+                          inferText: '시래기된장지짐',
+                          inferConfidence: 0.9972,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 416.0, y: 711.0 },
+                      { x: 1011.0, y: 711.0 },
+                      { x: 1011.0, y: 758.0 },
+                      { x: 416.0, y: 758.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9972,
+                  rowSpan: 1,
+                  rowIndex: 6,
+                  columnSpan: 1,
+                  columnIndex: 2,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 625.0, y: 756.0 },
+                          { x: 804.0, y: 756.0 },
+                          { x: 804.0, y: 807.0 },
+                          { x: 625.0, y: 807.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 625.0, y: 756.0 },
+                              { x: 804.0, y: 756.0 },
+                              { x: 804.0, y: 807.0 },
+                              { x: 625.0, y: 807.0 },
                             ],
                           },
                           inferText: '다시마튀각',
@@ -467,27 +1053,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 513.0 },
-                      { x: 597.0, y: 513.0 },
-                      { x: 597.0, y: 558.0 },
-                      { x: 7.0, y: 558.0 },
+                      { x: 416.0, y: 758.0 },
+                      { x: 1011.0, y: 758.0 },
+                      { x: 1011.0, y: 805.0 },
+                      { x: 416.0, y: 805.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 8,
+                  rowIndex: 7,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 264.0, y: 560.0 },
-                          { x: 336.0, y: 560.0 },
-                          { x: 336.0, y: 603.0 },
-                          { x: 264.0, y: 603.0 },
+                          { x: 671.0, y: 798.0 },
+                          { x: 753.0, y: 798.0 },
+                          { x: 753.0, y: 853.0 },
+                          { x: 671.0, y: 853.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -495,10 +1081,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 264.0, y: 560.0 },
-                              { x: 336.0, y: 560.0 },
-                              { x: 336.0, y: 603.0 },
-                              { x: 264.0, y: 603.0 },
+                              { x: 671.0, y: 798.0 },
+                              { x: 753.0, y: 798.0 },
+                              { x: 753.0, y: 853.0 },
+                              { x: 671.0, y: 853.0 },
                             ],
                           },
                           inferText: '김치',
@@ -509,27 +1095,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 558.0 },
-                      { x: 597.0, y: 558.0 },
-                      { x: 597.0, y: 606.0 },
-                      { x: 7.0, y: 606.0 },
+                      { x: 416.0, y: 805.0 },
+                      { x: 1011.0, y: 805.0 },
+                      { x: 1011.0, y: 851.0 },
+                      { x: 416.0, y: 851.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 9,
+                  rowIndex: 8,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 219.0, y: 605.0 },
-                          { x: 384.0, y: 605.0 },
-                          { x: 384.0, y: 648.0 },
-                          { x: 219.0, y: 648.0 },
+                          { x: 628.0, y: 850.0 },
+                          { x: 798.0, y: 850.0 },
+                          { x: 798.0, y: 895.0 },
+                          { x: 628.0, y: 895.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -537,10 +1123,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 219.0, y: 605.0 },
-                              { x: 384.0, y: 605.0 },
-                              { x: 384.0, y: 648.0 },
-                              { x: 219.0, y: 648.0 },
+                              { x: 628.0, y: 850.0 },
+                              { x: 798.0, y: 850.0 },
+                              { x: 798.0, y: 895.0 },
+                              { x: 628.0, y: 895.0 },
                             ],
                           },
                           inferText: '*ICE초코*',
@@ -551,43 +1137,43 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 606.0 },
-                      { x: 597.0, y: 606.0 },
-                      { x: 597.0, y: 722.0 },
-                      { x: 7.0, y: 722.0 },
+                      { x: 416.0, y: 851.0 },
+                      { x: 1011.0, y: 851.0 },
+                      { x: 1011.0, y: 966.0 },
+                      { x: 416.0, y: 966.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 10,
+                  rowIndex: 9,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 722.0 },
-                      { x: 597.0, y: 722.0 },
-                      { x: 597.0, y: 785.0 },
-                      { x: 7.0, y: 785.0 },
+                      { x: 416.0, y: 966.0 },
+                      { x: 1011.0, y: 966.0 },
+                      { x: 1011.0, y: 1034.0 },
+                      { x: 416.0, y: 1034.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 11,
+                  rowIndex: 10,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 200.0, y: 795.0 },
-                          { x: 403.0, y: 795.0 },
-                          { x: 403.0, y: 837.0 },
-                          { x: 200.0, y: 837.0 },
+                          { x: 613.0, y: 1041.0 },
+                          { x: 816.0, y: 1041.0 },
+                          { x: 816.0, y: 1083.0 },
+                          { x: 613.0, y: 1083.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -595,10 +1181,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 200.0, y: 795.0 },
-                              { x: 403.0, y: 795.0 },
-                              { x: 403.0, y: 837.0 },
-                              { x: 200.0, y: 837.0 },
+                              { x: 613.0, y: 1041.0 },
+                              { x: 816.0, y: 1041.0 },
+                              { x: 816.0, y: 1083.0 },
+                              { x: 613.0, y: 1083.0 },
                             ],
                           },
                           inferText: '해물볶음우동',
@@ -609,111 +1195,111 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 785.0 },
-                      { x: 597.0, y: 785.0 },
-                      { x: 597.0, y: 838.0 },
-                      { x: 7.0, y: 838.0 },
+                      { x: 416.0, y: 1034.0 },
+                      { x: 1011.0, y: 1034.0 },
+                      { x: 1011.0, y: 1085.0 },
+                      { x: 416.0, y: 1085.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 12,
+                  rowIndex: 11,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 181.0, y: 840.0 },
-                          { x: 419.0, y: 840.0 },
-                          { x: 419.0, y: 883.0 },
-                          { x: 181.0, y: 883.0 },
+                          { x: 589.0, y: 1083.0 },
+                          { x: 838.0, y: 1083.0 },
+                          { x: 838.0, y: 1135.0 },
+                          { x: 589.0, y: 1135.0 },
                         ],
                       },
-                      inferConfidence: 0.9999,
+                      inferConfidence: 0.9992,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 181.0, y: 840.0 },
-                              { x: 419.0, y: 840.0 },
-                              { x: 419.0, y: 883.0 },
-                              { x: 181.0, y: 883.0 },
+                              { x: 589.0, y: 1083.0 },
+                              { x: 838.0, y: 1083.0 },
+                              { x: 838.0, y: 1135.0 },
+                              { x: 589.0, y: 1135.0 },
                             ],
                           },
                           inferText: '(오징어:원양산)',
-                          inferConfidence: 0.9999,
+                          inferConfidence: 0.9992,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 838.0 },
-                      { x: 597.0, y: 838.0 },
-                      { x: 597.0, y: 886.0 },
-                      { x: 7.0, y: 886.0 },
+                      { x: 416.0, y: 1085.0 },
+                      { x: 1011.0, y: 1085.0 },
+                      { x: 1011.0, y: 1132.0 },
+                      { x: 416.0, y: 1132.0 },
                     ],
                   },
-                  inferConfidence: 0.9999,
+                  inferConfidence: 0.9992,
                   rowSpan: 1,
-                  rowIndex: 13,
+                  rowIndex: 12,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 187.0, y: 888.0 },
-                          { x: 413.0, y: 888.0 },
-                          { x: 413.0, y: 931.0 },
-                          { x: 187.0, y: 931.0 },
+                          { x: 601.0, y: 1135.0 },
+                          { x: 825.0, y: 1135.0 },
+                          { x: 825.0, y: 1178.0 },
+                          { x: 601.0, y: 1178.0 },
                         ],
                       },
-                      inferConfidence: 0.9999,
+                      inferConfidence: 0.9998,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 187.0, y: 888.0 },
-                              { x: 413.0, y: 888.0 },
-                              { x: 413.0, y: 931.0 },
-                              { x: 187.0, y: 931.0 },
+                              { x: 601.0, y: 1135.0 },
+                              { x: 825.0, y: 1135.0 },
+                              { x: 825.0, y: 1178.0 },
+                              { x: 601.0, y: 1178.0 },
                             ],
                           },
                           inferText: '쌀밥&후리가케',
-                          inferConfidence: 0.9999,
+                          inferConfidence: 0.9998,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 886.0 },
-                      { x: 597.0, y: 886.0 },
-                      { x: 597.0, y: 935.0 },
-                      { x: 7.0, y: 935.0 },
+                      { x: 416.0, y: 1132.0 },
+                      { x: 1011.0, y: 1132.0 },
+                      { x: 1011.0, y: 1183.0 },
+                      { x: 416.0, y: 1183.0 },
                     ],
                   },
-                  inferConfidence: 0.9999,
+                  inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 14,
+                  rowIndex: 13,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 216.0, y: 933.0 },
-                          { x: 387.0, y: 933.0 },
-                          { x: 387.0, y: 976.0 },
-                          { x: 216.0, y: 976.0 },
+                          { x: 625.0, y: 1178.0 },
+                          { x: 804.0, y: 1178.0 },
+                          { x: 804.0, y: 1229.0 },
+                          { x: 625.0, y: 1229.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -721,10 +1307,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 216.0, y: 933.0 },
-                              { x: 387.0, y: 933.0 },
-                              { x: 387.0, y: 976.0 },
-                              { x: 216.0, y: 976.0 },
+                              { x: 625.0, y: 1178.0 },
+                              { x: 804.0, y: 1178.0 },
+                              { x: 804.0, y: 1229.0 },
+                              { x: 625.0, y: 1229.0 },
                             ],
                           },
                           inferText: '가다랭이국',
@@ -735,69 +1321,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 935.0 },
-                      { x: 597.0, y: 935.0 },
-                      { x: 597.0, y: 980.0 },
-                      { x: 7.0, y: 980.0 },
+                      { x: 416.0, y: 1183.0 },
+                      { x: 1011.0, y: 1183.0 },
+                      { x: 1011.0, y: 1225.0 },
+                      { x: 416.0, y: 1225.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 15,
+                  rowIndex: 14,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 213.0, y: 981.0 },
-                          { x: 387.0, y: 981.0 },
-                          { x: 387.0, y: 1024.0 },
-                          { x: 213.0, y: 1024.0 },
+                          { x: 628.0, y: 1229.0 },
+                          { x: 798.0, y: 1229.0 },
+                          { x: 798.0, y: 1272.0 },
+                          { x: 628.0, y: 1272.0 },
                         ],
                       },
-                      inferConfidence: 0.9999,
+                      inferConfidence: 0.9993,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 213.0, y: 981.0 },
-                              { x: 387.0, y: 981.0 },
-                              { x: 387.0, y: 1024.0 },
-                              { x: 213.0, y: 1024.0 },
+                              { x: 628.0, y: 1229.0 },
+                              { x: 798.0, y: 1229.0 },
+                              { x: 798.0, y: 1272.0 },
+                              { x: 628.0, y: 1272.0 },
                             ],
                           },
                           inferText: '옥수수빠스',
-                          inferConfidence: 0.9999,
+                          inferConfidence: 0.9993,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 980.0 },
-                      { x: 597.0, y: 980.0 },
-                      { x: 597.0, y: 1028.0 },
-                      { x: 7.0, y: 1028.0 },
+                      { x: 416.0, y: 1225.0 },
+                      { x: 1011.0, y: 1225.0 },
+                      { x: 1011.0, y: 1272.0 },
+                      { x: 416.0, y: 1272.0 },
                     ],
                   },
-                  inferConfidence: 0.9999,
+                  inferConfidence: 0.9993,
                   rowSpan: 1,
-                  rowIndex: 16,
+                  rowIndex: 15,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 187.0, y: 1029.0 },
-                          { x: 413.0, y: 1029.0 },
-                          { x: 413.0, y: 1072.0 },
-                          { x: 187.0, y: 1072.0 },
+                          { x: 595.0, y: 1272.0 },
+                          { x: 832.0, y: 1272.0 },
+                          { x: 832.0, y: 1323.0 },
+                          { x: 595.0, y: 1323.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -805,10 +1391,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 187.0, y: 1029.0 },
-                              { x: 413.0, y: 1029.0 },
-                              { x: 413.0, y: 1072.0 },
-                              { x: 187.0, y: 1072.0 },
+                              { x: 595.0, y: 1272.0 },
+                              { x: 832.0, y: 1272.0 },
+                              { x: 832.0, y: 1323.0 },
+                              { x: 595.0, y: 1323.0 },
                             ],
                           },
                           inferText: '샐러드&드레싱',
@@ -819,181 +1405,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 1028.0 },
-                      { x: 597.0, y: 1028.0 },
-                      { x: 597.0, y: 1077.0 },
-                      { x: 7.0, y: 1077.0 },
+                      { x: 416.0, y: 1272.0 },
+                      { x: 1011.0, y: 1272.0 },
+                      { x: 1011.0, y: 1323.0 },
+                      { x: 416.0, y: 1323.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 17,
+                  rowIndex: 16,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 245.0, y: 1075.0 },
-                          { x: 352.0, y: 1075.0 },
-                          { x: 352.0, y: 1117.0 },
-                          { x: 245.0, y: 1117.0 },
+                          { x: 662.0, y: 1323.0 },
+                          { x: 765.0, y: 1323.0 },
+                          { x: 765.0, y: 1366.0 },
+                          { x: 662.0, y: 1366.0 },
                         ],
                       },
-                      inferConfidence: 0.9843,
+                      inferConfidence: 0.9952,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 245.0, y: 1075.0 },
-                              { x: 352.0, y: 1075.0 },
-                              { x: 352.0, y: 1117.0 },
-                              { x: 245.0, y: 1117.0 },
+                              { x: 662.0, y: 1323.0 },
+                              { x: 765.0, y: 1323.0 },
+                              { x: 765.0, y: 1366.0 },
+                              { x: 662.0, y: 1366.0 },
                             ],
                           },
                           inferText: '단무지',
-                          inferConfidence: 0.9843,
+                          inferConfidence: 0.9952,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 7.0, y: 1077.0 },
-                      { x: 597.0, y: 1077.0 },
-                      { x: 597.0, y: 1121.0 },
-                      { x: 7.0, y: 1121.0 },
+                      { x: 416.0, y: 1323.0 },
+                      { x: 1011.0, y: 1323.0 },
+                      { x: 1011.0, y: 1370.0 },
+                      { x: 416.0, y: 1370.0 },
                     ],
                   },
-                  inferConfidence: 0.9843,
+                  inferConfidence: 0.9952,
                   rowSpan: 1,
-                  rowIndex: 18,
+                  rowIndex: 17,
                   columnSpan: 1,
-                  columnIndex: 0,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 216.0, y: 1120.0 },
-                          { x: 384.0, y: 1120.0 },
-                          { x: 384.0, y: 1163.0 },
-                          { x: 216.0, y: 1163.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9998,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 216.0, y: 1120.0 },
-                              { x: 384.0, y: 1120.0 },
-                              { x: 384.0, y: 1163.0 },
-                              { x: 216.0, y: 1163.0 },
-                            ],
-                          },
-                          inferText: '*ICE초코*',
-                          inferConfidence: 0.9998,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 1121.0 },
-                      { x: 597.0, y: 1121.0 },
-                      { x: 597.0, y: 1174.0 },
-                      { x: 7.0, y: 1174.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9998,
-                  rowSpan: 1,
-                  rowIndex: 19,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 7.0, y: 1174.0 },
-                      { x: 597.0, y: 1174.0 },
-                      { x: 597.0, y: 1234.0 },
-                      { x: 7.0, y: 1234.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 20,
-                  columnSpan: 1,
-                  columnIndex: 0,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 816.0, y: 51.0 },
-                          { x: 973.0, y: 51.0 },
-                          { x: 973.0, y: 88.0 },
-                          { x: 816.0, y: 88.0 },
-                        ],
-                      },
-                      inferConfidence: 0.99965,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 816.0, y: 51.0 },
-                              { x: 891.0, y: 51.0 },
-                              { x: 891.0, y: 88.0 },
-                              { x: 816.0, y: 88.0 },
-                            ],
-                          },
-                          inferText: '05월',
-                          inferConfidence: 0.9997,
-                        },
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 899.0, y: 51.0 },
-                              { x: 973.0, y: 51.0 },
-                              { x: 973.0, y: 88.0 },
-                              { x: 899.0, y: 88.0 },
-                            ],
-                          },
-                          inferText: '20일',
-                          inferConfidence: 0.9996,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 597.0, y: 5.0 },
-                      { x: 1191.0, y: 5.0 },
-                      { x: 1191.0, y: 128.0 },
-                      { x: 597.0, y: 128.0 },
-                    ],
-                  },
-                  inferConfidence: 0.99965,
-                  rowSpan: 1,
-                  rowIndex: 0,
-                  columnSpan: 1,
-                  columnIndex: 1,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 856.0, y: 147.0 },
-                          { x: 933.0, y: 147.0 },
-                          { x: 933.0, y: 189.0 },
-                          { x: 856.0, y: 189.0 },
+                          { x: 628.0, y: 1366.0 },
+                          { x: 798.0, y: 1366.0 },
+                          { x: 798.0, y: 1411.0 },
+                          { x: 628.0, y: 1411.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -1001,13 +1475,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 856.0, y: 147.0 },
-                              { x: 933.0, y: 147.0 },
-                              { x: 933.0, y: 189.0 },
-                              { x: 856.0, y: 189.0 },
+                              { x: 628.0, y: 1366.0 },
+                              { x: 798.0, y: 1366.0 },
+                              { x: 798.0, y: 1411.0 },
+                              { x: 628.0, y: 1411.0 },
                             ],
                           },
-                          inferText: 'TUE',
+                          inferText: '*ICE초코*',
                           inferConfidence: 0.9999,
                         },
                       ],
@@ -1015,127 +1489,97 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 128.0 },
-                      { x: 1191.0, y: 128.0 },
-                      { x: 1191.0, y: 207.0 },
-                      { x: 597.0, y: 207.0 },
+                      { x: 416.0, y: 1370.0 },
+                      { x: 1011.0, y: 1370.0 },
+                      { x: 1011.0, y: 1416.0 },
+                      { x: 416.0, y: 1416.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 1,
+                  rowIndex: 18,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 207.0 },
-                      { x: 1191.0, y: 207.0 },
-                      { x: 1191.0, y: 274.0 },
-                      { x: 597.0, y: 274.0 },
+                      { x: 416.0, y: 1416.0 },
+                      { x: 1011.0, y: 1416.0 },
+                      { x: 1011.0, y: 1480.0 },
+                      { x: 416.0, y: 1480.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 2,
+                  rowIndex: 19,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 2,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 824.0, y: 277.0 },
-                          { x: 960.0, y: 277.0 },
-                          { x: 960.0, y: 320.0 },
-                          { x: 824.0, y: 320.0 },
+                          { x: 1220.0, y: 291.0 },
+                          { x: 1393.0, y: 291.0 },
+                          { x: 1393.0, y: 340.0 },
+                          { x: 1220.0, y: 340.0 },
                         ],
                       },
-                      inferConfidence: 0.9994,
+                      inferConfidence: 0.99815,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 824.0, y: 277.0 },
-                              { x: 960.0, y: 277.0 },
-                              { x: 960.0, y: 320.0 },
-                              { x: 824.0, y: 320.0 },
+                              { x: 1220.0, y: 291.0 },
+                              { x: 1308.0, y: 291.0 },
+                              { x: 1308.0, y: 337.0 },
+                              { x: 1220.0, y: 337.0 },
                             ],
                           },
-                          inferText: '닭매운찜',
-                          inferConfidence: 0.9994,
+                          inferText: '05월',
+                          inferConfidence: 0.9987,
+                        },
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1305.0, y: 291.0 },
+                              { x: 1393.0, y: 291.0 },
+                              { x: 1393.0, y: 340.0 },
+                              { x: 1305.0, y: 340.0 },
+                            ],
+                          },
+                          inferText: '20일',
+                          inferConfidence: 0.9976,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 274.0 },
-                      { x: 1191.0, y: 274.0 },
-                      { x: 1191.0, y: 322.0 },
-                      { x: 597.0, y: 322.0 },
+                      { x: 1011.0, y: 252.0 },
+                      { x: 1606.0, y: 252.0 },
+                      { x: 1606.0, y: 376.0 },
+                      { x: 1011.0, y: 376.0 },
                     ],
                   },
-                  inferConfidence: 0.9994,
+                  inferConfidence: 0.99815,
                   rowSpan: 1,
-                  rowIndex: 3,
+                  rowIndex: 0,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 773.0, y: 325.0 },
-                          { x: 1013.0, y: 325.0 },
-                          { x: 1013.0, y: 368.0 },
-                          { x: 773.0, y: 368.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 773.0, y: 325.0 },
-                              { x: 1013.0, y: 325.0 },
-                              { x: 1013.0, y: 368.0 },
-                              { x: 773.0, y: 368.0 },
-                            ],
-                          },
-                          inferText: '(계육:브라질산)',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 597.0, y: 322.0 },
-                      { x: 1191.0, y: 322.0 },
-                      { x: 1191.0, y: 371.0 },
-                      { x: 597.0, y: 371.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 4,
-                  columnSpan: 1,
-                  columnIndex: 1,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 800.0, y: 373.0 },
-                          { x: 987.0, y: 373.0 },
-                          { x: 987.0, y: 413.0 },
-                          { x: 800.0, y: 413.0 },
+                          { x: 1272.0, y: 395.0 },
+                          { x: 1344.0, y: 395.0 },
+                          { x: 1344.0, y: 434.0 },
+                          { x: 1272.0, y: 434.0 },
                         ],
                       },
                       inferConfidence: 0.9997,
@@ -1143,13 +1587,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 800.0, y: 373.0 },
-                              { x: 987.0, y: 373.0 },
-                              { x: 987.0, y: 413.0 },
-                              { x: 800.0, y: 413.0 },
+                              { x: 1272.0, y: 395.0 },
+                              { x: 1344.0, y: 395.0 },
+                              { x: 1344.0, y: 434.0 },
+                              { x: 1272.0, y: 434.0 },
                             ],
                           },
-                          inferText: '차조밥/쌀밥',
+                          inferText: 'TUE',
                           inferConfidence: 0.9997,
                         },
                       ],
@@ -1157,27 +1601,153 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 371.0 },
-                      { x: 1191.0, y: 371.0 },
-                      { x: 1191.0, y: 416.0 },
-                      { x: 597.0, y: 416.0 },
+                      { x: 1011.0, y: 376.0 },
+                      { x: 1606.0, y: 376.0 },
+                      { x: 1606.0, y: 452.0 },
+                      { x: 1011.0, y: 452.0 },
                     ],
                   },
                   inferConfidence: 0.9997,
                   rowSpan: 1,
-                  rowIndex: 5,
+                  rowIndex: 1,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 827.0, y: 419.0 },
-                          { x: 963.0, y: 419.0 },
-                          { x: 963.0, y: 461.0 },
-                          { x: 827.0, y: 461.0 },
+                          { x: 1235.0, y: 522.0 },
+                          { x: 1372.0, y: 522.0 },
+                          { x: 1372.0, y: 568.0 },
+                          { x: 1235.0, y: 568.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9988,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1235.0, y: 522.0 },
+                              { x: 1372.0, y: 522.0 },
+                              { x: 1372.0, y: 568.0 },
+                              { x: 1235.0, y: 568.0 },
+                            ],
+                          },
+                          inferText: '닭매운찜',
+                          inferConfidence: 0.9988,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 452.0 },
+                      { x: 1606.0, y: 452.0 },
+                      { x: 1606.0, y: 571.0 },
+                      { x: 1011.0, y: 571.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9988,
+                  rowSpan: 1,
+                  rowIndex: 2,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1181.0, y: 568.0 },
+                          { x: 1432.0, y: 568.0 },
+                          { x: 1432.0, y: 619.0 },
+                          { x: 1181.0, y: 619.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1181.0, y: 568.0 },
+                              { x: 1432.0, y: 568.0 },
+                              { x: 1432.0, y: 619.0 },
+                              { x: 1181.0, y: 619.0 },
+                            ],
+                          },
+                          inferText: '(계육:브라질산)',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 571.0 },
+                      { x: 1606.0, y: 571.0 },
+                      { x: 1606.0, y: 618.0 },
+                      { x: 1011.0, y: 618.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 3,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1214.0, y: 619.0 },
+                          { x: 1399.0, y: 619.0 },
+                          { x: 1399.0, y: 662.0 },
+                          { x: 1214.0, y: 662.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9995,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1214.0, y: 619.0 },
+                              { x: 1399.0, y: 619.0 },
+                              { x: 1399.0, y: 662.0 },
+                              { x: 1214.0, y: 662.0 },
+                            ],
+                          },
+                          inferText: '차조밥/쌀밥',
+                          inferConfidence: 0.9995,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 618.0 },
+                      { x: 1606.0, y: 618.0 },
+                      { x: 1606.0, y: 664.0 },
+                      { x: 1011.0, y: 664.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9995,
+                  rowSpan: 1,
+                  rowIndex: 4,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1235.0, y: 662.0 },
+                          { x: 1381.0, y: 662.0 },
+                          { x: 1381.0, y: 713.0 },
+                          { x: 1235.0, y: 713.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -1185,10 +1755,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 827.0, y: 419.0 },
-                              { x: 963.0, y: 419.0 },
-                              { x: 963.0, y: 461.0 },
-                              { x: 827.0, y: 461.0 },
+                              { x: 1235.0, y: 662.0 },
+                              { x: 1381.0, y: 662.0 },
+                              { x: 1381.0, y: 713.0 },
+                              { x: 1235.0, y: 713.0 },
                             ],
                           },
                           inferText: '멸치육수',
@@ -1199,69 +1769,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 416.0 },
-                      { x: 1191.0, y: 416.0 },
-                      { x: 1191.0, y: 464.0 },
-                      { x: 597.0, y: 464.0 },
+                      { x: 1011.0, y: 664.0 },
+                      { x: 1606.0, y: 664.0 },
+                      { x: 1606.0, y: 711.0 },
+                      { x: 1011.0, y: 711.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 6,
+                  rowIndex: 5,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 840.0, y: 467.0 },
-                          { x: 947.0, y: 467.0 },
-                          { x: 947.0, y: 509.0 },
-                          { x: 840.0, y: 509.0 },
+                          { x: 1254.0, y: 712.0 },
+                          { x: 1358.0, y: 717.0 },
+                          { x: 1356.0, y: 759.0 },
+                          { x: 1252.0, y: 754.0 },
                         ],
                       },
-                      inferConfidence: 0.9998,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 840.0, y: 467.0 },
-                              { x: 947.0, y: 467.0 },
-                              { x: 947.0, y: 509.0 },
-                              { x: 840.0, y: 509.0 },
+                              { x: 1254.0, y: 712.0 },
+                              { x: 1358.0, y: 717.0 },
+                              { x: 1356.0, y: 758.0 },
+                              { x: 1252.0, y: 754.0 },
                             ],
                           },
                           inferText: '부추전',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 464.0 },
-                      { x: 1191.0, y: 464.0 },
-                      { x: 1191.0, y: 513.0 },
-                      { x: 597.0, y: 513.0 },
+                      { x: 1011.0, y: 711.0 },
+                      { x: 1606.0, y: 711.0 },
+                      { x: 1606.0, y: 758.0 },
+                      { x: 1011.0, y: 758.0 },
                     ],
                   },
-                  inferConfidence: 0.9998,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 7,
+                  rowIndex: 6,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 808.0, y: 512.0 },
-                          { x: 979.0, y: 512.0 },
-                          { x: 979.0, y: 555.0 },
-                          { x: 808.0, y: 555.0 },
+                          { x: 1217.0, y: 756.0 },
+                          { x: 1396.0, y: 756.0 },
+                          { x: 1396.0, y: 807.0 },
+                          { x: 1217.0, y: 807.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -1269,10 +1839,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 808.0, y: 512.0 },
-                              { x: 979.0, y: 512.0 },
-                              { x: 979.0, y: 555.0 },
-                              { x: 808.0, y: 555.0 },
+                              { x: 1217.0, y: 756.0 },
+                              { x: 1396.0, y: 756.0 },
+                              { x: 1396.0, y: 807.0 },
+                              { x: 1217.0, y: 807.0 },
                             ],
                           },
                           inferText: '건파래볶음',
@@ -1283,27 +1853,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 513.0 },
-                      { x: 1191.0, y: 513.0 },
-                      { x: 1191.0, y: 558.0 },
-                      { x: 597.0, y: 558.0 },
+                      { x: 1011.0, y: 758.0 },
+                      { x: 1606.0, y: 758.0 },
+                      { x: 1606.0, y: 805.0 },
+                      { x: 1011.0, y: 805.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 8,
+                  rowIndex: 7,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 859.0, y: 560.0 },
-                          { x: 928.0, y: 560.0 },
-                          { x: 928.0, y: 603.0 },
-                          { x: 859.0, y: 603.0 },
+                          { x: 1266.0, y: 801.0 },
+                          { x: 1347.0, y: 801.0 },
+                          { x: 1347.0, y: 853.0 },
+                          { x: 1266.0, y: 853.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -1311,10 +1881,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 859.0, y: 560.0 },
-                              { x: 928.0, y: 560.0 },
-                              { x: 928.0, y: 603.0 },
-                              { x: 859.0, y: 603.0 },
+                              { x: 1266.0, y: 801.0 },
+                              { x: 1347.0, y: 801.0 },
+                              { x: 1347.0, y: 853.0 },
+                              { x: 1266.0, y: 853.0 },
                             ],
                           },
                           inferText: '김치',
@@ -1325,85 +1895,85 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 558.0 },
-                      { x: 1191.0, y: 558.0 },
-                      { x: 1191.0, y: 606.0 },
-                      { x: 597.0, y: 606.0 },
+                      { x: 1011.0, y: 805.0 },
+                      { x: 1606.0, y: 805.0 },
+                      { x: 1606.0, y: 851.0 },
+                      { x: 1011.0, y: 851.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 9,
+                  rowIndex: 8,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 763.0, y: 608.0 },
-                          { x: 1027.0, y: 608.0 },
-                          { x: 1027.0, y: 648.0 },
-                          { x: 763.0, y: 648.0 },
+                          { x: 1165.0, y: 850.0 },
+                          { x: 1448.0, y: 850.0 },
+                          { x: 1448.0, y: 901.0 },
+                          { x: 1165.0, y: 901.0 },
                         ],
                       },
-                      inferConfidence: 0.9999,
+                      inferConfidence: 0.9998,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 763.0, y: 608.0 },
-                              { x: 1027.0, y: 608.0 },
-                              { x: 1027.0, y: 648.0 },
-                              { x: 763.0, y: 648.0 },
+                              { x: 1165.0, y: 850.0 },
+                              { x: 1448.0, y: 850.0 },
+                              { x: 1448.0, y: 901.0 },
+                              { x: 1165.0, y: 901.0 },
                             ],
                           },
                           inferText: '*아이스티(레몬)*',
-                          inferConfidence: 0.9999,
+                          inferConfidence: 0.9998,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 606.0 },
-                      { x: 1191.0, y: 606.0 },
-                      { x: 1191.0, y: 722.0 },
-                      { x: 597.0, y: 722.0 },
+                      { x: 1011.0, y: 851.0 },
+                      { x: 1606.0, y: 851.0 },
+                      { x: 1606.0, y: 966.0 },
+                      { x: 1011.0, y: 966.0 },
                     ],
                   },
-                  inferConfidence: 0.9999,
+                  inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 10,
+                  rowIndex: 9,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 722.0 },
-                      { x: 1191.0, y: 722.0 },
-                      { x: 1191.0, y: 785.0 },
-                      { x: 597.0, y: 785.0 },
+                      { x: 1011.0, y: 966.0 },
+                      { x: 1606.0, y: 966.0 },
+                      { x: 1606.0, y: 1034.0 },
+                      { x: 1011.0, y: 1034.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 11,
+                  rowIndex: 10,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 808.0, y: 792.0 },
-                          { x: 979.0, y: 792.0 },
-                          { x: 979.0, y: 837.0 },
-                          { x: 808.0, y: 837.0 },
+                          { x: 1220.0, y: 1041.0 },
+                          { x: 1393.0, y: 1041.0 },
+                          { x: 1393.0, y: 1083.0 },
+                          { x: 1220.0, y: 1083.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -1411,10 +1981,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 808.0, y: 792.0 },
-                              { x: 979.0, y: 792.0 },
-                              { x: 979.0, y: 837.0 },
-                              { x: 808.0, y: 837.0 },
+                              { x: 1220.0, y: 1041.0 },
+                              { x: 1393.0, y: 1041.0 },
+                              { x: 1393.0, y: 1083.0 },
+                              { x: 1220.0, y: 1083.0 },
                             ],
                           },
                           inferText: '양지쌀국수',
@@ -1425,153 +1995,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 785.0 },
-                      { x: 1191.0, y: 785.0 },
-                      { x: 1191.0, y: 838.0 },
-                      { x: 597.0, y: 838.0 },
+                      { x: 1011.0, y: 1034.0 },
+                      { x: 1606.0, y: 1034.0 },
+                      { x: 1606.0, y: 1085.0 },
+                      { x: 1011.0, y: 1085.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 12,
+                  rowIndex: 11,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 701.0, y: 840.0 },
-                          { x: 1085.0, y: 840.0 },
-                          { x: 1085.0, y: 883.0 },
-                          { x: 701.0, y: 883.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9988,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 701.0, y: 840.0 },
-                              { x: 1085.0, y: 840.0 },
-                              { x: 1085.0, y: 883.0 },
-                              { x: 701.0, y: 883.0 },
-                            ],
-                          },
-                          inferText: '(소고기편육-우육:외국산)',
-                          inferConfidence: 0.9988,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 597.0, y: 838.0 },
-                      { x: 1191.0, y: 838.0 },
-                      { x: 1191.0, y: 886.0 },
-                      { x: 597.0, y: 886.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9988,
-                  rowSpan: 1,
-                  rowIndex: 13,
-                  columnSpan: 1,
-                  columnIndex: 1,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 744.0, y: 888.0 },
-                          { x: 1043.0, y: 888.0 },
-                          { x: 1043.0, y: 931.0 },
-                          { x: 744.0, y: 931.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9985,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 744.0, y: 888.0 },
-                              { x: 1043.0, y: 888.0 },
-                              { x: 1043.0, y: 931.0 },
-                              { x: 744.0, y: 931.0 },
-                            ],
-                          },
-                          inferText: '미니파인애플볶음밥',
-                          inferConfidence: 0.9985,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 597.0, y: 886.0 },
-                      { x: 1191.0, y: 886.0 },
-                      { x: 1191.0, y: 935.0 },
-                      { x: 597.0, y: 935.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9985,
-                  rowSpan: 1,
-                  rowIndex: 14,
-                  columnSpan: 1,
-                  columnIndex: 1,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 808.0, y: 933.0 },
-                          { x: 976.0, y: 933.0 },
-                          { x: 976.0, y: 976.0 },
-                          { x: 808.0, y: 976.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9997,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 808.0, y: 933.0 },
-                              { x: 976.0, y: 933.0 },
-                              { x: 976.0, y: 976.0 },
-                              { x: 808.0, y: 976.0 },
-                            ],
-                          },
-                          inferText: '달콤팥춘권',
-                          inferConfidence: 0.9997,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 597.0, y: 935.0 },
-                      { x: 1191.0, y: 935.0 },
-                      { x: 1191.0, y: 980.0 },
-                      { x: 597.0, y: 980.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9997,
-                  rowSpan: 1,
-                  rowIndex: 15,
-                  columnSpan: 1,
-                  columnIndex: 1,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 824.0, y: 981.0 },
-                          { x: 960.0, y: 981.0 },
-                          { x: 960.0, y: 1024.0 },
-                          { x: 824.0, y: 1024.0 },
+                          { x: 1108.0, y: 1083.0 },
+                          { x: 1505.0, y: 1083.0 },
+                          { x: 1505.0, y: 1135.0 },
+                          { x: 1108.0, y: 1135.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -1579,10 +2023,136 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 824.0, y: 981.0 },
-                              { x: 960.0, y: 981.0 },
-                              { x: 960.0, y: 1024.0 },
-                              { x: 824.0, y: 1024.0 },
+                              { x: 1108.0, y: 1083.0 },
+                              { x: 1505.0, y: 1083.0 },
+                              { x: 1505.0, y: 1135.0 },
+                              { x: 1108.0, y: 1135.0 },
+                            ],
+                          },
+                          inferText: '(소고기편육-우육:외국산)',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 1085.0 },
+                      { x: 1606.0, y: 1085.0 },
+                      { x: 1606.0, y: 1132.0 },
+                      { x: 1011.0, y: 1132.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 12,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1159.0, y: 1135.0 },
+                          { x: 1457.0, y: 1135.0 },
+                          { x: 1457.0, y: 1178.0 },
+                          { x: 1159.0, y: 1178.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9979,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1159.0, y: 1135.0 },
+                              { x: 1457.0, y: 1135.0 },
+                              { x: 1457.0, y: 1178.0 },
+                              { x: 1159.0, y: 1178.0 },
+                            ],
+                          },
+                          inferText: '미니파인애플볶음밥',
+                          inferConfidence: 0.9979,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 1132.0 },
+                      { x: 1606.0, y: 1132.0 },
+                      { x: 1606.0, y: 1183.0 },
+                      { x: 1011.0, y: 1183.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9979,
+                  rowSpan: 1,
+                  rowIndex: 13,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1217.0, y: 1178.0 },
+                          { x: 1396.0, y: 1178.0 },
+                          { x: 1396.0, y: 1229.0 },
+                          { x: 1217.0, y: 1229.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9981,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1217.0, y: 1178.0 },
+                              { x: 1396.0, y: 1178.0 },
+                              { x: 1396.0, y: 1229.0 },
+                              { x: 1217.0, y: 1229.0 },
+                            ],
+                          },
+                          inferText: '달콤팥춘권',
+                          inferConfidence: 0.9981,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1011.0, y: 1183.0 },
+                      { x: 1606.0, y: 1183.0 },
+                      { x: 1606.0, y: 1225.0 },
+                      { x: 1011.0, y: 1225.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9981,
+                  rowSpan: 1,
+                  rowIndex: 14,
+                  columnSpan: 1,
+                  columnIndex: 3,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1238.0, y: 1229.0 },
+                          { x: 1375.0, y: 1229.0 },
+                          { x: 1375.0, y: 1272.0 },
+                          { x: 1238.0, y: 1272.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1238.0, y: 1229.0 },
+                              { x: 1375.0, y: 1229.0 },
+                              { x: 1375.0, y: 1272.0 },
+                              { x: 1238.0, y: 1272.0 },
                             ],
                           },
                           inferText: '알새우칩',
@@ -1593,27 +2163,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 980.0 },
-                      { x: 1191.0, y: 980.0 },
-                      { x: 1191.0, y: 1028.0 },
-                      { x: 597.0, y: 1028.0 },
+                      { x: 1011.0, y: 1225.0 },
+                      { x: 1606.0, y: 1225.0 },
+                      { x: 1606.0, y: 1272.0 },
+                      { x: 1011.0, y: 1272.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 16,
+                  rowIndex: 15,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 779.0, y: 1029.0 },
-                          { x: 1005.0, y: 1029.0 },
-                          { x: 1005.0, y: 1072.0 },
-                          { x: 779.0, y: 1072.0 },
+                          { x: 1190.0, y: 1272.0 },
+                          { x: 1423.0, y: 1272.0 },
+                          { x: 1423.0, y: 1323.0 },
+                          { x: 1190.0, y: 1323.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -1621,10 +2191,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 779.0, y: 1029.0 },
-                              { x: 1005.0, y: 1029.0 },
-                              { x: 1005.0, y: 1072.0 },
-                              { x: 779.0, y: 1072.0 },
+                              { x: 1190.0, y: 1272.0 },
+                              { x: 1423.0, y: 1272.0 },
+                              { x: 1423.0, y: 1323.0 },
+                              { x: 1190.0, y: 1323.0 },
                             ],
                           },
                           inferText: '샐러드&드레싱',
@@ -1635,69 +2205,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 1028.0 },
-                      { x: 1191.0, y: 1028.0 },
-                      { x: 1191.0, y: 1077.0 },
-                      { x: 597.0, y: 1077.0 },
+                      { x: 1011.0, y: 1272.0 },
+                      { x: 1606.0, y: 1272.0 },
+                      { x: 1606.0, y: 1323.0 },
+                      { x: 1011.0, y: 1323.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 17,
+                  rowIndex: 16,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 808.0, y: 1075.0 },
-                          { x: 976.0, y: 1075.0 },
-                          { x: 976.0, y: 1117.0 },
-                          { x: 808.0, y: 1117.0 },
+                          { x: 1223.0, y: 1323.0 },
+                          { x: 1390.0, y: 1323.0 },
+                          { x: 1390.0, y: 1366.0 },
+                          { x: 1223.0, y: 1366.0 },
                         ],
                       },
-                      inferConfidence: 1.0,
+                      inferConfidence: 0.9998,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 808.0, y: 1075.0 },
-                              { x: 976.0, y: 1075.0 },
-                              { x: 976.0, y: 1117.0 },
-                              { x: 808.0, y: 1117.0 },
+                              { x: 1223.0, y: 1323.0 },
+                              { x: 1390.0, y: 1323.0 },
+                              { x: 1390.0, y: 1366.0 },
+                              { x: 1223.0, y: 1366.0 },
                             ],
                           },
                           inferText: '사각단무지',
-                          inferConfidence: 1.0,
+                          inferConfidence: 0.9998,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 1077.0 },
-                      { x: 1191.0, y: 1077.0 },
-                      { x: 1191.0, y: 1121.0 },
-                      { x: 597.0, y: 1121.0 },
+                      { x: 1011.0, y: 1323.0 },
+                      { x: 1606.0, y: 1323.0 },
+                      { x: 1606.0, y: 1370.0 },
+                      { x: 1011.0, y: 1370.0 },
                     ],
                   },
-                  inferConfidence: 1.0,
+                  inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 18,
+                  rowIndex: 17,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 763.0, y: 1125.0 },
-                          { x: 1027.0, y: 1125.0 },
-                          { x: 1027.0, y: 1165.0 },
-                          { x: 763.0, y: 1165.0 },
+                          { x: 1171.0, y: 1369.0 },
+                          { x: 1439.0, y: 1369.0 },
+                          { x: 1439.0, y: 1411.0 },
+                          { x: 1171.0, y: 1411.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -1705,10 +2275,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 763.0, y: 1125.0 },
-                              { x: 1027.0, y: 1125.0 },
-                              { x: 1027.0, y: 1165.0 },
-                              { x: 763.0, y: 1165.0 },
+                              { x: 1171.0, y: 1369.0 },
+                              { x: 1439.0, y: 1369.0 },
+                              { x: 1439.0, y: 1411.0 },
+                              { x: 1171.0, y: 1411.0 },
                             ],
                           },
                           inferText: '*아이스티(레몬)*',
@@ -1719,97 +2289,97 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 1121.0 },
-                      { x: 1191.0, y: 1121.0 },
-                      { x: 1191.0, y: 1174.0 },
-                      { x: 597.0, y: 1174.0 },
+                      { x: 1011.0, y: 1370.0 },
+                      { x: 1606.0, y: 1370.0 },
+                      { x: 1606.0, y: 1416.0 },
+                      { x: 1011.0, y: 1416.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 19,
+                  rowIndex: 18,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 597.0, y: 1174.0 },
-                      { x: 1191.0, y: 1174.0 },
-                      { x: 1191.0, y: 1234.0 },
-                      { x: 597.0, y: 1234.0 },
+                      { x: 1011.0, y: 1416.0 },
+                      { x: 1606.0, y: 1416.0 },
+                      { x: 1606.0, y: 1480.0 },
+                      { x: 1011.0, y: 1480.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 20,
+                  rowIndex: 19,
                   columnSpan: 1,
-                  columnIndex: 1,
+                  columnIndex: 3,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1411.0, y: 48.0 },
-                          { x: 1563.0, y: 48.0 },
-                          { x: 1563.0, y: 88.0 },
-                          { x: 1411.0, y: 88.0 },
+                          { x: 1818.0, y: 288.0 },
+                          { x: 1982.0, y: 288.0 },
+                          { x: 1982.0, y: 340.0 },
+                          { x: 1818.0, y: 340.0 },
                         ],
                       },
-                      inferConfidence: 0.99975,
+                      inferConfidence: 0.99895,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1411.0, y: 51.0 },
-                              { x: 1488.0, y: 51.0 },
-                              { x: 1488.0, y: 88.0 },
-                              { x: 1411.0, y: 88.0 },
+                              { x: 1818.0, y: 288.0 },
+                              { x: 1909.0, y: 288.0 },
+                              { x: 1909.0, y: 340.0 },
+                              { x: 1818.0, y: 340.0 },
                             ],
                           },
                           inferText: '05월',
-                          inferConfidence: 0.9997,
+                          inferConfidence: 0.9984,
                         },
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1491.0, y: 48.0 },
-                              { x: 1563.0, y: 48.0 },
-                              { x: 1563.0, y: 88.0 },
-                              { x: 1491.0, y: 88.0 },
+                              { x: 1900.0, y: 288.0 },
+                              { x: 1982.0, y: 288.0 },
+                              { x: 1982.0, y: 340.0 },
+                              { x: 1900.0, y: 340.0 },
                             ],
                           },
                           inferText: '21일',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9995,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 5.0 },
-                      { x: 1784.0, y: 5.0 },
-                      { x: 1784.0, y: 128.0 },
-                      { x: 1191.0, y: 128.0 },
+                      { x: 1606.0, y: 252.0 },
+                      { x: 2196.0, y: 252.0 },
+                      { x: 2196.0, y: 376.0 },
+                      { x: 1606.0, y: 376.0 },
                     ],
                   },
-                  inferConfidence: 0.99975,
+                  inferConfidence: 0.99895,
                   rowSpan: 1,
                   rowIndex: 0,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1445.0, y: 147.0 },
-                          { x: 1534.0, y: 147.0 },
-                          { x: 1534.0, y: 189.0 },
-                          { x: 1445.0, y: 189.0 },
+                          { x: 1857.0, y: 395.0 },
+                          { x: 1942.0, y: 395.0 },
+                          { x: 1942.0, y: 434.0 },
+                          { x: 1857.0, y: 434.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -1817,10 +2387,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1445.0, y: 147.0 },
-                              { x: 1534.0, y: 147.0 },
-                              { x: 1534.0, y: 189.0 },
-                              { x: 1445.0, y: 189.0 },
+                              { x: 1857.0, y: 395.0 },
+                              { x: 1942.0, y: 395.0 },
+                              { x: 1942.0, y: 434.0 },
+                              { x: 1857.0, y: 434.0 },
                             ],
                           },
                           inferText: 'WED',
@@ -1831,169 +2401,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 128.0 },
-                      { x: 1784.0, y: 128.0 },
-                      { x: 1784.0, y: 207.0 },
-                      { x: 1191.0, y: 207.0 },
+                      { x: 1606.0, y: 376.0 },
+                      { x: 2196.0, y: 376.0 },
+                      { x: 2196.0, y: 452.0 },
+                      { x: 1606.0, y: 452.0 },
                     ],
                   },
                   inferConfidence: 0.9998,
                   rowSpan: 1,
                   rowIndex: 1,
                   columnSpan: 1,
-                  columnIndex: 2,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1191.0, y: 207.0 },
-                      { x: 1784.0, y: 207.0 },
-                      { x: 1784.0, y: 274.0 },
-                      { x: 1191.0, y: 274.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 2,
-                  columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1419.0, y: 277.0 },
-                          { x: 1552.0, y: 277.0 },
-                          { x: 1552.0, y: 320.0 },
-                          { x: 1419.0, y: 320.0 },
+                          { x: 1830.0, y: 522.0 },
+                          { x: 1967.0, y: 522.0 },
+                          { x: 1967.0, y: 568.0 },
+                          { x: 1830.0, y: 568.0 },
                         ],
                       },
-                      inferConfidence: 1.0,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1419.0, y: 277.0 },
-                              { x: 1552.0, y: 277.0 },
-                              { x: 1552.0, y: 320.0 },
-                              { x: 1419.0, y: 320.0 },
+                              { x: 1830.0, y: 522.0 },
+                              { x: 1967.0, y: 522.0 },
+                              { x: 1967.0, y: 568.0 },
+                              { x: 1830.0, y: 568.0 },
                             ],
                           },
                           inferText: '비지찌개',
-                          inferConfidence: 1.0,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 274.0 },
-                      { x: 1784.0, y: 274.0 },
-                      { x: 1784.0, y: 322.0 },
-                      { x: 1191.0, y: 322.0 },
+                      { x: 1606.0, y: 452.0 },
+                      { x: 2196.0, y: 452.0 },
+                      { x: 2196.0, y: 571.0 },
+                      { x: 1606.0, y: 571.0 },
                     ],
                   },
-                  inferConfidence: 1.0,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 3,
+                  rowIndex: 2,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1395.0, y: 325.0 },
-                          { x: 1579.0, y: 325.0 },
-                          { x: 1579.0, y: 365.0 },
-                          { x: 1395.0, y: 365.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9998,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1395.0, y: 325.0 },
-                              { x: 1579.0, y: 325.0 },
-                              { x: 1579.0, y: 365.0 },
-                              { x: 1395.0, y: 365.0 },
-                            ],
-                          },
-                          inferText: '보리밥/쌀밥',
-                          inferConfidence: 0.9998,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1191.0, y: 322.0 },
-                      { x: 1784.0, y: 322.0 },
-                      { x: 1784.0, y: 371.0 },
-                      { x: 1191.0, y: 371.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9998,
-                  rowSpan: 1,
-                  rowIndex: 4,
-                  columnSpan: 1,
-                  columnIndex: 2,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1339.0, y: 371.0 },
-                          { x: 1632.0, y: 371.0 },
-                          { x: 1632.0, y: 413.0 },
-                          { x: 1339.0, y: 413.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9996,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1339.0, y: 371.0 },
-                              { x: 1632.0, y: 371.0 },
-                              { x: 1632.0, y: 413.0 },
-                              { x: 1339.0, y: 413.0 },
-                            ],
-                          },
-                          inferText: '치킨너겟&머스타드',
-                          inferConfidence: 0.9996,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1191.0, y: 371.0 },
-                      { x: 1784.0, y: 371.0 },
-                      { x: 1784.0, y: 416.0 },
-                      { x: 1191.0, y: 416.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9996,
-                  rowSpan: 1,
-                  rowIndex: 5,
-                  columnSpan: 1,
-                  columnIndex: 2,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1309.0, y: 419.0 },
-                          { x: 1662.0, y: 419.0 },
-                          { x: 1662.0, y: 461.0 },
-                          { x: 1309.0, y: 461.0 },
+                          { x: 1800.0, y: 568.0 },
+                          { x: 2000.0, y: 568.0 },
+                          { x: 2000.0, y: 619.0 },
+                          { x: 1800.0, y: 619.0 },
                         ],
                       },
                       inferConfidence: 0.9994,
@@ -2001,13 +2471,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1309.0, y: 419.0 },
-                              { x: 1662.0, y: 419.0 },
-                              { x: 1662.0, y: 461.0 },
-                              { x: 1309.0, y: 461.0 },
+                              { x: 1800.0, y: 568.0 },
+                              { x: 2000.0, y: 568.0 },
+                              { x: 2000.0, y: 619.0 },
+                              { x: 1800.0, y: 619.0 },
                             ],
                           },
-                          inferText: '(치킨너겟-계육:국내산)',
+                          inferText: '보리밥/쌀밥',
                           inferConfidence: 0.9994,
                         },
                       ],
@@ -2015,27 +2485,111 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 416.0 },
-                      { x: 1784.0, y: 416.0 },
-                      { x: 1784.0, y: 464.0 },
-                      { x: 1191.0, y: 464.0 },
+                      { x: 1606.0, y: 571.0 },
+                      { x: 2196.0, y: 571.0 },
+                      { x: 2196.0, y: 618.0 },
+                      { x: 1606.0, y: 618.0 },
                     ],
                   },
                   inferConfidence: 0.9994,
                   rowSpan: 1,
-                  rowIndex: 6,
+                  rowIndex: 3,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1339.0, y: 467.0 },
-                          { x: 1632.0, y: 467.0 },
-                          { x: 1632.0, y: 507.0 },
-                          { x: 1339.0, y: 507.0 },
+                          { x: 1754.0, y: 619.0 },
+                          { x: 2045.0, y: 619.0 },
+                          { x: 2045.0, y: 662.0 },
+                          { x: 1754.0, y: 662.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9989,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1754.0, y: 619.0 },
+                              { x: 2045.0, y: 619.0 },
+                              { x: 2045.0, y: 662.0 },
+                              { x: 1754.0, y: 662.0 },
+                            ],
+                          },
+                          inferText: '치킨너겟&머스타드',
+                          inferConfidence: 0.9989,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1606.0, y: 618.0 },
+                      { x: 2196.0, y: 618.0 },
+                      { x: 2196.0, y: 664.0 },
+                      { x: 1606.0, y: 664.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9989,
+                  rowSpan: 1,
+                  rowIndex: 4,
+                  columnSpan: 1,
+                  columnIndex: 4,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1724.0, y: 668.0 },
+                          { x: 2076.0, y: 668.0 },
+                          { x: 2076.0, y: 710.0 },
+                          { x: 1724.0, y: 710.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9996,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 1724.0, y: 668.0 },
+                              { x: 2076.0, y: 668.0 },
+                              { x: 2076.0, y: 710.0 },
+                              { x: 1724.0, y: 710.0 },
+                            ],
+                          },
+                          inferText: '(치킨너겟-계육:국내산)',
+                          inferConfidence: 0.9996,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1606.0, y: 664.0 },
+                      { x: 2196.0, y: 664.0 },
+                      { x: 2196.0, y: 711.0 },
+                      { x: 1606.0, y: 711.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9996,
+                  rowSpan: 1,
+                  rowIndex: 5,
+                  columnSpan: 1,
+                  columnIndex: 4,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 1754.0, y: 713.0 },
+                          { x: 2049.0, y: 713.0 },
+                          { x: 2049.0, y: 756.0 },
+                          { x: 1754.0, y: 756.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -2043,10 +2597,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1339.0, y: 467.0 },
-                              { x: 1632.0, y: 467.0 },
-                              { x: 1632.0, y: 507.0 },
-                              { x: 1339.0, y: 507.0 },
+                              { x: 1754.0, y: 713.0 },
+                              { x: 2049.0, y: 713.0 },
+                              { x: 2049.0, y: 756.0 },
+                              { x: 1754.0, y: 756.0 },
                             ],
                           },
                           inferText: '분홍소시지전&케찹',
@@ -2057,69 +2611,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 464.0 },
-                      { x: 1784.0, y: 464.0 },
-                      { x: 1784.0, y: 513.0 },
-                      { x: 1191.0, y: 513.0 },
+                      { x: 1606.0, y: 711.0 },
+                      { x: 2196.0, y: 711.0 },
+                      { x: 2196.0, y: 758.0 },
+                      { x: 1606.0, y: 758.0 },
                     ],
                   },
                   inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 7,
+                  rowIndex: 6,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1277.0, y: 512.0 },
-                          { x: 1696.0, y: 512.0 },
-                          { x: 1696.0, y: 555.0 },
-                          { x: 1277.0, y: 555.0 },
+                          { x: 1690.0, y: 759.0 },
+                          { x: 2109.0, y: 759.0 },
+                          { x: 2109.0, y: 801.0 },
+                          { x: 1690.0, y: 801.0 },
                         ],
                       },
-                      inferConfidence: 0.9898,
+                      inferConfidence: 0.9925,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1277.0, y: 512.0 },
-                              { x: 1696.0, y: 512.0 },
-                              { x: 1696.0, y: 555.0 },
-                              { x: 1277.0, y: 555.0 },
+                              { x: 1690.0, y: 759.0 },
+                              { x: 2109.0, y: 759.0 },
+                              { x: 2109.0, y: 801.0 },
+                              { x: 1690.0, y: 801.0 },
                             ],
                           },
                           inferText: '(참피온소시지-돈육:국내산)',
-                          inferConfidence: 0.9898,
+                          inferConfidence: 0.9925,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 513.0 },
-                      { x: 1784.0, y: 513.0 },
-                      { x: 1784.0, y: 558.0 },
-                      { x: 1191.0, y: 558.0 },
+                      { x: 1606.0, y: 758.0 },
+                      { x: 2196.0, y: 758.0 },
+                      { x: 2196.0, y: 805.0 },
+                      { x: 1606.0, y: 805.0 },
                     ],
                   },
-                  inferConfidence: 0.9898,
+                  inferConfidence: 0.9925,
                   rowSpan: 1,
-                  rowIndex: 8,
+                  rowIndex: 7,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1315.0, y: 560.0 },
-                          { x: 1656.0, y: 560.0 },
-                          { x: 1656.0, y: 603.0 },
-                          { x: 1315.0, y: 603.0 },
+                          { x: 1727.0, y: 807.0 },
+                          { x: 2070.0, y: 807.0 },
+                          { x: 2070.0, y: 850.0 },
+                          { x: 1727.0, y: 850.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -2127,10 +2681,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1315.0, y: 560.0 },
-                              { x: 1656.0, y: 560.0 },
-                              { x: 1656.0, y: 603.0 },
-                              { x: 1315.0, y: 603.0 },
+                              { x: 1727.0, y: 807.0 },
+                              { x: 2070.0, y: 807.0 },
+                              { x: 2070.0, y: 850.0 },
+                              { x: 1727.0, y: 850.0 },
                             ],
                           },
                           inferText: '매콤콩나물잡채/깍두기',
@@ -2141,85 +2695,85 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 558.0 },
-                      { x: 1784.0, y: 558.0 },
-                      { x: 1784.0, y: 606.0 },
-                      { x: 1191.0, y: 606.0 },
+                      { x: 1606.0, y: 805.0 },
+                      { x: 2196.0, y: 805.0 },
+                      { x: 2196.0, y: 851.0 },
+                      { x: 1606.0, y: 851.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 9,
+                  rowIndex: 8,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1400.0, y: 611.0 },
-                          { x: 1574.0, y: 611.0 },
-                          { x: 1574.0, y: 651.0 },
-                          { x: 1400.0, y: 651.0 },
+                          { x: 1806.0, y: 850.0 },
+                          { x: 1994.0, y: 850.0 },
+                          { x: 1994.0, y: 901.0 },
+                          { x: 1806.0, y: 901.0 },
                         ],
                       },
-                      inferConfidence: 0.9999,
+                      inferConfidence: 0.9997,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1400.0, y: 611.0 },
-                              { x: 1574.0, y: 611.0 },
-                              { x: 1574.0, y: 651.0 },
-                              { x: 1400.0, y: 651.0 },
+                              { x: 1806.0, y: 850.0 },
+                              { x: 1994.0, y: 850.0 },
+                              { x: 1994.0, y: 901.0 },
+                              { x: 1806.0, y: 901.0 },
                             ],
                           },
                           inferText: '*복분자차*',
-                          inferConfidence: 0.9999,
+                          inferConfidence: 0.9997,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 606.0 },
-                      { x: 1784.0, y: 606.0 },
-                      { x: 1784.0, y: 722.0 },
-                      { x: 1191.0, y: 722.0 },
+                      { x: 1606.0, y: 851.0 },
+                      { x: 2196.0, y: 851.0 },
+                      { x: 2196.0, y: 966.0 },
+                      { x: 1606.0, y: 966.0 },
                     ],
                   },
-                  inferConfidence: 0.9999,
+                  inferConfidence: 0.9997,
                   rowSpan: 1,
-                  rowIndex: 10,
+                  rowIndex: 9,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 722.0 },
-                      { x: 1784.0, y: 722.0 },
-                      { x: 1784.0, y: 785.0 },
-                      { x: 1191.0, y: 785.0 },
+                      { x: 1606.0, y: 966.0 },
+                      { x: 2196.0, y: 966.0 },
+                      { x: 2196.0, y: 1034.0 },
+                      { x: 1606.0, y: 1034.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 11,
+                  rowIndex: 10,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1403.0, y: 791.0 },
-                          { x: 1572.0, y: 794.0 },
-                          { x: 1571.0, y: 838.0 },
-                          { x: 1402.0, y: 835.0 },
+                          { x: 1812.0, y: 1038.0 },
+                          { x: 1985.0, y: 1038.0 },
+                          { x: 1985.0, y: 1083.0 },
+                          { x: 1812.0, y: 1083.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -2227,10 +2781,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1403.0, y: 791.0 },
-                              { x: 1571.0, y: 794.0 },
-                              { x: 1571.0, y: 838.0 },
-                              { x: 1402.0, y: 835.0 },
+                              { x: 1812.0, y: 1038.0 },
+                              { x: 1985.0, y: 1038.0 },
+                              { x: 1985.0, y: 1083.0 },
+                              { x: 1812.0, y: 1083.0 },
                             ],
                           },
                           inferText: '계란떡볶이',
@@ -2241,69 +2795,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 785.0 },
-                      { x: 1784.0, y: 785.0 },
-                      { x: 1784.0, y: 838.0 },
-                      { x: 1191.0, y: 838.0 },
+                      { x: 1606.0, y: 1034.0 },
+                      { x: 2196.0, y: 1034.0 },
+                      { x: 2196.0, y: 1085.0 },
+                      { x: 1606.0, y: 1085.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 12,
+                  rowIndex: 11,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1304.0, y: 840.0 },
-                          { x: 1667.0, y: 840.0 },
-                          { x: 1667.0, y: 883.0 },
-                          { x: 1304.0, y: 883.0 },
+                          { x: 1715.0, y: 1083.0 },
+                          { x: 2085.0, y: 1083.0 },
+                          { x: 2085.0, y: 1135.0 },
+                          { x: 1715.0, y: 1135.0 },
                         ],
                       },
-                      inferConfidence: 0.9994,
+                      inferConfidence: 0.9986,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1304.0, y: 840.0 },
-                              { x: 1667.0, y: 840.0 },
-                              { x: 1667.0, y: 883.0 },
-                              { x: 1304.0, y: 883.0 },
+                              { x: 1715.0, y: 1083.0 },
+                              { x: 2085.0, y: 1083.0 },
+                              { x: 2085.0, y: 1135.0 },
+                              { x: 1715.0, y: 1135.0 },
                             ],
                           },
                           inferText: '꼬마김밥&김가루양념밥',
-                          inferConfidence: 0.9994,
+                          inferConfidence: 0.9986,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 838.0 },
-                      { x: 1784.0, y: 838.0 },
-                      { x: 1784.0, y: 886.0 },
-                      { x: 1191.0, y: 886.0 },
+                      { x: 1606.0, y: 1085.0 },
+                      { x: 2196.0, y: 1085.0 },
+                      { x: 2196.0, y: 1132.0 },
+                      { x: 1606.0, y: 1132.0 },
                     ],
                   },
-                  inferConfidence: 0.9994,
+                  inferConfidence: 0.9986,
                   rowSpan: 1,
-                  rowIndex: 13,
+                  rowIndex: 12,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1435.0, y: 888.0 },
-                          { x: 1539.0, y: 888.0 },
-                          { x: 1539.0, y: 931.0 },
-                          { x: 1435.0, y: 931.0 },
+                          { x: 1848.0, y: 1135.0 },
+                          { x: 1951.0, y: 1135.0 },
+                          { x: 1951.0, y: 1178.0 },
+                          { x: 1848.0, y: 1178.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -2311,10 +2865,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1435.0, y: 888.0 },
-                              { x: 1539.0, y: 888.0 },
-                              { x: 1539.0, y: 931.0 },
-                              { x: 1435.0, y: 931.0 },
+                              { x: 1848.0, y: 1135.0 },
+                              { x: 1951.0, y: 1135.0 },
+                              { x: 1951.0, y: 1178.0 },
+                              { x: 1848.0, y: 1178.0 },
                             ],
                           },
                           inferText: '어묵국',
@@ -2325,27 +2879,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 886.0 },
-                      { x: 1784.0, y: 886.0 },
-                      { x: 1784.0, y: 935.0 },
-                      { x: 1191.0, y: 935.0 },
+                      { x: 1606.0, y: 1132.0 },
+                      { x: 2196.0, y: 1132.0 },
+                      { x: 2196.0, y: 1183.0 },
+                      { x: 1606.0, y: 1183.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 14,
+                  rowIndex: 13,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1352.0, y: 933.0 },
-                          { x: 1619.0, y: 933.0 },
-                          { x: 1619.0, y: 976.0 },
-                          { x: 1352.0, y: 976.0 },
+                          { x: 1766.0, y: 1181.0 },
+                          { x: 2033.0, y: 1181.0 },
+                          { x: 2033.0, y: 1223.0 },
+                          { x: 1766.0, y: 1223.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -2353,10 +2907,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1352.0, y: 933.0 },
-                              { x: 1619.0, y: 933.0 },
-                              { x: 1619.0, y: 976.0 },
-                              { x: 1352.0, y: 976.0 },
+                              { x: 1766.0, y: 1181.0 },
+                              { x: 2033.0, y: 1181.0 },
+                              { x: 2033.0, y: 1223.0 },
+                              { x: 1766.0, y: 1223.0 },
                             ],
                           },
                           inferText: '자색고구마크로켓',
@@ -2367,27 +2921,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 935.0 },
-                      { x: 1784.0, y: 935.0 },
-                      { x: 1784.0, y: 980.0 },
-                      { x: 1191.0, y: 980.0 },
+                      { x: 1606.0, y: 1183.0 },
+                      { x: 2196.0, y: 1183.0 },
+                      { x: 2196.0, y: 1225.0 },
+                      { x: 1606.0, y: 1225.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 15,
+                  rowIndex: 14,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1387.0, y: 981.0 },
-                          { x: 1587.0, y: 981.0 },
-                          { x: 1587.0, y: 1024.0 },
-                          { x: 1387.0, y: 1024.0 },
+                          { x: 1797.0, y: 1226.0 },
+                          { x: 2000.0, y: 1226.0 },
+                          { x: 2000.0, y: 1272.0 },
+                          { x: 1797.0, y: 1272.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -2395,10 +2949,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1387.0, y: 981.0 },
-                              { x: 1587.0, y: 981.0 },
-                              { x: 1587.0, y: 1024.0 },
-                              { x: 1387.0, y: 1024.0 },
+                              { x: 1797.0, y: 1226.0 },
+                              { x: 2000.0, y: 1226.0 },
+                              { x: 2000.0, y: 1272.0 },
+                              { x: 1797.0, y: 1272.0 },
                             ],
                           },
                           inferText: '멕시칸샐러드',
@@ -2409,169 +2963,111 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 980.0 },
-                      { x: 1784.0, y: 980.0 },
-                      { x: 1784.0, y: 1028.0 },
-                      { x: 1191.0, y: 1028.0 },
+                      { x: 1606.0, y: 1225.0 },
+                      { x: 2196.0, y: 1225.0 },
+                      { x: 2196.0, y: 1272.0 },
+                      { x: 1606.0, y: 1272.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 16,
+                  rowIndex: 15,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1339.0, y: 1027.0 },
-                          { x: 1635.0, y: 1027.0 },
-                          { x: 1635.0, y: 1072.0 },
-                          { x: 1339.0, y: 1072.0 },
+                          { x: 1745.0, y: 1272.0 },
+                          { x: 2055.0, y: 1272.0 },
+                          { x: 2055.0, y: 1323.0 },
+                          { x: 1745.0, y: 1323.0 },
                         ],
                       },
-                      inferConfidence: 0.9986,
+                      inferConfidence: 0.9979,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1339.0, y: 1027.0 },
-                              { x: 1635.0, y: 1027.0 },
-                              { x: 1635.0, y: 1072.0 },
-                              { x: 1339.0, y: 1072.0 },
+                              { x: 1745.0, y: 1272.0 },
+                              { x: 2055.0, y: 1272.0 },
+                              { x: 2055.0, y: 1323.0 },
+                              { x: 1745.0, y: 1323.0 },
                             ],
                           },
                           inferText: '(햄-계육,돈육:국산)',
-                          inferConfidence: 0.9986,
+                          inferConfidence: 0.9979,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 1028.0 },
-                      { x: 1784.0, y: 1028.0 },
-                      { x: 1784.0, y: 1077.0 },
-                      { x: 1191.0, y: 1077.0 },
+                      { x: 1606.0, y: 1272.0 },
+                      { x: 2196.0, y: 1272.0 },
+                      { x: 2196.0, y: 1323.0 },
+                      { x: 1606.0, y: 1323.0 },
                     ],
                   },
-                  inferConfidence: 0.9986,
+                  inferConfidence: 0.9979,
                   rowSpan: 1,
-                  rowIndex: 17,
+                  rowIndex: 16,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1400.0, y: 1075.0 },
-                          { x: 1571.0, y: 1075.0 },
-                          { x: 1571.0, y: 1117.0 },
-                          { x: 1400.0, y: 1117.0 },
+                          { x: 1815.0, y: 1323.0 },
+                          { x: 1985.0, y: 1323.0 },
+                          { x: 1985.0, y: 1366.0 },
+                          { x: 1815.0, y: 1366.0 },
                         ],
                       },
-                      inferConfidence: 0.9963,
+                      inferConfidence: 0.9972,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1400.0, y: 1075.0 },
-                              { x: 1571.0, y: 1075.0 },
-                              { x: 1571.0, y: 1117.0 },
-                              { x: 1400.0, y: 1117.0 },
+                              { x: 1815.0, y: 1323.0 },
+                              { x: 1985.0, y: 1323.0 },
+                              { x: 1985.0, y: 1366.0 },
+                              { x: 1815.0, y: 1366.0 },
                             ],
                           },
                           inferText: '단무지무침',
-                          inferConfidence: 0.9963,
+                          inferConfidence: 0.9972,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1191.0, y: 1077.0 },
-                      { x: 1784.0, y: 1077.0 },
-                      { x: 1784.0, y: 1121.0 },
-                      { x: 1191.0, y: 1121.0 },
+                      { x: 1606.0, y: 1323.0 },
+                      { x: 2196.0, y: 1323.0 },
+                      { x: 2196.0, y: 1370.0 },
+                      { x: 1606.0, y: 1370.0 },
                     ],
                   },
-                  inferConfidence: 0.9963,
+                  inferConfidence: 0.9972,
                   rowSpan: 1,
-                  rowIndex: 18,
+                  rowIndex: 17,
                   columnSpan: 1,
-                  columnIndex: 2,
+                  columnIndex: 4,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1400.0, y: 1125.0 },
-                          { x: 1576.0, y: 1125.0 },
-                          { x: 1576.0, y: 1165.0 },
-                          { x: 1400.0, y: 1165.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1400.0, y: 1125.0 },
-                              { x: 1576.0, y: 1125.0 },
-                              { x: 1576.0, y: 1165.0 },
-                              { x: 1400.0, y: 1165.0 },
-                            ],
-                          },
-                          inferText: '*복분자차*',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1191.0, y: 1121.0 },
-                      { x: 1784.0, y: 1121.0 },
-                      { x: 1784.0, y: 1174.0 },
-                      { x: 1191.0, y: 1174.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 19,
-                  columnSpan: 1,
-                  columnIndex: 2,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1191.0, y: 1174.0 },
-                      { x: 1784.0, y: 1174.0 },
-                      { x: 1784.0, y: 1234.0 },
-                      { x: 1191.0, y: 1234.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 20,
-                  columnSpan: 1,
-                  columnIndex: 2,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2011.0, y: 48.0 },
-                          { x: 2166.0, y: 48.0 },
-                          { x: 2166.0, y: 88.0 },
-                          { x: 2011.0, y: 88.0 },
+                          { x: 1806.0, y: 1366.0 },
+                          { x: 1994.0, y: 1366.0 },
+                          { x: 1994.0, y: 1417.0 },
+                          { x: 1806.0, y: 1417.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -2579,22 +3075,80 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2011.0, y: 51.0 },
-                              { x: 2086.0, y: 51.0 },
-                              { x: 2086.0, y: 88.0 },
-                              { x: 2011.0, y: 88.0 },
+                              { x: 1806.0, y: 1366.0 },
+                              { x: 1994.0, y: 1366.0 },
+                              { x: 1994.0, y: 1417.0 },
+                              { x: 1806.0, y: 1417.0 },
+                            ],
+                          },
+                          inferText: '*복분자차*',
+                          inferConfidence: 0.9998,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1606.0, y: 1370.0 },
+                      { x: 2196.0, y: 1370.0 },
+                      { x: 2196.0, y: 1416.0 },
+                      { x: 1606.0, y: 1416.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9998,
+                  rowSpan: 1,
+                  rowIndex: 18,
+                  columnSpan: 1,
+                  columnIndex: 4,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 1606.0, y: 1416.0 },
+                      { x: 2196.0, y: 1416.0 },
+                      { x: 2196.0, y: 1480.0 },
+                      { x: 1606.0, y: 1480.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 19,
+                  columnSpan: 1,
+                  columnIndex: 4,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2416.0, y: 288.0 },
+                          { x: 2586.0, y: 288.0 },
+                          { x: 2586.0, y: 340.0 },
+                          { x: 2416.0, y: 340.0 },
+                        ],
+                      },
+                      inferConfidence: 0.99915,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2416.0, y: 291.0 },
+                              { x: 2504.0, y: 291.0 },
+                              { x: 2504.0, y: 337.0 },
+                              { x: 2416.0, y: 337.0 },
                             ],
                           },
                           inferText: '05월',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9985,
                         },
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2091.0, y: 48.0 },
-                              { x: 2166.0, y: 48.0 },
-                              { x: 2166.0, y: 88.0 },
-                              { x: 2091.0, y: 88.0 },
+                              { x: 2498.0, y: 288.0 },
+                              { x: 2586.0, y: 288.0 },
+                              { x: 2586.0, y: 340.0 },
+                              { x: 2498.0, y: 340.0 },
                             ],
                           },
                           inferText: '22일',
@@ -2605,27 +3159,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 5.0 },
-                      { x: 2397.0, y: 5.0 },
-                      { x: 2397.0, y: 128.0 },
-                      { x: 1784.0, y: 128.0 },
+                      { x: 2196.0, y: 252.0 },
+                      { x: 2808.0, y: 252.0 },
+                      { x: 2808.0, y: 376.0 },
+                      { x: 2196.0, y: 376.0 },
                     ],
                   },
-                  inferConfidence: 0.9998,
+                  inferConfidence: 0.99915,
                   rowSpan: 1,
                   rowIndex: 0,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2048.0, y: 147.0 },
-                          { x: 2131.0, y: 147.0 },
-                          { x: 2131.0, y: 189.0 },
-                          { x: 2048.0, y: 189.0 },
+                          { x: 2461.0, y: 395.0 },
+                          { x: 2543.0, y: 395.0 },
+                          { x: 2543.0, y: 434.0 },
+                          { x: 2461.0, y: 434.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -2633,10 +3187,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2048.0, y: 147.0 },
-                              { x: 2131.0, y: 147.0 },
-                              { x: 2131.0, y: 189.0 },
-                              { x: 2048.0, y: 189.0 },
+                              { x: 2461.0, y: 395.0 },
+                              { x: 2543.0, y: 395.0 },
+                              { x: 2543.0, y: 434.0 },
+                              { x: 2461.0, y: 434.0 },
                             ],
                           },
                           inferText: 'THU',
@@ -2647,127 +3201,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 128.0 },
-                      { x: 2397.0, y: 128.0 },
-                      { x: 2397.0, y: 207.0 },
-                      { x: 1784.0, y: 207.0 },
+                      { x: 2196.0, y: 376.0 },
+                      { x: 2808.0, y: 376.0 },
+                      { x: 2808.0, y: 452.0 },
+                      { x: 2196.0, y: 452.0 },
                     ],
                   },
                   inferConfidence: 0.9998,
                   rowSpan: 1,
                   rowIndex: 1,
                   columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 207.0 },
-                      { x: 2397.0, y: 207.0 },
-                      { x: 2397.0, y: 274.0 },
-                      { x: 1784.0, y: 274.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 2,
-                  columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2038.0, y: 277.0 },
-                          { x: 2139.0, y: 277.0 },
-                          { x: 2139.0, y: 320.0 },
-                          { x: 2038.0, y: 320.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2038.0, y: 277.0 },
-                              { x: 2139.0, y: 277.0 },
-                              { x: 2139.0, y: 320.0 },
-                              { x: 2038.0, y: 320.0 },
-                            ],
-                          },
-                          inferText: '설렁탕',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 274.0 },
-                      { x: 2397.0, y: 274.0 },
-                      { x: 2397.0, y: 322.0 },
-                      { x: 1784.0, y: 322.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 3,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1870.0, y: 325.0 },
-                          { x: 2302.0, y: 325.0 },
-                          { x: 2302.0, y: 368.0 },
-                          { x: 1870.0, y: 368.0 },
-                        ],
-                      },
-                      inferConfidence: 0.999,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1870.0, y: 325.0 },
-                              { x: 2302.0, y: 325.0 },
-                              { x: 2302.0, y: 368.0 },
-                              { x: 1870.0, y: 368.0 },
-                            ],
-                          },
-                          inferText: '(우육:호주산,진한사골농축액',
-                          inferConfidence: 0.999,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 322.0 },
-                      { x: 2397.0, y: 322.0 },
-                      { x: 2397.0, y: 371.0 },
-                      { x: 1784.0, y: 371.0 },
-                    ],
-                  },
-                  inferConfidence: 0.999,
-                  rowSpan: 1,
-                  rowIndex: 4,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1910.0, y: 371.0 },
-                          { x: 2264.0, y: 371.0 },
-                          { x: 2264.0, y: 413.0 },
-                          { x: 1910.0, y: 413.0 },
+                          { x: 2446.0, y: 522.0 },
+                          { x: 2552.0, y: 522.0 },
+                          { x: 2552.0, y: 568.0 },
+                          { x: 2446.0, y: 568.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -2775,13 +3229,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1910.0, y: 371.0 },
-                              { x: 2264.0, y: 371.0 },
-                              { x: 2264.0, y: 413.0 },
-                              { x: 1910.0, y: 413.0 },
+                              { x: 2446.0, y: 522.0 },
+                              { x: 2552.0, y: 522.0 },
+                              { x: 2552.0, y: 568.0 },
+                              { x: 2446.0, y: 568.0 },
                             ],
                           },
-                          inferText: '-한우사골/모둠뼈:국산)',
+                          inferText: '설렁탕',
                           inferConfidence: 0.9998,
                         },
                       ],
@@ -2789,153 +3243,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 371.0 },
-                      { x: 2397.0, y: 371.0 },
-                      { x: 2397.0, y: 416.0 },
-                      { x: 1784.0, y: 416.0 },
+                      { x: 2196.0, y: 452.0 },
+                      { x: 2808.0, y: 452.0 },
+                      { x: 2808.0, y: 571.0 },
+                      { x: 2196.0, y: 571.0 },
                     ],
                   },
                   inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 5,
+                  rowIndex: 2,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1960.0, y: 419.0 },
-                          { x: 2214.0, y: 419.0 },
-                          { x: 2214.0, y: 461.0 },
-                          { x: 1960.0, y: 461.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9996,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1960.0, y: 419.0 },
-                              { x: 2214.0, y: 419.0 },
-                              { x: 2214.0, y: 461.0 },
-                              { x: 1960.0, y: 461.0 },
-                            ],
-                          },
-                          inferText: '혼합잡곡밥/쌀밥',
-                          inferConfidence: 0.9996,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 416.0 },
-                      { x: 2397.0, y: 416.0 },
-                      { x: 2397.0, y: 464.0 },
-                      { x: 1784.0, y: 464.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9996,
-                  rowSpan: 1,
-                  rowIndex: 6,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2003.0, y: 467.0 },
-                          { x: 2171.0, y: 467.0 },
-                          { x: 2171.0, y: 509.0 },
-                          { x: 2003.0, y: 509.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9997,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2003.0, y: 467.0 },
-                              { x: 2171.0, y: 467.0 },
-                              { x: 2171.0, y: 509.0 },
-                              { x: 2003.0, y: 509.0 },
-                            ],
-                          },
-                          inferText: '새우완자전',
-                          inferConfidence: 0.9997,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 464.0 },
-                      { x: 2397.0, y: 464.0 },
-                      { x: 2397.0, y: 513.0 },
-                      { x: 1784.0, y: 513.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9997,
-                  rowSpan: 1,
-                  rowIndex: 7,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1987.0, y: 512.0 },
-                          { x: 2187.0, y: 512.0 },
-                          { x: 2187.0, y: 555.0 },
-                          { x: 1987.0, y: 555.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9992,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1987.0, y: 512.0 },
-                              { x: 2187.0, y: 512.0 },
-                              { x: 2187.0, y: 555.0 },
-                              { x: 1987.0, y: 555.0 },
-                            ],
-                          },
-                          inferText: '매운감자조림',
-                          inferConfidence: 0.9992,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 513.0 },
-                      { x: 2397.0, y: 513.0 },
-                      { x: 2397.0, y: 558.0 },
-                      { x: 1784.0, y: 558.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9992,
-                  rowSpan: 1,
-                  rowIndex: 8,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1987.0, y: 560.0 },
-                          { x: 2190.0, y: 560.0 },
-                          { x: 2190.0, y: 603.0 },
-                          { x: 1987.0, y: 603.0 },
+                          { x: 2279.0, y: 568.0 },
+                          { x: 2722.0, y: 568.0 },
+                          { x: 2722.0, y: 619.0 },
+                          { x: 2279.0, y: 619.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -2943,13 +3271,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1987.0, y: 560.0 },
-                              { x: 2190.0, y: 560.0 },
-                              { x: 2190.0, y: 603.0 },
-                              { x: 1987.0, y: 603.0 },
+                              { x: 2279.0, y: 568.0 },
+                              { x: 2722.0, y: 568.0 },
+                              { x: 2722.0, y: 619.0 },
+                              { x: 2279.0, y: 619.0 },
                             ],
                           },
-                          inferText: '열무된장나물',
+                          inferText: '(우육:호주산,진한사골농축액',
                           inferConfidence: 0.9999,
                         },
                       ],
@@ -2957,27 +3285,237 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 558.0 },
-                      { x: 2397.0, y: 558.0 },
-                      { x: 2397.0, y: 606.0 },
-                      { x: 1784.0, y: 606.0 },
+                      { x: 2196.0, y: 571.0 },
+                      { x: 2808.0, y: 571.0 },
+                      { x: 2808.0, y: 618.0 },
+                      { x: 2196.0, y: 618.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 9,
+                  rowIndex: 3,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1979.0, y: 603.0 },
-                          { x: 2199.0, y: 611.0 },
-                          { x: 2198.0, y: 656.0 },
-                          { x: 1977.0, y: 648.0 },
+                          { x: 2322.0, y: 619.0 },
+                          { x: 2677.0, y: 619.0 },
+                          { x: 2677.0, y: 662.0 },
+                          { x: 2322.0, y: 662.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9995,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2322.0, y: 619.0 },
+                              { x: 2677.0, y: 619.0 },
+                              { x: 2677.0, y: 662.0 },
+                              { x: 2322.0, y: 662.0 },
+                            ],
+                          },
+                          inferText: '-한우사골/모둠뼈:국산)',
+                          inferConfidence: 0.9995,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 618.0 },
+                      { x: 2808.0, y: 618.0 },
+                      { x: 2808.0, y: 664.0 },
+                      { x: 2196.0, y: 664.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9995,
+                  rowSpan: 1,
+                  rowIndex: 4,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2367.0, y: 662.0 },
+                          { x: 2631.0, y: 662.0 },
+                          { x: 2631.0, y: 713.0 },
+                          { x: 2367.0, y: 713.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2367.0, y: 662.0 },
+                              { x: 2631.0, y: 662.0 },
+                              { x: 2631.0, y: 713.0 },
+                              { x: 2367.0, y: 713.0 },
+                            ],
+                          },
+                          inferText: '혼합잡곡밥/쌀밥',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 664.0 },
+                      { x: 2808.0, y: 664.0 },
+                      { x: 2808.0, y: 711.0 },
+                      { x: 2196.0, y: 711.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 5,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2416.0, y: 713.0 },
+                          { x: 2586.0, y: 713.0 },
+                          { x: 2586.0, y: 756.0 },
+                          { x: 2416.0, y: 756.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9966,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2416.0, y: 713.0 },
+                              { x: 2586.0, y: 713.0 },
+                              { x: 2586.0, y: 756.0 },
+                              { x: 2416.0, y: 756.0 },
+                            ],
+                          },
+                          inferText: '새우완자전',
+                          inferConfidence: 0.9966,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 711.0 },
+                      { x: 2808.0, y: 711.0 },
+                      { x: 2808.0, y: 758.0 },
+                      { x: 2196.0, y: 758.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9966,
+                  rowSpan: 1,
+                  rowIndex: 6,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2394.0, y: 756.0 },
+                          { x: 2607.0, y: 756.0 },
+                          { x: 2607.0, y: 807.0 },
+                          { x: 2394.0, y: 807.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9954,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2394.0, y: 756.0 },
+                              { x: 2607.0, y: 756.0 },
+                              { x: 2607.0, y: 807.0 },
+                              { x: 2394.0, y: 807.0 },
+                            ],
+                          },
+                          inferText: '매운감자조림',
+                          inferConfidence: 0.9954,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 758.0 },
+                      { x: 2808.0, y: 758.0 },
+                      { x: 2808.0, y: 805.0 },
+                      { x: 2196.0, y: 805.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9954,
+                  rowSpan: 1,
+                  rowIndex: 7,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2401.0, y: 807.0 },
+                          { x: 2601.0, y: 807.0 },
+                          { x: 2601.0, y: 850.0 },
+                          { x: 2401.0, y: 850.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9997,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2401.0, y: 807.0 },
+                              { x: 2601.0, y: 807.0 },
+                              { x: 2601.0, y: 850.0 },
+                              { x: 2401.0, y: 850.0 },
+                            ],
+                          },
+                          inferText: '열무된장나물',
+                          inferConfidence: 0.9997,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 805.0 },
+                      { x: 2808.0, y: 805.0 },
+                      { x: 2808.0, y: 851.0 },
+                      { x: 2196.0, y: 851.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9997,
+                  rowSpan: 1,
+                  rowIndex: 8,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2385.0, y: 850.0 },
+                          { x: 2616.0, y: 850.0 },
+                          { x: 2616.0, y: 901.0 },
+                          { x: 2385.0, y: 901.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -2985,10 +3523,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1979.0, y: 603.0 },
-                              { x: 2084.0, y: 607.0 },
-                              { x: 2082.0, y: 652.0 },
-                              { x: 1978.0, y: 648.0 },
+                              { x: 2385.0, y: 850.0 },
+                              { x: 2501.0, y: 850.0 },
+                              { x: 2501.0, y: 901.0 },
+                              { x: 2385.0, y: 901.0 },
                             ],
                           },
                           inferText: '깍두기',
@@ -2997,10 +3535,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2091.0, y: 611.0 },
-                              { x: 2198.0, y: 611.0 },
-                              { x: 2198.0, y: 648.0 },
-                              { x: 2091.0, y: 648.0 },
+                              { x: 2495.0, y: 850.0 },
+                              { x: 2616.0, y: 850.0 },
+                              { x: 2616.0, y: 901.0 },
+                              { x: 2495.0, y: 901.0 },
                             ],
                           },
                           inferText: '*식혜*',
@@ -3011,85 +3549,85 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 606.0 },
-                      { x: 2397.0, y: 606.0 },
-                      { x: 2397.0, y: 722.0 },
-                      { x: 1784.0, y: 722.0 },
+                      { x: 2196.0, y: 851.0 },
+                      { x: 2808.0, y: 851.0 },
+                      { x: 2808.0, y: 966.0 },
+                      { x: 2196.0, y: 966.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 9,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 966.0 },
+                      { x: 2808.0, y: 966.0 },
+                      { x: 2808.0, y: 1034.0 },
+                      { x: 2196.0, y: 1034.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
                   rowIndex: 10,
                   columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 722.0 },
-                      { x: 2397.0, y: 722.0 },
-                      { x: 2397.0, y: 785.0 },
-                      { x: 1784.0, y: 785.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 11,
-                  columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2003.0, y: 792.0 },
-                          { x: 2171.0, y: 792.0 },
-                          { x: 2171.0, y: 837.0 },
-                          { x: 2003.0, y: 837.0 },
+                          { x: 2413.0, y: 1038.0 },
+                          { x: 2586.0, y: 1038.0 },
+                          { x: 2586.0, y: 1083.0 },
+                          { x: 2413.0, y: 1083.0 },
                         ],
                       },
-                      inferConfidence: 0.9998,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2003.0, y: 792.0 },
-                              { x: 2171.0, y: 792.0 },
-                              { x: 2171.0, y: 837.0 },
-                              { x: 2003.0, y: 837.0 },
+                              { x: 2413.0, y: 1038.0 },
+                              { x: 2586.0, y: 1038.0 },
+                              { x: 2586.0, y: 1083.0 },
+                              { x: 2413.0, y: 1083.0 },
                             ],
                           },
                           inferText: '카레라이스',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 785.0 },
-                      { x: 2397.0, y: 785.0 },
-                      { x: 2397.0, y: 838.0 },
-                      { x: 1784.0, y: 838.0 },
+                      { x: 2196.0, y: 1034.0 },
+                      { x: 2808.0, y: 1034.0 },
+                      { x: 2808.0, y: 1085.0 },
+                      { x: 2196.0, y: 1085.0 },
                     ],
                   },
-                  inferConfidence: 0.9998,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 12,
+                  rowIndex: 11,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1984.0, y: 840.0 },
-                          { x: 2192.0, y: 840.0 },
-                          { x: 2192.0, y: 883.0 },
-                          { x: 1984.0, y: 883.0 },
+                          { x: 2398.0, y: 1090.0 },
+                          { x: 2604.0, y: 1090.0 },
+                          { x: 2604.0, y: 1132.0 },
+                          { x: 2398.0, y: 1132.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -3097,10 +3635,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1984.0, y: 840.0 },
-                              { x: 2192.0, y: 840.0 },
-                              { x: 2192.0, y: 883.0 },
-                              { x: 1984.0, y: 883.0 },
+                              { x: 2398.0, y: 1090.0 },
+                              { x: 2604.0, y: 1090.0 },
+                              { x: 2604.0, y: 1132.0 },
+                              { x: 2398.0, y: 1132.0 },
                             ],
                           },
                           inferText: '(돈육:국내산)',
@@ -3111,27 +3649,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 838.0 },
-                      { x: 2397.0, y: 838.0 },
-                      { x: 2397.0, y: 886.0 },
-                      { x: 1784.0, y: 886.0 },
+                      { x: 2196.0, y: 1085.0 },
+                      { x: 2808.0, y: 1085.0 },
+                      { x: 2808.0, y: 1132.0 },
+                      { x: 2196.0, y: 1132.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 13,
+                  rowIndex: 12,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2035.0, y: 888.0 },
-                          { x: 2142.0, y: 888.0 },
-                          { x: 2142.0, y: 931.0 },
-                          { x: 2035.0, y: 931.0 },
+                          { x: 2450.0, y: 1132.0 },
+                          { x: 2554.0, y: 1137.0 },
+                          { x: 2552.0, y: 1179.0 },
+                          { x: 2448.0, y: 1174.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -3139,10 +3677,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2035.0, y: 888.0 },
-                              { x: 2142.0, y: 888.0 },
-                              { x: 2142.0, y: 931.0 },
-                              { x: 2035.0, y: 931.0 },
+                              { x: 2450.0, y: 1132.0 },
+                              { x: 2554.0, y: 1137.0 },
+                              { x: 2552.0, y: 1179.0 },
+                              { x: 2448.0, y: 1174.0 },
                             ],
                           },
                           inferText: '김칫국',
@@ -3153,69 +3691,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 886.0 },
-                      { x: 2397.0, y: 886.0 },
-                      { x: 2397.0, y: 935.0 },
-                      { x: 1784.0, y: 935.0 },
+                      { x: 2196.0, y: 1132.0 },
+                      { x: 2808.0, y: 1132.0 },
+                      { x: 2808.0, y: 1183.0 },
+                      { x: 2196.0, y: 1183.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 14,
+                  rowIndex: 13,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1987.0, y: 933.0 },
-                          { x: 2190.0, y: 933.0 },
-                          { x: 2190.0, y: 976.0 },
-                          { x: 1987.0, y: 976.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9999,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 1987.0, y: 933.0 },
-                              { x: 2190.0, y: 933.0 },
-                              { x: 2190.0, y: 976.0 },
-                              { x: 1987.0, y: 976.0 },
-                            ],
-                          },
-                          inferText: '비빔채소만두',
-                          inferConfidence: 0.9999,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 935.0 },
-                      { x: 2397.0, y: 935.0 },
-                      { x: 2397.0, y: 980.0 },
-                      { x: 1784.0, y: 980.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9999,
-                  rowSpan: 1,
-                  rowIndex: 15,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 1952.0, y: 981.0 },
-                          { x: 2219.0, y: 981.0 },
-                          { x: 2219.0, y: 1024.0 },
-                          { x: 1952.0, y: 1024.0 },
+                          { x: 2394.0, y: 1178.0 },
+                          { x: 2607.0, y: 1178.0 },
+                          { x: 2607.0, y: 1229.0 },
+                          { x: 2394.0, y: 1229.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -3223,10 +3719,52 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1952.0, y: 981.0 },
-                              { x: 2219.0, y: 981.0 },
-                              { x: 2219.0, y: 1024.0 },
-                              { x: 1952.0, y: 1024.0 },
+                              { x: 2394.0, y: 1178.0 },
+                              { x: 2607.0, y: 1178.0 },
+                              { x: 2607.0, y: 1229.0 },
+                              { x: 2394.0, y: 1229.0 },
+                            ],
+                          },
+                          inferText: '비빔채소만두',
+                          inferConfidence: 1.0,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 1183.0 },
+                      { x: 2808.0, y: 1183.0 },
+                      { x: 2808.0, y: 1225.0 },
+                      { x: 2196.0, y: 1225.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 14,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2367.0, y: 1229.0 },
+                          { x: 2634.0, y: 1229.0 },
+                          { x: 2634.0, y: 1272.0 },
+                          { x: 2367.0, y: 1272.0 },
+                        ],
+                      },
+                      inferConfidence: 1.0,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2367.0, y: 1229.0 },
+                              { x: 2634.0, y: 1229.0 },
+                              { x: 2634.0, y: 1272.0 },
+                              { x: 2367.0, y: 1272.0 },
                             ],
                           },
                           inferText: '파프리카버섯볶음',
@@ -3237,69 +3775,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 980.0 },
-                      { x: 2397.0, y: 980.0 },
-                      { x: 2397.0, y: 1028.0 },
-                      { x: 1784.0, y: 1028.0 },
+                      { x: 2196.0, y: 1225.0 },
+                      { x: 2808.0, y: 1225.0 },
+                      { x: 2808.0, y: 1272.0 },
+                      { x: 2196.0, y: 1272.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 16,
+                  rowIndex: 15,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 1987.0, y: 1029.0 },
-                          { x: 2190.0, y: 1029.0 },
-                          { x: 2190.0, y: 1072.0 },
-                          { x: 1987.0, y: 1072.0 },
+                          { x: 2394.0, y: 1272.0 },
+                          { x: 2607.0, y: 1272.0 },
+                          { x: 2607.0, y: 1323.0 },
+                          { x: 2394.0, y: 1323.0 },
                         ],
                       },
-                      inferConfidence: 0.9998,
+                      inferConfidence: 0.9996,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 1987.0, y: 1029.0 },
-                              { x: 2190.0, y: 1029.0 },
-                              { x: 2190.0, y: 1072.0 },
-                              { x: 1987.0, y: 1072.0 },
+                              { x: 2394.0, y: 1272.0 },
+                              { x: 2607.0, y: 1272.0 },
+                              { x: 2607.0, y: 1323.0 },
+                              { x: 2394.0, y: 1323.0 },
                             ],
                           },
                           inferText: '열무된장나물',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9996,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 1028.0 },
-                      { x: 2397.0, y: 1028.0 },
-                      { x: 2397.0, y: 1077.0 },
-                      { x: 1784.0, y: 1077.0 },
+                      { x: 2196.0, y: 1272.0 },
+                      { x: 2808.0, y: 1272.0 },
+                      { x: 2808.0, y: 1323.0 },
+                      { x: 2196.0, y: 1323.0 },
                     ],
                   },
-                  inferConfidence: 0.9998,
+                  inferConfidence: 0.9996,
                   rowSpan: 1,
-                  rowIndex: 17,
+                  rowIndex: 16,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2035.0, y: 1075.0 },
-                          { x: 2139.0, y: 1075.0 },
-                          { x: 2139.0, y: 1117.0 },
-                          { x: 2035.0, y: 1117.0 },
+                          { x: 2446.0, y: 1320.0 },
+                          { x: 2549.0, y: 1320.0 },
+                          { x: 2549.0, y: 1366.0 },
+                          { x: 2446.0, y: 1366.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -3307,10 +3845,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2035.0, y: 1075.0 },
-                              { x: 2139.0, y: 1075.0 },
-                              { x: 2139.0, y: 1117.0 },
-                              { x: 2035.0, y: 1117.0 },
+                              { x: 2446.0, y: 1320.0 },
+                              { x: 2549.0, y: 1320.0 },
+                              { x: 2549.0, y: 1366.0 },
+                              { x: 2446.0, y: 1366.0 },
                             ],
                           },
                           inferText: '깍두기',
@@ -3321,197 +3859,27 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 1784.0, y: 1077.0 },
-                      { x: 2397.0, y: 1077.0 },
-                      { x: 2397.0, y: 1121.0 },
-                      { x: 1784.0, y: 1121.0 },
+                      { x: 2196.0, y: 1323.0 },
+                      { x: 2808.0, y: 1323.0 },
+                      { x: 2808.0, y: 1370.0 },
+                      { x: 2196.0, y: 1370.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 18,
+                  rowIndex: 17,
                   columnSpan: 1,
-                  columnIndex: 3,
+                  columnIndex: 5,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2035.0, y: 1125.0 },
-                          { x: 2144.0, y: 1125.0 },
-                          { x: 2144.0, y: 1163.0 },
-                          { x: 2035.0, y: 1163.0 },
-                        ],
-                      },
-                      inferConfidence: 1.0,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2035.0, y: 1125.0 },
-                              { x: 2144.0, y: 1125.0 },
-                              { x: 2144.0, y: 1163.0 },
-                              { x: 2035.0, y: 1163.0 },
-                            ],
-                          },
-                          inferText: '*식혜*',
-                          inferConfidence: 1.0,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 1121.0 },
-                      { x: 2397.0, y: 1121.0 },
-                      { x: 2397.0, y: 1174.0 },
-                      { x: 1784.0, y: 1174.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 19,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 1784.0, y: 1174.0 },
-                      { x: 2397.0, y: 1174.0 },
-                      { x: 2397.0, y: 1234.0 },
-                      { x: 1784.0, y: 1234.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 20,
-                  columnSpan: 1,
-                  columnIndex: 3,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2606.0, y: 45.0 },
-                          { x: 2768.0, y: 45.0 },
-                          { x: 2768.0, y: 91.0 },
-                          { x: 2606.0, y: 91.0 },
-                        ],
-                      },
-                      inferConfidence: 0.99945,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2606.0, y: 45.0 },
-                              { x: 2694.0, y: 45.0 },
-                              { x: 2694.0, y: 91.0 },
-                              { x: 2606.0, y: 91.0 },
-                            ],
-                          },
-                          inferText: '05월',
-                          inferConfidence: 0.9991,
-                        },
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2696.0, y: 51.0 },
-                              { x: 2768.0, y: 51.0 },
-                              { x: 2768.0, y: 88.0 },
-                              { x: 2696.0, y: 88.0 },
-                            ],
-                          },
-                          inferText: '23일',
-                          inferConfidence: 0.9998,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 2397.0, y: 5.0 },
-                      { x: 2983.0, y: 5.0 },
-                      { x: 2983.0, y: 128.0 },
-                      { x: 2397.0, y: 128.0 },
-                    ],
-                  },
-                  inferConfidence: 0.99945,
-                  rowSpan: 1,
-                  rowIndex: 0,
-                  columnSpan: 1,
-                  columnIndex: 4,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2662.0, y: 147.0 },
-                          { x: 2720.0, y: 147.0 },
-                          { x: 2720.0, y: 184.0 },
-                          { x: 2662.0, y: 184.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9994,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2662.0, y: 147.0 },
-                              { x: 2720.0, y: 147.0 },
-                              { x: 2720.0, y: 184.0 },
-                              { x: 2662.0, y: 184.0 },
-                            ],
-                          },
-                          inferText: 'FRI',
-                          inferConfidence: 0.9994,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 2397.0, y: 128.0 },
-                      { x: 2983.0, y: 128.0 },
-                      { x: 2983.0, y: 207.0 },
-                      { x: 2397.0, y: 207.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9994,
-                  rowSpan: 1,
-                  rowIndex: 1,
-                  columnSpan: 1,
-                  columnIndex: 4,
-                },
-                {
-                  cellTextLines: [],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 2397.0, y: 207.0 },
-                      { x: 2983.0, y: 207.0 },
-                      { x: 2983.0, y: 274.0 },
-                      { x: 2397.0, y: 274.0 },
-                    ],
-                  },
-                  inferConfidence: 1.0,
-                  rowSpan: 1,
-                  rowIndex: 2,
-                  columnSpan: 1,
-                  columnIndex: 4,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2504.0, y: 277.0 },
-                          { x: 2872.0, y: 277.0 },
-                          { x: 2872.0, y: 320.0 },
-                          { x: 2504.0, y: 320.0 },
+                          { x: 2440.0, y: 1366.0 },
+                          { x: 2561.0, y: 1366.0 },
+                          { x: 2561.0, y: 1414.0 },
+                          { x: 2440.0, y: 1414.0 },
                         ],
                       },
                       inferConfidence: 0.9999,
@@ -3519,10 +3887,164 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2504.0, y: 277.0 },
-                              { x: 2872.0, y: 277.0 },
-                              { x: 2872.0, y: 320.0 },
-                              { x: 2504.0, y: 320.0 },
+                              { x: 2440.0, y: 1366.0 },
+                              { x: 2561.0, y: 1366.0 },
+                              { x: 2561.0, y: 1414.0 },
+                              { x: 2440.0, y: 1414.0 },
+                            ],
+                          },
+                          inferText: '*식혜*',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 1370.0 },
+                      { x: 2808.0, y: 1370.0 },
+                      { x: 2808.0, y: 1416.0 },
+                      { x: 2196.0, y: 1416.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 18,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2196.0, y: 1416.0 },
+                      { x: 2808.0, y: 1416.0 },
+                      { x: 2808.0, y: 1480.0 },
+                      { x: 2196.0, y: 1480.0 },
+                    ],
+                  },
+                  inferConfidence: 1.0,
+                  rowSpan: 1,
+                  rowIndex: 19,
+                  columnSpan: 1,
+                  columnIndex: 5,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 3017.0, y: 288.0 },
+                          { x: 3187.0, y: 288.0 },
+                          { x: 3187.0, y: 340.0 },
+                          { x: 3017.0, y: 340.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9988,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 3017.0, y: 291.0 },
+                              { x: 3105.0, y: 291.0 },
+                              { x: 3105.0, y: 340.0 },
+                              { x: 3017.0, y: 340.0 },
+                            ],
+                          },
+                          inferText: '05월',
+                          inferConfidence: 0.9993,
+                        },
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 3102.0, y: 288.0 },
+                              { x: 3187.0, y: 288.0 },
+                              { x: 3187.0, y: 340.0 },
+                              { x: 3102.0, y: 340.0 },
+                            ],
+                          },
+                          inferText: '23일',
+                          inferConfidence: 0.9983,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2808.0, y: 252.0 },
+                      { x: 3394.0, y: 252.0 },
+                      { x: 3394.0, y: 376.0 },
+                      { x: 2808.0, y: 376.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9988,
+                  rowSpan: 1,
+                  rowIndex: 0,
+                  columnSpan: 1,
+                  columnIndex: 6,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 3074.0, y: 395.0 },
+                          { x: 3135.0, y: 395.0 },
+                          { x: 3135.0, y: 434.0 },
+                          { x: 3074.0, y: 434.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9993,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 3074.0, y: 395.0 },
+                              { x: 3135.0, y: 395.0 },
+                              { x: 3135.0, y: 434.0 },
+                              { x: 3074.0, y: 434.0 },
+                            ],
+                          },
+                          inferText: 'FRI',
+                          inferConfidence: 0.9993,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2808.0, y: 376.0 },
+                      { x: 3394.0, y: 376.0 },
+                      { x: 3394.0, y: 452.0 },
+                      { x: 2808.0, y: 452.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9993,
+                  rowSpan: 1,
+                  rowIndex: 1,
+                  columnSpan: 1,
+                  columnIndex: 6,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 2919.0, y: 525.0 },
+                          { x: 3287.0, y: 525.0 },
+                          { x: 3287.0, y: 568.0 },
+                          { x: 2919.0, y: 568.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 2919.0, y: 525.0 },
+                              { x: 3287.0, y: 525.0 },
+                              { x: 3287.0, y: 568.0 },
+                              { x: 2919.0, y: 568.0 },
                             ],
                           },
                           inferText: '숯불돼지고기고추장볶음',
@@ -3533,38 +4055,38 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 274.0 },
-                      { x: 2983.0, y: 274.0 },
-                      { x: 2983.0, y: 322.0 },
-                      { x: 2397.0, y: 322.0 },
+                      { x: 2808.0, y: 452.0 },
+                      { x: 3394.0, y: 452.0 },
+                      { x: 3394.0, y: 571.0 },
+                      { x: 2808.0, y: 571.0 },
                     ],
                   },
                   inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 3,
+                  rowIndex: 2,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2488.0, y: 325.0 },
-                          { x: 2888.0, y: 325.0 },
-                          { x: 2888.0, y: 368.0 },
-                          { x: 2488.0, y: 368.0 },
+                          { x: 2901.0, y: 568.0 },
+                          { x: 3308.0, y: 568.0 },
+                          { x: 3308.0, y: 619.0 },
+                          { x: 2901.0, y: 619.0 },
                         ],
                       },
-                      inferConfidence: 0.99983335,
+                      inferConfidence: 0.9993333,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2488.0, y: 325.0 },
-                              { x: 2694.0, y: 325.0 },
-                              { x: 2694.0, y: 368.0 },
-                              { x: 2488.0, y: 368.0 },
+                              { x: 2901.0, y: 574.0 },
+                              { x: 3105.0, y: 574.0 },
+                              { x: 3105.0, y: 616.0 },
+                              { x: 2901.0, y: 616.0 },
                             ],
                           },
                           inferText: '(돈육:국내산,',
@@ -3573,10 +4095,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2696.0, y: 325.0 },
-                              { x: 2803.0, y: 325.0 },
-                              { x: 2803.0, y: 368.0 },
-                              { x: 2696.0, y: 368.0 },
+                              { x: 3114.0, y: 574.0 },
+                              { x: 3217.0, y: 574.0 },
+                              { x: 3217.0, y: 616.0 },
+                              { x: 3114.0, y: 616.0 },
                             ],
                           },
                           inferText: '미국산',
@@ -3585,125 +4107,125 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2806.0, y: 325.0 },
-                              { x: 2888.0, y: 325.0 },
-                              { x: 2888.0, y: 368.0 },
-                              { x: 2806.0, y: 368.0 },
+                              { x: 3214.0, y: 568.0 },
+                              { x: 3308.0, y: 568.0 },
+                              { x: 3308.0, y: 619.0 },
+                              { x: 3214.0, y: 619.0 },
                             ],
                           },
                           inferText: '섞음)',
-                          inferConfidence: 0.9995,
+                          inferConfidence: 0.998,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 322.0 },
-                      { x: 2983.0, y: 322.0 },
-                      { x: 2983.0, y: 371.0 },
-                      { x: 2397.0, y: 371.0 },
+                      { x: 2808.0, y: 571.0 },
+                      { x: 3394.0, y: 571.0 },
+                      { x: 3394.0, y: 618.0 },
+                      { x: 2808.0, y: 618.0 },
                     ],
                   },
-                  inferConfidence: 0.99983335,
+                  inferConfidence: 0.9993333,
                   rowSpan: 1,
-                  rowIndex: 4,
+                  rowIndex: 3,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2595.0, y: 371.0 },
-                          { x: 2784.0, y: 371.0 },
-                          { x: 2784.0, y: 413.0 },
-                          { x: 2595.0, y: 413.0 },
+                          { x: 3011.0, y: 619.0 },
+                          { x: 3196.0, y: 619.0 },
+                          { x: 3196.0, y: 662.0 },
+                          { x: 3011.0, y: 662.0 },
                         ],
                       },
-                      inferConfidence: 0.9998,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2595.0, y: 371.0 },
-                              { x: 2784.0, y: 371.0 },
-                              { x: 2784.0, y: 413.0 },
-                              { x: 2595.0, y: 413.0 },
+                              { x: 3011.0, y: 619.0 },
+                              { x: 3196.0, y: 619.0 },
+                              { x: 3196.0, y: 662.0 },
+                              { x: 3011.0, y: 662.0 },
                             ],
                           },
                           inferText: '흑미밥/쌀밥',
-                          inferConfidence: 0.9998,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 371.0 },
-                      { x: 2983.0, y: 371.0 },
-                      { x: 2983.0, y: 416.0 },
-                      { x: 2397.0, y: 416.0 },
+                      { x: 2808.0, y: 618.0 },
+                      { x: 3394.0, y: 618.0 },
+                      { x: 3394.0, y: 664.0 },
+                      { x: 2808.0, y: 664.0 },
                     ],
                   },
-                  inferConfidence: 0.9998,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 5,
+                  rowIndex: 4,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2587.0, y: 419.0 },
-                          { x: 2792.0, y: 419.0 },
-                          { x: 2792.0, y: 461.0 },
-                          { x: 2587.0, y: 461.0 },
+                          { x: 2995.0, y: 662.0 },
+                          { x: 3211.0, y: 662.0 },
+                          { x: 3211.0, y: 713.0 },
+                          { x: 2995.0, y: 713.0 },
                         ],
                       },
-                      inferConfidence: 1.0,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2587.0, y: 419.0 },
-                              { x: 2792.0, y: 419.0 },
-                              { x: 2792.0, y: 461.0 },
-                              { x: 2587.0, y: 461.0 },
+                              { x: 2995.0, y: 662.0 },
+                              { x: 3211.0, y: 662.0 },
+                              { x: 3211.0, y: 713.0 },
+                              { x: 2995.0, y: 713.0 },
                             ],
                           },
                           inferText: '시금치된장국',
-                          inferConfidence: 1.0,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 416.0 },
-                      { x: 2983.0, y: 416.0 },
-                      { x: 2983.0, y: 464.0 },
-                      { x: 2397.0, y: 464.0 },
+                      { x: 2808.0, y: 664.0 },
+                      { x: 3394.0, y: 664.0 },
+                      { x: 3394.0, y: 711.0 },
+                      { x: 2808.0, y: 711.0 },
                     ],
                   },
-                  inferConfidence: 1.0,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 6,
+                  rowIndex: 5,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2539.0, y: 467.0 },
-                          { x: 2840.0, y: 467.0 },
-                          { x: 2840.0, y: 509.0 },
-                          { x: 2539.0, y: 509.0 },
+                          { x: 2953.0, y: 713.0 },
+                          { x: 3253.0, y: 713.0 },
+                          { x: 3253.0, y: 756.0 },
+                          { x: 2953.0, y: 756.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -3711,10 +4233,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2539.0, y: 467.0 },
-                              { x: 2840.0, y: 467.0 },
-                              { x: 2840.0, y: 509.0 },
-                              { x: 2539.0, y: 509.0 },
+                              { x: 2953.0, y: 713.0 },
+                              { x: 3253.0, y: 713.0 },
+                              { x: 3253.0, y: 756.0 },
+                              { x: 2953.0, y: 756.0 },
                             ],
                           },
                           inferText: '토마토스크램블에그',
@@ -3725,69 +4247,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 464.0 },
-                      { x: 2983.0, y: 464.0 },
-                      { x: 2983.0, y: 513.0 },
-                      { x: 2397.0, y: 513.0 },
+                      { x: 2808.0, y: 711.0 },
+                      { x: 3394.0, y: 711.0 },
+                      { x: 3394.0, y: 758.0 },
+                      { x: 2808.0, y: 758.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 7,
+                  rowIndex: 6,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2590.0, y: 512.0 },
-                          { x: 2787.0, y: 512.0 },
-                          { x: 2787.0, y: 555.0 },
-                          { x: 2590.0, y: 555.0 },
+                          { x: 2998.0, y: 756.0 },
+                          { x: 3208.0, y: 756.0 },
+                          { x: 3208.0, y: 807.0 },
+                          { x: 2998.0, y: 807.0 },
                         ],
                       },
-                      inferConfidence: 0.9981,
+                      inferConfidence: 0.9969,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2590.0, y: 512.0 },
-                              { x: 2787.0, y: 512.0 },
-                              { x: 2787.0, y: 555.0 },
-                              { x: 2590.0, y: 555.0 },
+                              { x: 2998.0, y: 756.0 },
+                              { x: 3208.0, y: 756.0 },
+                              { x: 3208.0, y: 807.0 },
+                              { x: 2998.0, y: 807.0 },
                             ],
                           },
                           inferText: '쌈무&깻잎쌈',
-                          inferConfidence: 0.9981,
+                          inferConfidence: 0.9969,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 513.0 },
-                      { x: 2983.0, y: 513.0 },
-                      { x: 2983.0, y: 558.0 },
-                      { x: 2397.0, y: 558.0 },
+                      { x: 2808.0, y: 758.0 },
+                      { x: 3394.0, y: 758.0 },
+                      { x: 3394.0, y: 805.0 },
+                      { x: 2808.0, y: 805.0 },
                     ],
                   },
-                  inferConfidence: 0.9981,
+                  inferConfidence: 0.9969,
                   rowSpan: 1,
-                  rowIndex: 8,
+                  rowIndex: 7,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2654.0, y: 560.0 },
-                          { x: 2723.0, y: 560.0 },
-                          { x: 2723.0, y: 603.0 },
-                          { x: 2654.0, y: 603.0 },
+                          { x: 3062.0, y: 801.0 },
+                          { x: 3144.0, y: 801.0 },
+                          { x: 3144.0, y: 853.0 },
+                          { x: 3062.0, y: 853.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -3795,10 +4317,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2654.0, y: 560.0 },
-                              { x: 2723.0, y: 560.0 },
-                              { x: 2723.0, y: 603.0 },
-                              { x: 2654.0, y: 603.0 },
+                              { x: 3062.0, y: 801.0 },
+                              { x: 3144.0, y: 801.0 },
+                              { x: 3144.0, y: 853.0 },
+                              { x: 3062.0, y: 853.0 },
                             ],
                           },
                           inferText: '김치',
@@ -3809,169 +4331,127 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 558.0 },
-                      { x: 2983.0, y: 558.0 },
-                      { x: 2983.0, y: 606.0 },
-                      { x: 2397.0, y: 606.0 },
+                      { x: 2808.0, y: 805.0 },
+                      { x: 3394.0, y: 805.0 },
+                      { x: 3394.0, y: 851.0 },
+                      { x: 2808.0, y: 851.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 9,
+                  rowIndex: 8,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2619.0, y: 611.0 },
-                          { x: 2763.0, y: 611.0 },
-                          { x: 2763.0, y: 651.0 },
-                          { x: 2619.0, y: 651.0 },
+                          { x: 3026.0, y: 850.0 },
+                          { x: 3180.0, y: 850.0 },
+                          { x: 3180.0, y: 901.0 },
+                          { x: 3026.0, y: 901.0 },
                         ],
                       },
-                      inferConfidence: 0.9686,
+                      inferConfidence: 0.9059,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2619.0, y: 611.0 },
-                              { x: 2763.0, y: 611.0 },
-                              { x: 2763.0, y: 651.0 },
-                              { x: 2619.0, y: 651.0 },
+                              { x: 3026.0, y: 850.0 },
+                              { x: 3180.0, y: 850.0 },
+                              { x: 3180.0, y: 901.0 },
+                              { x: 3026.0, y: 901.0 },
                             ],
                           },
                           inferText: '*유자차*',
-                          inferConfidence: 0.9686,
+                          inferConfidence: 0.9059,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 606.0 },
-                      { x: 2983.0, y: 606.0 },
-                      { x: 2983.0, y: 722.0 },
-                      { x: 2397.0, y: 722.0 },
+                      { x: 2808.0, y: 851.0 },
+                      { x: 3394.0, y: 851.0 },
+                      { x: 3394.0, y: 966.0 },
+                      { x: 2808.0, y: 966.0 },
                     ],
                   },
-                  inferConfidence: 0.9686,
+                  inferConfidence: 0.9059,
                   rowSpan: 1,
-                  rowIndex: 10,
+                  rowIndex: 9,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 722.0 },
-                      { x: 2983.0, y: 722.0 },
-                      { x: 2983.0, y: 785.0 },
-                      { x: 2397.0, y: 785.0 },
+                      { x: 2808.0, y: 966.0 },
+                      { x: 3394.0, y: 966.0 },
+                      { x: 3394.0, y: 1034.0 },
+                      { x: 2808.0, y: 1034.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 11,
+                  rowIndex: 10,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2560.0, y: 792.0 },
-                          { x: 2822.0, y: 792.0 },
-                          { x: 2822.0, y: 837.0 },
-                          { x: 2560.0, y: 837.0 },
+                          { x: 2971.0, y: 1041.0 },
+                          { x: 3232.0, y: 1041.0 },
+                          { x: 3232.0, y: 1083.0 },
+                          { x: 2971.0, y: 1083.0 },
                         ],
                       },
-                      inferConfidence: 1.0,
+                      inferConfidence: 0.9999,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2560.0, y: 792.0 },
-                              { x: 2822.0, y: 792.0 },
-                              { x: 2822.0, y: 837.0 },
-                              { x: 2560.0, y: 837.0 },
+                              { x: 2971.0, y: 1041.0 },
+                              { x: 3232.0, y: 1041.0 },
+                              { x: 3232.0, y: 1083.0 },
+                              { x: 2971.0, y: 1083.0 },
                             ],
                           },
                           inferText: '새우볶음밥&케찹',
-                          inferConfidence: 1.0,
+                          inferConfidence: 0.9999,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 785.0 },
-                      { x: 2983.0, y: 785.0 },
-                      { x: 2983.0, y: 838.0 },
-                      { x: 2397.0, y: 838.0 },
+                      { x: 2808.0, y: 1034.0 },
+                      { x: 3394.0, y: 1034.0 },
+                      { x: 3394.0, y: 1085.0 },
+                      { x: 2808.0, y: 1085.0 },
                     ],
                   },
-                  inferConfidence: 1.0,
+                  inferConfidence: 0.9999,
                   rowSpan: 1,
-                  rowIndex: 12,
+                  rowIndex: 11,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2622.0, y: 840.0 },
-                          { x: 2760.0, y: 840.0 },
-                          { x: 2760.0, y: 883.0 },
-                          { x: 2622.0, y: 883.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9994,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2622.0, y: 840.0 },
-                              { x: 2760.0, y: 840.0 },
-                              { x: 2760.0, y: 883.0 },
-                              { x: 2622.0, y: 883.0 },
-                            ],
-                          },
-                          inferText: '일식장국',
-                          inferConfidence: 0.9994,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 2397.0, y: 838.0 },
-                      { x: 2983.0, y: 838.0 },
-                      { x: 2983.0, y: 886.0 },
-                      { x: 2397.0, y: 886.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9994,
-                  rowSpan: 1,
-                  rowIndex: 13,
-                  columnSpan: 1,
-                  columnIndex: 4,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2587.0, y: 888.0 },
-                          { x: 2790.0, y: 888.0 },
-                          { x: 2790.0, y: 931.0 },
-                          { x: 2587.0, y: 931.0 },
+                          { x: 3029.0, y: 1083.0 },
+                          { x: 3177.0, y: 1083.0 },
+                          { x: 3177.0, y: 1135.0 },
+                          { x: 3029.0, y: 1135.0 },
                         ],
                       },
                       inferConfidence: 0.9998,
@@ -3979,13 +4459,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2587.0, y: 888.0 },
-                              { x: 2790.0, y: 888.0 },
-                              { x: 2790.0, y: 931.0 },
-                              { x: 2587.0, y: 931.0 },
+                              { x: 3029.0, y: 1083.0 },
+                              { x: 3177.0, y: 1083.0 },
+                              { x: 3177.0, y: 1135.0 },
+                              { x: 3029.0, y: 1135.0 },
                             ],
                           },
-                          inferText: '연근땅콩강정',
+                          inferText: '일식장국',
                           inferConfidence: 0.9998,
                         },
                       ],
@@ -3993,111 +4473,69 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 886.0 },
-                      { x: 2983.0, y: 886.0 },
-                      { x: 2983.0, y: 935.0 },
-                      { x: 2397.0, y: 935.0 },
+                      { x: 2808.0, y: 1085.0 },
+                      { x: 3394.0, y: 1085.0 },
+                      { x: 3394.0, y: 1132.0 },
+                      { x: 2808.0, y: 1132.0 },
                     ],
                   },
                   inferConfidence: 0.9998,
                   rowSpan: 1,
-                  rowIndex: 14,
+                  rowIndex: 12,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2587.0, y: 933.0 },
-                          { x: 2790.0, y: 933.0 },
-                          { x: 2790.0, y: 976.0 },
-                          { x: 2587.0, y: 976.0 },
+                          { x: 2998.0, y: 1132.0 },
+                          { x: 3202.0, y: 1132.0 },
+                          { x: 3202.0, y: 1178.0 },
+                          { x: 2998.0, y: 1178.0 },
                         ],
                       },
-                      inferConfidence: 0.9997,
+                      inferConfidence: 0.9995,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2587.0, y: 933.0 },
-                              { x: 2790.0, y: 933.0 },
-                              { x: 2790.0, y: 976.0 },
-                              { x: 2587.0, y: 976.0 },
+                              { x: 2998.0, y: 1132.0 },
+                              { x: 3202.0, y: 1132.0 },
+                              { x: 3202.0, y: 1178.0 },
+                              { x: 2998.0, y: 1178.0 },
                             ],
                           },
-                          inferText: '쫄면채소무침',
-                          inferConfidence: 0.9997,
+                          inferText: '연근땅콩강정',
+                          inferConfidence: 0.9995,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 935.0 },
-                      { x: 2983.0, y: 935.0 },
-                      { x: 2983.0, y: 980.0 },
-                      { x: 2397.0, y: 980.0 },
+                      { x: 2808.0, y: 1132.0 },
+                      { x: 3394.0, y: 1132.0 },
+                      { x: 3394.0, y: 1183.0 },
+                      { x: 2808.0, y: 1183.0 },
                     ],
                   },
-                  inferConfidence: 0.9997,
+                  inferConfidence: 0.9995,
                   rowSpan: 1,
-                  rowIndex: 15,
+                  rowIndex: 13,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2587.0, y: 981.0 },
-                          { x: 2790.0, y: 981.0 },
-                          { x: 2790.0, y: 1024.0 },
-                          { x: 2587.0, y: 1024.0 },
-                        ],
-                      },
-                      inferConfidence: 0.9972,
-                      cellWords: [
-                        {
-                          boundingPoly: {
-                            vertices: [
-                              { x: 2587.0, y: 981.0 },
-                              { x: 2790.0, y: 981.0 },
-                              { x: 2790.0, y: 1024.0 },
-                              { x: 2587.0, y: 1024.0 },
-                            ],
-                          },
-                          inferText: '만다린샐러드',
-                          inferConfidence: 0.9972,
-                        },
-                      ],
-                    },
-                  ],
-                  boundingPoly: {
-                    vertices: [
-                      { x: 2397.0, y: 980.0 },
-                      { x: 2983.0, y: 980.0 },
-                      { x: 2983.0, y: 1028.0 },
-                      { x: 2397.0, y: 1028.0 },
-                    ],
-                  },
-                  inferConfidence: 0.9972,
-                  rowSpan: 1,
-                  rowIndex: 16,
-                  columnSpan: 1,
-                  columnIndex: 4,
-                },
-                {
-                  cellTextLines: [
-                    {
-                      boundingPoly: {
-                        vertices: [
-                          { x: 2624.0, y: 1029.0 },
-                          { x: 2752.0, y: 1029.0 },
-                          { x: 2752.0, y: 1069.0 },
-                          { x: 2624.0, y: 1069.0 },
+                          { x: 2995.0, y: 1178.0 },
+                          { x: 3208.0, y: 1178.0 },
+                          { x: 3208.0, y: 1229.0 },
+                          { x: 2995.0, y: 1229.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -4105,13 +4543,13 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2624.0, y: 1029.0 },
-                              { x: 2752.0, y: 1029.0 },
-                              { x: 2752.0, y: 1069.0 },
-                              { x: 2624.0, y: 1069.0 },
+                              { x: 2995.0, y: 1178.0 },
+                              { x: 3208.0, y: 1178.0 },
+                              { x: 3208.0, y: 1229.0 },
+                              { x: 2995.0, y: 1229.0 },
                             ],
                           },
-                          inferText: '&드레싱',
+                          inferText: '쫄면채소무침',
                           inferConfidence: 1.0,
                         },
                       ],
@@ -4119,27 +4557,111 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 1028.0 },
-                      { x: 2983.0, y: 1028.0 },
-                      { x: 2983.0, y: 1077.0 },
-                      { x: 2397.0, y: 1077.0 },
+                      { x: 2808.0, y: 1183.0 },
+                      { x: 3394.0, y: 1183.0 },
+                      { x: 3394.0, y: 1225.0 },
+                      { x: 2808.0, y: 1225.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 17,
+                  rowIndex: 14,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2654.0, y: 1075.0 },
-                          { x: 2726.0, y: 1075.0 },
-                          { x: 2726.0, y: 1117.0 },
-                          { x: 2654.0, y: 1117.0 },
+                          { x: 3001.0, y: 1229.0 },
+                          { x: 3202.0, y: 1229.0 },
+                          { x: 3202.0, y: 1272.0 },
+                          { x: 3001.0, y: 1272.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9963,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 3001.0, y: 1229.0 },
+                              { x: 3202.0, y: 1229.0 },
+                              { x: 3202.0, y: 1272.0 },
+                              { x: 3001.0, y: 1272.0 },
+                            ],
+                          },
+                          inferText: '만다린샐러드',
+                          inferConfidence: 0.9963,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2808.0, y: 1225.0 },
+                      { x: 3394.0, y: 1225.0 },
+                      { x: 3394.0, y: 1272.0 },
+                      { x: 2808.0, y: 1272.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9963,
+                  rowSpan: 1,
+                  rowIndex: 15,
+                  columnSpan: 1,
+                  columnIndex: 6,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 3032.0, y: 1272.0 },
+                          { x: 3171.0, y: 1272.0 },
+                          { x: 3171.0, y: 1323.0 },
+                          { x: 3032.0, y: 1323.0 },
+                        ],
+                      },
+                      inferConfidence: 0.9999,
+                      cellWords: [
+                        {
+                          boundingPoly: {
+                            vertices: [
+                              { x: 3032.0, y: 1272.0 },
+                              { x: 3171.0, y: 1272.0 },
+                              { x: 3171.0, y: 1323.0 },
+                              { x: 3032.0, y: 1323.0 },
+                            ],
+                          },
+                          inferText: '&드레싱',
+                          inferConfidence: 0.9999,
+                        },
+                      ],
+                    },
+                  ],
+                  boundingPoly: {
+                    vertices: [
+                      { x: 2808.0, y: 1272.0 },
+                      { x: 3394.0, y: 1272.0 },
+                      { x: 3394.0, y: 1323.0 },
+                      { x: 2808.0, y: 1323.0 },
+                    ],
+                  },
+                  inferConfidence: 0.9999,
+                  rowSpan: 1,
+                  rowIndex: 16,
+                  columnSpan: 1,
+                  columnIndex: 6,
+                },
+                {
+                  cellTextLines: [
+                    {
+                      boundingPoly: {
+                        vertices: [
+                          { x: 3062.0, y: 1317.0 },
+                          { x: 3144.0, y: 1317.0 },
+                          { x: 3144.0, y: 1369.0 },
+                          { x: 3062.0, y: 1369.0 },
                         ],
                       },
                       inferConfidence: 1.0,
@@ -4147,10 +4669,10 @@ async function sendToServer() {
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2654.0, y: 1075.0 },
-                              { x: 2726.0, y: 1075.0 },
-                              { x: 2726.0, y: 1117.0 },
-                              { x: 2654.0, y: 1117.0 },
+                              { x: 3062.0, y: 1317.0 },
+                              { x: 3144.0, y: 1317.0 },
+                              { x: 3144.0, y: 1369.0 },
+                              { x: 3062.0, y: 1369.0 },
                             ],
                           },
                           inferText: '김치',
@@ -4161,86 +4683,86 @@ async function sendToServer() {
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 1077.0 },
-                      { x: 2983.0, y: 1077.0 },
-                      { x: 2983.0, y: 1121.0 },
-                      { x: 2397.0, y: 1121.0 },
+                      { x: 2808.0, y: 1323.0 },
+                      { x: 3394.0, y: 1323.0 },
+                      { x: 3394.0, y: 1370.0 },
+                      { x: 2808.0, y: 1370.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 18,
+                  rowIndex: 17,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [
                     {
                       boundingPoly: {
                         vertices: [
-                          { x: 2619.0, y: 1125.0 },
-                          { x: 2763.0, y: 1125.0 },
-                          { x: 2763.0, y: 1165.0 },
-                          { x: 2619.0, y: 1165.0 },
+                          { x: 3029.0, y: 1372.0 },
+                          { x: 3174.0, y: 1372.0 },
+                          { x: 3174.0, y: 1414.0 },
+                          { x: 3029.0, y: 1414.0 },
                         ],
                       },
-                      inferConfidence: 0.9796,
+                      inferConfidence: 0.989,
                       cellWords: [
                         {
                           boundingPoly: {
                             vertices: [
-                              { x: 2619.0, y: 1125.0 },
-                              { x: 2763.0, y: 1125.0 },
-                              { x: 2763.0, y: 1165.0 },
-                              { x: 2619.0, y: 1165.0 },
+                              { x: 3029.0, y: 1372.0 },
+                              { x: 3174.0, y: 1372.0 },
+                              { x: 3174.0, y: 1414.0 },
+                              { x: 3029.0, y: 1414.0 },
                             ],
                           },
                           inferText: '*유자차*',
-                          inferConfidence: 0.9796,
+                          inferConfidence: 0.989,
                         },
                       ],
                     },
                   ],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 1121.0 },
-                      { x: 2983.0, y: 1121.0 },
-                      { x: 2983.0, y: 1174.0 },
-                      { x: 2397.0, y: 1174.0 },
+                      { x: 2808.0, y: 1370.0 },
+                      { x: 3394.0, y: 1370.0 },
+                      { x: 3394.0, y: 1416.0 },
+                      { x: 2808.0, y: 1416.0 },
                     ],
                   },
-                  inferConfidence: 0.9796,
+                  inferConfidence: 0.989,
                   rowSpan: 1,
-                  rowIndex: 19,
+                  rowIndex: 18,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
                 {
                   cellTextLines: [],
                   boundingPoly: {
                     vertices: [
-                      { x: 2397.0, y: 1174.0 },
-                      { x: 2983.0, y: 1174.0 },
-                      { x: 2983.0, y: 1234.0 },
-                      { x: 2397.0, y: 1234.0 },
+                      { x: 2808.0, y: 1416.0 },
+                      { x: 3394.0, y: 1416.0 },
+                      { x: 3394.0, y: 1480.0 },
+                      { x: 2808.0, y: 1480.0 },
                     ],
                   },
                   inferConfidence: 1.0,
                   rowSpan: 1,
-                  rowIndex: 20,
+                  rowIndex: 19,
                   columnSpan: 1,
-                  columnIndex: 4,
+                  columnIndex: 6,
                 },
               ],
               boundingPoly: {
                 vertices: [
-                  { x: 7.0, y: 5.0 },
-                  { x: 2983.0, y: 5.0 },
-                  { x: 2983.0, y: 1234.0 },
-                  { x: 7.0, y: 1234.0 },
+                  { x: 12.0, y: 252.0 },
+                  { x: 3394.0, y: 252.0 },
+                  { x: 3394.0, y: 1480.0 },
+                  { x: 12.0, y: 1480.0 },
                 ],
               },
-              inferConfidence: 0.99894696,
+              inferConfidence: 0.9982171,
             },
           ],
           fields: [
@@ -4248,14 +4770,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 224.0, y: 51.0 },
-                  { x: 299.0, y: 51.0 },
-                  { x: 299.0, y: 88.0 },
-                  { x: 224.0, y: 88.0 },
+                  { x: 1311.0, y: 70.0 },
+                  { x: 1560.0, y: 70.0 },
+                  { x: 1560.0, y: 191.0 },
+                  { x: 1311.0, y: 191.0 },
                 ],
               },
-              inferText: '05월',
-              inferConfidence: 0.9997,
+              inferText: '20층',
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4263,28 +4785,43 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 309.0, y: 51.0 },
-                  { x: 376.0, y: 51.0 },
-                  { x: 376.0, y: 88.0 },
-                  { x: 309.0, y: 88.0 },
+                  { x: 1572.0, y: 67.0 },
+                  { x: 2091.0, y: 67.0 },
+                  { x: 2091.0, y: 194.0 },
+                  { x: 1572.0, y: 194.0 },
+                ],
+              },
+              inferText: '주간메뉴표',
+              inferConfidence: 0.9999,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 628.0, y: 291.0 },
+                  { x: 719.0, y: 291.0 },
+                  { x: 719.0, y: 340.0 },
+                  { x: 628.0, y: 340.0 },
+                ],
+              },
+              inferText: '05월',
+              inferConfidence: 0.9992,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 713.0, y: 288.0 },
+                  { x: 798.0, y: 288.0 },
+                  { x: 798.0, y: 340.0 },
+                  { x: 713.0, y: 340.0 },
                 ],
               },
               inferText: '19일',
-              inferConfidence: 0.9998,
-              type: 'NORMAL',
-              lineBreak: false,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 816.0, y: 51.0 },
-                  { x: 891.0, y: 51.0 },
-                  { x: 891.0, y: 88.0 },
-                  { x: 816.0, y: 88.0 },
-                ],
-              },
-              inferText: '05월',
               inferConfidence: 0.9997,
               type: 'NORMAL',
               lineBreak: false,
@@ -4293,14 +4830,29 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 899.0, y: 51.0 },
-                  { x: 973.0, y: 51.0 },
-                  { x: 973.0, y: 88.0 },
-                  { x: 899.0, y: 88.0 },
+                  { x: 1220.0, y: 291.0 },
+                  { x: 1308.0, y: 291.0 },
+                  { x: 1308.0, y: 337.0 },
+                  { x: 1220.0, y: 337.0 },
+                ],
+              },
+              inferText: '05월',
+              inferConfidence: 0.9987,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 1305.0, y: 291.0 },
+                  { x: 1393.0, y: 291.0 },
+                  { x: 1393.0, y: 340.0 },
+                  { x: 1305.0, y: 340.0 },
                 ],
               },
               inferText: '20일',
-              inferConfidence: 0.9996,
+              inferConfidence: 0.9976,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4308,14 +4860,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1411.0, y: 51.0 },
-                  { x: 1488.0, y: 51.0 },
-                  { x: 1488.0, y: 88.0 },
-                  { x: 1411.0, y: 88.0 },
+                  { x: 1818.0, y: 288.0 },
+                  { x: 1909.0, y: 288.0 },
+                  { x: 1909.0, y: 340.0 },
+                  { x: 1818.0, y: 340.0 },
                 ],
               },
               inferText: '05월',
-              inferConfidence: 0.9997,
+              inferConfidence: 0.9984,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4323,14 +4875,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1491.0, y: 48.0 },
-                  { x: 1563.0, y: 48.0 },
-                  { x: 1563.0, y: 88.0 },
-                  { x: 1491.0, y: 88.0 },
+                  { x: 1900.0, y: 288.0 },
+                  { x: 1982.0, y: 288.0 },
+                  { x: 1982.0, y: 340.0 },
+                  { x: 1900.0, y: 340.0 },
                 ],
               },
               inferText: '21일',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9995,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4338,14 +4890,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2011.0, y: 51.0 },
-                  { x: 2086.0, y: 51.0 },
-                  { x: 2086.0, y: 88.0 },
-                  { x: 2011.0, y: 88.0 },
+                  { x: 2416.0, y: 291.0 },
+                  { x: 2504.0, y: 291.0 },
+                  { x: 2504.0, y: 337.0 },
+                  { x: 2416.0, y: 337.0 },
                 ],
               },
               inferText: '05월',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9985,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4353,10 +4905,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2091.0, y: 48.0 },
-                  { x: 2166.0, y: 48.0 },
-                  { x: 2166.0, y: 88.0 },
-                  { x: 2091.0, y: 88.0 },
+                  { x: 2498.0, y: 288.0 },
+                  { x: 2586.0, y: 288.0 },
+                  { x: 2586.0, y: 340.0 },
+                  { x: 2498.0, y: 340.0 },
                 ],
               },
               inferText: '22일',
@@ -4368,14 +4920,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2606.0, y: 45.0 },
-                  { x: 2694.0, y: 45.0 },
-                  { x: 2694.0, y: 91.0 },
-                  { x: 2606.0, y: 91.0 },
+                  { x: 3017.0, y: 291.0 },
+                  { x: 3105.0, y: 291.0 },
+                  { x: 3105.0, y: 340.0 },
+                  { x: 3017.0, y: 340.0 },
                 ],
               },
               inferText: '05월',
-              inferConfidence: 0.9991,
+              inferConfidence: 0.9993,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4383,14 +4935,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2696.0, y: 51.0 },
-                  { x: 2768.0, y: 51.0 },
-                  { x: 2768.0, y: 88.0 },
-                  { x: 2696.0, y: 88.0 },
+                  { x: 3102.0, y: 288.0 },
+                  { x: 3187.0, y: 288.0 },
+                  { x: 3187.0, y: 340.0 },
+                  { x: 3102.0, y: 340.0 },
                 ],
               },
               inferText: '23일',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9983,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4398,10 +4950,25 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 253.0, y: 147.0 },
-                  { x: 349.0, y: 147.0 },
-                  { x: 349.0, y: 189.0 },
-                  { x: 253.0, y: 189.0 },
+                  { x: 42.0, y: 328.0 },
+                  { x: 140.0, y: 328.0 },
+                  { x: 140.0, y: 376.0 },
+                  { x: 42.0, y: 376.0 },
+                ],
+              },
+              inferText: '구분',
+              inferConfidence: 0.9509,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 668.0, y: 395.0 },
+                  { x: 762.0, y: 395.0 },
+                  { x: 762.0, y: 434.0 },
+                  { x: 668.0, y: 434.0 },
                 ],
               },
               inferText: 'MON',
@@ -4413,14 +4980,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 856.0, y: 147.0 },
-                  { x: 933.0, y: 147.0 },
-                  { x: 933.0, y: 189.0 },
-                  { x: 856.0, y: 189.0 },
+                  { x: 1272.0, y: 395.0 },
+                  { x: 1344.0, y: 395.0 },
+                  { x: 1344.0, y: 434.0 },
+                  { x: 1272.0, y: 434.0 },
                 ],
               },
               inferText: 'TUE',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9997,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4428,10 +4995,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1445.0, y: 147.0 },
-                  { x: 1534.0, y: 147.0 },
-                  { x: 1534.0, y: 189.0 },
-                  { x: 1445.0, y: 189.0 },
+                  { x: 1857.0, y: 395.0 },
+                  { x: 1942.0, y: 395.0 },
+                  { x: 1942.0, y: 434.0 },
+                  { x: 1857.0, y: 434.0 },
                 ],
               },
               inferText: 'WED',
@@ -4443,10 +5010,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2048.0, y: 147.0 },
-                  { x: 2131.0, y: 147.0 },
-                  { x: 2131.0, y: 189.0 },
-                  { x: 2048.0, y: 189.0 },
+                  { x: 2461.0, y: 395.0 },
+                  { x: 2543.0, y: 395.0 },
+                  { x: 2543.0, y: 434.0 },
+                  { x: 2461.0, y: 434.0 },
                 ],
               },
               inferText: 'THU',
@@ -4458,14 +5025,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2662.0, y: 147.0 },
-                  { x: 2720.0, y: 147.0 },
-                  { x: 2720.0, y: 184.0 },
-                  { x: 2662.0, y: 184.0 },
+                  { x: 3074.0, y: 395.0 },
+                  { x: 3135.0, y: 395.0 },
+                  { x: 3135.0, y: 434.0 },
+                  { x: 3074.0, y: 434.0 },
                 ],
               },
               inferText: 'FRI',
-              inferConfidence: 0.9994,
+              inferConfidence: 0.9993,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4473,10 +5040,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 248.0, y: 277.0 },
-                  { x: 352.0, y: 277.0 },
-                  { x: 352.0, y: 320.0 },
-                  { x: 248.0, y: 320.0 },
+                  { x: 662.0, y: 525.0 },
+                  { x: 765.0, y: 525.0 },
+                  { x: 765.0, y: 568.0 },
+                  { x: 662.0, y: 568.0 },
                 ],
               },
               inferText: '비빔밥',
@@ -4488,14 +5055,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 824.0, y: 277.0 },
-                  { x: 960.0, y: 277.0 },
-                  { x: 960.0, y: 320.0 },
-                  { x: 824.0, y: 320.0 },
+                  { x: 1235.0, y: 522.0 },
+                  { x: 1372.0, y: 522.0 },
+                  { x: 1372.0, y: 568.0 },
+                  { x: 1235.0, y: 568.0 },
                 ],
               },
               inferText: '닭매운찜',
-              inferConfidence: 0.9994,
+              inferConfidence: 0.9988,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4503,14 +5070,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1419.0, y: 277.0 },
-                  { x: 1552.0, y: 277.0 },
-                  { x: 1552.0, y: 320.0 },
-                  { x: 1419.0, y: 320.0 },
+                  { x: 1830.0, y: 522.0 },
+                  { x: 1967.0, y: 522.0 },
+                  { x: 1967.0, y: 568.0 },
+                  { x: 1830.0, y: 568.0 },
                 ],
               },
               inferText: '비지찌개',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4518,14 +5085,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2038.0, y: 277.0 },
-                  { x: 2139.0, y: 277.0 },
-                  { x: 2139.0, y: 320.0 },
-                  { x: 2038.0, y: 320.0 },
+                  { x: 2446.0, y: 522.0 },
+                  { x: 2552.0, y: 522.0 },
+                  { x: 2552.0, y: 568.0 },
+                  { x: 2446.0, y: 568.0 },
                 ],
               },
               inferText: '설렁탕',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4533,10 +5100,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2504.0, y: 277.0 },
-                  { x: 2872.0, y: 277.0 },
-                  { x: 2872.0, y: 320.0 },
-                  { x: 2504.0, y: 320.0 },
+                  { x: 2919.0, y: 525.0 },
+                  { x: 3287.0, y: 525.0 },
+                  { x: 3287.0, y: 568.0 },
+                  { x: 2919.0, y: 568.0 },
                 ],
               },
               inferText: '숯불돼지고기고추장볶음',
@@ -4548,14 +5115,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 195.0, y: 325.0 },
-                  { x: 403.0, y: 325.0 },
-                  { x: 403.0, y: 368.0 },
-                  { x: 195.0, y: 368.0 },
+                  { x: 604.0, y: 568.0 },
+                  { x: 822.0, y: 568.0 },
+                  { x: 822.0, y: 619.0 },
+                  { x: 604.0, y: 619.0 },
                 ],
               },
               inferText: '(우육:호주산)',
-              inferConfidence: 0.9985,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4563,14 +5130,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 773.0, y: 325.0 },
-                  { x: 1013.0, y: 325.0 },
-                  { x: 1013.0, y: 368.0 },
-                  { x: 773.0, y: 368.0 },
+                  { x: 1181.0, y: 568.0 },
+                  { x: 1432.0, y: 568.0 },
+                  { x: 1432.0, y: 619.0 },
+                  { x: 1181.0, y: 619.0 },
                 ],
               },
               inferText: '(계육:브라질산)',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4578,14 +5145,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1395.0, y: 325.0 },
-                  { x: 1579.0, y: 325.0 },
-                  { x: 1579.0, y: 365.0 },
-                  { x: 1395.0, y: 365.0 },
+                  { x: 1800.0, y: 568.0 },
+                  { x: 2000.0, y: 568.0 },
+                  { x: 2000.0, y: 619.0 },
+                  { x: 1800.0, y: 619.0 },
                 ],
               },
               inferText: '보리밥/쌀밥',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9994,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4593,14 +5160,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1870.0, y: 325.0 },
-                  { x: 2302.0, y: 325.0 },
-                  { x: 2302.0, y: 368.0 },
-                  { x: 1870.0, y: 368.0 },
+                  { x: 2279.0, y: 568.0 },
+                  { x: 2722.0, y: 568.0 },
+                  { x: 2722.0, y: 619.0 },
+                  { x: 2279.0, y: 619.0 },
                 ],
               },
               inferText: '(우육:호주산,진한사골농축액',
-              inferConfidence: 0.999,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4608,10 +5175,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2488.0, y: 325.0 },
-                  { x: 2694.0, y: 325.0 },
-                  { x: 2694.0, y: 368.0 },
-                  { x: 2488.0, y: 368.0 },
+                  { x: 2901.0, y: 574.0 },
+                  { x: 3105.0, y: 574.0 },
+                  { x: 3105.0, y: 616.0 },
+                  { x: 2901.0, y: 616.0 },
                 ],
               },
               inferText: '(돈육:국내산,',
@@ -4623,10 +5190,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2696.0, y: 325.0 },
-                  { x: 2803.0, y: 325.0 },
-                  { x: 2803.0, y: 368.0 },
-                  { x: 2696.0, y: 368.0 },
+                  { x: 3114.0, y: 574.0 },
+                  { x: 3217.0, y: 574.0 },
+                  { x: 3217.0, y: 616.0 },
+                  { x: 3114.0, y: 616.0 },
                 ],
               },
               inferText: '미국산',
@@ -4638,14 +5205,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2806.0, y: 325.0 },
-                  { x: 2888.0, y: 325.0 },
-                  { x: 2888.0, y: 368.0 },
-                  { x: 2806.0, y: 368.0 },
+                  { x: 3214.0, y: 568.0 },
+                  { x: 3308.0, y: 568.0 },
+                  { x: 3308.0, y: 619.0 },
+                  { x: 3214.0, y: 619.0 },
                 ],
               },
               inferText: '섞음)',
-              inferConfidence: 0.9995,
+              inferConfidence: 0.998,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4653,14 +5220,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 216.0, y: 371.0 },
-                  { x: 387.0, y: 371.0 },
-                  { x: 387.0, y: 413.0 },
-                  { x: 216.0, y: 413.0 },
+                  { x: 631.0, y: 619.0 },
+                  { x: 798.0, y: 619.0 },
+                  { x: 798.0, y: 662.0 },
+                  { x: 631.0, y: 662.0 },
                 ],
               },
               inferText: '가다랭이국',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4668,14 +5235,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 800.0, y: 373.0 },
-                  { x: 987.0, y: 373.0 },
-                  { x: 987.0, y: 413.0 },
-                  { x: 800.0, y: 413.0 },
+                  { x: 1214.0, y: 619.0 },
+                  { x: 1399.0, y: 619.0 },
+                  { x: 1399.0, y: 662.0 },
+                  { x: 1214.0, y: 662.0 },
                 ],
               },
               inferText: '차조밥/쌀밥',
-              inferConfidence: 0.9997,
+              inferConfidence: 0.9995,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4683,14 +5250,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1339.0, y: 371.0 },
-                  { x: 1632.0, y: 371.0 },
-                  { x: 1632.0, y: 413.0 },
-                  { x: 1339.0, y: 413.0 },
+                  { x: 1754.0, y: 619.0 },
+                  { x: 2045.0, y: 619.0 },
+                  { x: 2045.0, y: 662.0 },
+                  { x: 1754.0, y: 662.0 },
                 ],
               },
               inferText: '치킨너겟&머스타드',
-              inferConfidence: 0.9996,
+              inferConfidence: 0.9989,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4698,14 +5265,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1910.0, y: 371.0 },
-                  { x: 2264.0, y: 371.0 },
-                  { x: 2264.0, y: 413.0 },
-                  { x: 1910.0, y: 413.0 },
+                  { x: 2322.0, y: 619.0 },
+                  { x: 2677.0, y: 619.0 },
+                  { x: 2677.0, y: 662.0 },
+                  { x: 2322.0, y: 662.0 },
                 ],
               },
               inferText: '-한우사골/모둠뼈:국산)',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9995,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4713,14 +5280,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2595.0, y: 371.0 },
-                  { x: 2784.0, y: 371.0 },
-                  { x: 2784.0, y: 413.0 },
-                  { x: 2595.0, y: 413.0 },
+                  { x: 3011.0, y: 619.0 },
+                  { x: 3196.0, y: 619.0 },
+                  { x: 3196.0, y: 662.0 },
+                  { x: 3011.0, y: 662.0 },
                 ],
               },
               inferText: '흑미밥/쌀밥',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4728,14 +5295,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 197.0, y: 419.0 },
-                  { x: 400.0, y: 419.0 },
-                  { x: 400.0, y: 461.0 },
-                  { x: 197.0, y: 461.0 },
+                  { x: 607.0, y: 662.0 },
+                  { x: 819.0, y: 662.0 },
+                  { x: 819.0, y: 713.0 },
+                  { x: 607.0, y: 713.0 },
                 ],
               },
               inferText: '도토리묵무침',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4743,10 +5310,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 827.0, y: 419.0 },
-                  { x: 963.0, y: 419.0 },
-                  { x: 963.0, y: 461.0 },
-                  { x: 827.0, y: 461.0 },
+                  { x: 1235.0, y: 662.0 },
+                  { x: 1381.0, y: 662.0 },
+                  { x: 1381.0, y: 713.0 },
+                  { x: 1235.0, y: 713.0 },
                 ],
               },
               inferText: '멸치육수',
@@ -4758,28 +5325,13 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1309.0, y: 419.0 },
-                  { x: 1662.0, y: 419.0 },
-                  { x: 1662.0, y: 461.0 },
-                  { x: 1309.0, y: 461.0 },
+                  { x: 1724.0, y: 668.0 },
+                  { x: 2076.0, y: 668.0 },
+                  { x: 2076.0, y: 710.0 },
+                  { x: 1724.0, y: 710.0 },
                 ],
               },
               inferText: '(치킨너겟-계육:국내산)',
-              inferConfidence: 0.9994,
-              type: 'NORMAL',
-              lineBreak: false,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 1960.0, y: 419.0 },
-                  { x: 2214.0, y: 419.0 },
-                  { x: 2214.0, y: 461.0 },
-                  { x: 1960.0, y: 461.0 },
-                ],
-              },
-              inferText: '혼합잡곡밥/쌀밥',
               inferConfidence: 0.9996,
               type: 'NORMAL',
               lineBreak: false,
@@ -4788,14 +5340,29 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2587.0, y: 419.0 },
-                  { x: 2792.0, y: 419.0 },
-                  { x: 2792.0, y: 461.0 },
-                  { x: 2587.0, y: 461.0 },
+                  { x: 2367.0, y: 662.0 },
+                  { x: 2631.0, y: 662.0 },
+                  { x: 2631.0, y: 713.0 },
+                  { x: 2367.0, y: 713.0 },
+                ],
+              },
+              inferText: '혼합잡곡밥/쌀밥',
+              inferConfidence: 0.9999,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 2995.0, y: 662.0 },
+                  { x: 3211.0, y: 662.0 },
+                  { x: 3211.0, y: 713.0 },
+                  { x: 2995.0, y: 713.0 },
                 ],
               },
               inferText: '시금치된장국',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4803,14 +5370,44 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 184.0, y: 464.0 },
-                  { x: 416.0, y: 464.0 },
-                  { x: 416.0, y: 509.0 },
-                  { x: 184.0, y: 509.0 },
+                  { x: 231.0, y: 686.0 },
+                  { x: 282.0, y: 686.0 },
+                  { x: 282.0, y: 731.0 },
+                  { x: 231.0, y: 731.0 },
+                ],
+              },
+              inferText: 'A.',
+              inferConfidence: 0.9997,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 282.0, y: 686.0 },
+                  { x: 352.0, y: 686.0 },
+                  { x: 352.0, y: 731.0 },
+                  { x: 282.0, y: 731.0 },
+                ],
+              },
+              inferText: '한식',
+              inferConfidence: 0.9978,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 595.0, y: 710.0 },
+                  { x: 829.0, y: 710.0 },
+                  { x: 829.0, y: 756.0 },
+                  { x: 595.0, y: 756.0 },
                 ],
               },
               inferText: '시래기된장지짐',
-              inferConfidence: 0.9938,
+              inferConfidence: 0.9972,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4818,14 +5415,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 840.0, y: 467.0 },
-                  { x: 947.0, y: 467.0 },
-                  { x: 947.0, y: 509.0 },
-                  { x: 840.0, y: 509.0 },
+                  { x: 1254.0, y: 712.0 },
+                  { x: 1358.0, y: 717.0 },
+                  { x: 1356.0, y: 758.0 },
+                  { x: 1252.0, y: 754.0 },
                 ],
               },
               inferText: '부추전',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4833,10 +5430,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1339.0, y: 467.0 },
-                  { x: 1632.0, y: 467.0 },
-                  { x: 1632.0, y: 507.0 },
-                  { x: 1339.0, y: 507.0 },
+                  { x: 1754.0, y: 713.0 },
+                  { x: 2049.0, y: 713.0 },
+                  { x: 2049.0, y: 756.0 },
+                  { x: 1754.0, y: 756.0 },
                 ],
               },
               inferText: '분홍소시지전&케찹',
@@ -4848,14 +5445,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2003.0, y: 467.0 },
-                  { x: 2171.0, y: 467.0 },
-                  { x: 2171.0, y: 509.0 },
-                  { x: 2003.0, y: 509.0 },
+                  { x: 2416.0, y: 713.0 },
+                  { x: 2586.0, y: 713.0 },
+                  { x: 2586.0, y: 756.0 },
+                  { x: 2416.0, y: 756.0 },
                 ],
               },
               inferText: '새우완자전',
-              inferConfidence: 0.9997,
+              inferConfidence: 0.9966,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4863,10 +5460,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2539.0, y: 467.0 },
-                  { x: 2840.0, y: 467.0 },
-                  { x: 2840.0, y: 509.0 },
-                  { x: 2539.0, y: 509.0 },
+                  { x: 2953.0, y: 713.0 },
+                  { x: 3253.0, y: 713.0 },
+                  { x: 3253.0, y: 756.0 },
+                  { x: 2953.0, y: 756.0 },
                 ],
               },
               inferText: '토마토스크램블에그',
@@ -4878,10 +5475,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 216.0, y: 512.0 },
-                  { x: 387.0, y: 512.0 },
-                  { x: 387.0, y: 555.0 },
-                  { x: 216.0, y: 555.0 },
+                  { x: 625.0, y: 756.0 },
+                  { x: 804.0, y: 756.0 },
+                  { x: 804.0, y: 807.0 },
+                  { x: 625.0, y: 807.0 },
                 ],
               },
               inferText: '다시마튀각',
@@ -4893,10 +5490,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 808.0, y: 512.0 },
-                  { x: 979.0, y: 512.0 },
-                  { x: 979.0, y: 555.0 },
-                  { x: 808.0, y: 555.0 },
+                  { x: 1217.0, y: 756.0 },
+                  { x: 1396.0, y: 756.0 },
+                  { x: 1396.0, y: 807.0 },
+                  { x: 1217.0, y: 807.0 },
                 ],
               },
               inferText: '건파래볶음',
@@ -4908,14 +5505,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1277.0, y: 512.0 },
-                  { x: 1696.0, y: 512.0 },
-                  { x: 1696.0, y: 555.0 },
-                  { x: 1277.0, y: 555.0 },
+                  { x: 1690.0, y: 759.0 },
+                  { x: 2109.0, y: 759.0 },
+                  { x: 2109.0, y: 801.0 },
+                  { x: 1690.0, y: 801.0 },
                 ],
               },
               inferText: '(참피온소시지-돈육:국내산)',
-              inferConfidence: 0.9898,
+              inferConfidence: 0.9925,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4923,14 +5520,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1987.0, y: 512.0 },
-                  { x: 2187.0, y: 512.0 },
-                  { x: 2187.0, y: 555.0 },
-                  { x: 1987.0, y: 555.0 },
+                  { x: 2394.0, y: 756.0 },
+                  { x: 2607.0, y: 756.0 },
+                  { x: 2607.0, y: 807.0 },
+                  { x: 2394.0, y: 807.0 },
                 ],
               },
               inferText: '매운감자조림',
-              inferConfidence: 0.9992,
+              inferConfidence: 0.9954,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -4938,14 +5535,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2590.0, y: 512.0 },
-                  { x: 2787.0, y: 512.0 },
-                  { x: 2787.0, y: 555.0 },
-                  { x: 2590.0, y: 555.0 },
+                  { x: 2998.0, y: 756.0 },
+                  { x: 3208.0, y: 756.0 },
+                  { x: 3208.0, y: 807.0 },
+                  { x: 2998.0, y: 807.0 },
                 ],
               },
               inferText: '쌈무&깻잎쌈',
-              inferConfidence: 0.9981,
+              inferConfidence: 0.9969,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -4953,10 +5550,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 264.0, y: 560.0 },
-                  { x: 336.0, y: 560.0 },
-                  { x: 336.0, y: 603.0 },
-                  { x: 264.0, y: 603.0 },
+                  { x: 671.0, y: 798.0 },
+                  { x: 753.0, y: 798.0 },
+                  { x: 753.0, y: 853.0 },
+                  { x: 671.0, y: 853.0 },
                 ],
               },
               inferText: '김치',
@@ -4968,10 +5565,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 859.0, y: 560.0 },
-                  { x: 928.0, y: 560.0 },
-                  { x: 928.0, y: 603.0 },
-                  { x: 859.0, y: 603.0 },
+                  { x: 1266.0, y: 801.0 },
+                  { x: 1347.0, y: 801.0 },
+                  { x: 1347.0, y: 853.0 },
+                  { x: 1266.0, y: 853.0 },
                 ],
               },
               inferText: '김치',
@@ -4983,10 +5580,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1315.0, y: 560.0 },
-                  { x: 1656.0, y: 560.0 },
-                  { x: 1656.0, y: 603.0 },
-                  { x: 1315.0, y: 603.0 },
+                  { x: 1727.0, y: 807.0 },
+                  { x: 2070.0, y: 807.0 },
+                  { x: 2070.0, y: 850.0 },
+                  { x: 1727.0, y: 850.0 },
                 ],
               },
               inferText: '매콤콩나물잡채/깍두기',
@@ -4998,14 +5595,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1987.0, y: 560.0 },
-                  { x: 2190.0, y: 560.0 },
-                  { x: 2190.0, y: 603.0 },
-                  { x: 1987.0, y: 603.0 },
+                  { x: 2401.0, y: 807.0 },
+                  { x: 2601.0, y: 807.0 },
+                  { x: 2601.0, y: 850.0 },
+                  { x: 2401.0, y: 850.0 },
                 ],
               },
               inferText: '열무된장나물',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9997,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5013,10 +5610,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2654.0, y: 560.0 },
-                  { x: 2723.0, y: 560.0 },
-                  { x: 2723.0, y: 603.0 },
-                  { x: 2654.0, y: 603.0 },
+                  { x: 3062.0, y: 801.0 },
+                  { x: 3144.0, y: 801.0 },
+                  { x: 3144.0, y: 853.0 },
+                  { x: 3062.0, y: 853.0 },
                 ],
               },
               inferText: '김치',
@@ -5028,10 +5625,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 219.0, y: 605.0 },
-                  { x: 384.0, y: 605.0 },
-                  { x: 384.0, y: 648.0 },
-                  { x: 219.0, y: 648.0 },
+                  { x: 628.0, y: 850.0 },
+                  { x: 798.0, y: 850.0 },
+                  { x: 798.0, y: 895.0 },
+                  { x: 628.0, y: 895.0 },
                 ],
               },
               inferText: '*ICE초코*',
@@ -5043,14 +5640,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 763.0, y: 608.0 },
-                  { x: 1027.0, y: 608.0 },
-                  { x: 1027.0, y: 648.0 },
-                  { x: 763.0, y: 648.0 },
+                  { x: 1165.0, y: 850.0 },
+                  { x: 1448.0, y: 850.0 },
+                  { x: 1448.0, y: 901.0 },
+                  { x: 1165.0, y: 901.0 },
                 ],
               },
               inferText: '*아이스티(레몬)*',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5058,14 +5655,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1400.0, y: 611.0 },
-                  { x: 1574.0, y: 611.0 },
-                  { x: 1574.0, y: 651.0 },
-                  { x: 1400.0, y: 651.0 },
+                  { x: 1806.0, y: 850.0 },
+                  { x: 1994.0, y: 850.0 },
+                  { x: 1994.0, y: 901.0 },
+                  { x: 1806.0, y: 901.0 },
                 ],
               },
               inferText: '*복분자차*',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9997,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5073,10 +5670,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1979.0, y: 603.0 },
-                  { x: 2084.0, y: 607.0 },
-                  { x: 2082.0, y: 652.0 },
-                  { x: 1978.0, y: 648.0 },
+                  { x: 2385.0, y: 850.0 },
+                  { x: 2501.0, y: 850.0 },
+                  { x: 2501.0, y: 901.0 },
+                  { x: 2385.0, y: 901.0 },
                 ],
               },
               inferText: '깍두기',
@@ -5088,10 +5685,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2091.0, y: 611.0 },
-                  { x: 2198.0, y: 611.0 },
-                  { x: 2198.0, y: 648.0 },
-                  { x: 2091.0, y: 648.0 },
+                  { x: 2495.0, y: 850.0 },
+                  { x: 2616.0, y: 850.0 },
+                  { x: 2616.0, y: 901.0 },
+                  { x: 2495.0, y: 901.0 },
                 ],
               },
               inferText: '*식혜*',
@@ -5103,14 +5700,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2619.0, y: 611.0 },
-                  { x: 2763.0, y: 611.0 },
-                  { x: 2763.0, y: 651.0 },
-                  { x: 2619.0, y: 651.0 },
+                  { x: 3026.0, y: 850.0 },
+                  { x: 3180.0, y: 850.0 },
+                  { x: 3180.0, y: 901.0 },
+                  { x: 3026.0, y: 901.0 },
                 ],
               },
               inferText: '*유자차*',
-              inferConfidence: 0.9686,
+              inferConfidence: 0.9059,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -5118,10 +5715,40 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 200.0, y: 795.0 },
-                  { x: 403.0, y: 795.0 },
-                  { x: 403.0, y: 837.0 },
-                  { x: 200.0, y: 837.0 },
+                  { x: 52.0, y: 923.0 },
+                  { x: 140.0, y: 923.0 },
+                  { x: 140.0, y: 965.0 },
+                  { x: 52.0, y: 965.0 },
+                ],
+              },
+              inferText: '[20F]',
+              inferConfidence: 0.9992,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 42.0, y: 968.0 },
+                  { x: 146.0, y: 968.0 },
+                  { x: 146.0, y: 1014.0 },
+                  { x: 42.0, y: 1014.0 },
+                ],
+              },
+              inferText: '일반식',
+              inferConfidence: 0.9993,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 613.0, y: 1041.0 },
+                  { x: 816.0, y: 1041.0 },
+                  { x: 816.0, y: 1083.0 },
+                  { x: 613.0, y: 1083.0 },
                 ],
               },
               inferText: '해물볶음우동',
@@ -5133,10 +5760,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 808.0, y: 792.0 },
-                  { x: 979.0, y: 792.0 },
-                  { x: 979.0, y: 837.0 },
-                  { x: 808.0, y: 837.0 },
+                  { x: 1220.0, y: 1041.0 },
+                  { x: 1393.0, y: 1041.0 },
+                  { x: 1393.0, y: 1083.0 },
+                  { x: 1220.0, y: 1083.0 },
                 ],
               },
               inferText: '양지쌀국수',
@@ -5148,10 +5775,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1403.0, y: 791.0 },
-                  { x: 1571.0, y: 794.0 },
-                  { x: 1571.0, y: 838.0 },
-                  { x: 1402.0, y: 835.0 },
+                  { x: 1812.0, y: 1038.0 },
+                  { x: 1985.0, y: 1038.0 },
+                  { x: 1985.0, y: 1083.0 },
+                  { x: 1812.0, y: 1083.0 },
                 ],
               },
               inferText: '계란떡볶이',
@@ -5163,43 +5790,13 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2003.0, y: 792.0 },
-                  { x: 2171.0, y: 792.0 },
-                  { x: 2171.0, y: 837.0 },
-                  { x: 2003.0, y: 837.0 },
+                  { x: 2413.0, y: 1038.0 },
+                  { x: 2586.0, y: 1038.0 },
+                  { x: 2586.0, y: 1083.0 },
+                  { x: 2413.0, y: 1083.0 },
                 ],
               },
               inferText: '카레라이스',
-              inferConfidence: 0.9998,
-              type: 'NORMAL',
-              lineBreak: false,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 2560.0, y: 792.0 },
-                  { x: 2822.0, y: 792.0 },
-                  { x: 2822.0, y: 837.0 },
-                  { x: 2560.0, y: 837.0 },
-                ],
-              },
-              inferText: '새우볶음밥&케찹',
-              inferConfidence: 1.0,
-              type: 'NORMAL',
-              lineBreak: true,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 181.0, y: 840.0 },
-                  { x: 419.0, y: 840.0 },
-                  { x: 419.0, y: 883.0 },
-                  { x: 181.0, y: 883.0 },
-                ],
-              },
-              inferText: '(오징어:원양산)',
               inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
@@ -5208,14 +5805,44 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 701.0, y: 840.0 },
-                  { x: 1085.0, y: 840.0 },
-                  { x: 1085.0, y: 883.0 },
-                  { x: 701.0, y: 883.0 },
+                  { x: 2971.0, y: 1041.0 },
+                  { x: 3232.0, y: 1041.0 },
+                  { x: 3232.0, y: 1083.0 },
+                  { x: 2971.0, y: 1083.0 },
+                ],
+              },
+              inferText: '새우볶음밥&케찹',
+              inferConfidence: 0.9999,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 589.0, y: 1083.0 },
+                  { x: 838.0, y: 1083.0 },
+                  { x: 838.0, y: 1135.0 },
+                  { x: 589.0, y: 1135.0 },
+                ],
+              },
+              inferText: '(오징어:원양산)',
+              inferConfidence: 0.9992,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 1108.0, y: 1083.0 },
+                  { x: 1505.0, y: 1083.0 },
+                  { x: 1505.0, y: 1135.0 },
+                  { x: 1108.0, y: 1135.0 },
                 ],
               },
               inferText: '(소고기편육-우육:외국산)',
-              inferConfidence: 0.9988,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5223,14 +5850,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1304.0, y: 840.0 },
-                  { x: 1667.0, y: 840.0 },
-                  { x: 1667.0, y: 883.0 },
-                  { x: 1304.0, y: 883.0 },
+                  { x: 1715.0, y: 1083.0 },
+                  { x: 2085.0, y: 1083.0 },
+                  { x: 2085.0, y: 1135.0 },
+                  { x: 1715.0, y: 1135.0 },
                 ],
               },
               inferText: '꼬마김밥&김가루양념밥',
-              inferConfidence: 0.9994,
+              inferConfidence: 0.9986,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5238,10 +5865,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1984.0, y: 840.0 },
-                  { x: 2192.0, y: 840.0 },
-                  { x: 2192.0, y: 883.0 },
-                  { x: 1984.0, y: 883.0 },
+                  { x: 2398.0, y: 1090.0 },
+                  { x: 2604.0, y: 1090.0 },
+                  { x: 2604.0, y: 1132.0 },
+                  { x: 2398.0, y: 1132.0 },
                 ],
               },
               inferText: '(돈육:국내산)',
@@ -5253,14 +5880,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2622.0, y: 840.0 },
-                  { x: 2760.0, y: 840.0 },
-                  { x: 2760.0, y: 883.0 },
-                  { x: 2622.0, y: 883.0 },
+                  { x: 3029.0, y: 1083.0 },
+                  { x: 3177.0, y: 1083.0 },
+                  { x: 3177.0, y: 1135.0 },
+                  { x: 3029.0, y: 1135.0 },
                 ],
               },
               inferText: '일식장국',
-              inferConfidence: 0.9994,
+              inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -5268,14 +5895,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 187.0, y: 888.0 },
-                  { x: 413.0, y: 888.0 },
-                  { x: 413.0, y: 931.0 },
-                  { x: 187.0, y: 931.0 },
+                  { x: 601.0, y: 1135.0 },
+                  { x: 825.0, y: 1135.0 },
+                  { x: 825.0, y: 1178.0 },
+                  { x: 601.0, y: 1178.0 },
                 ],
               },
               inferText: '쌀밥&후리가케',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5283,14 +5910,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 744.0, y: 888.0 },
-                  { x: 1043.0, y: 888.0 },
-                  { x: 1043.0, y: 931.0 },
-                  { x: 744.0, y: 931.0 },
+                  { x: 1159.0, y: 1135.0 },
+                  { x: 1457.0, y: 1135.0 },
+                  { x: 1457.0, y: 1178.0 },
+                  { x: 1159.0, y: 1178.0 },
                 ],
               },
               inferText: '미니파인애플볶음밥',
-              inferConfidence: 0.9985,
+              inferConfidence: 0.9979,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5298,10 +5925,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1435.0, y: 888.0 },
-                  { x: 1539.0, y: 888.0 },
-                  { x: 1539.0, y: 931.0 },
-                  { x: 1435.0, y: 931.0 },
+                  { x: 1848.0, y: 1135.0 },
+                  { x: 1951.0, y: 1135.0 },
+                  { x: 1951.0, y: 1178.0 },
+                  { x: 1848.0, y: 1178.0 },
                 ],
               },
               inferText: '어묵국',
@@ -5313,10 +5940,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2035.0, y: 888.0 },
-                  { x: 2142.0, y: 888.0 },
-                  { x: 2142.0, y: 931.0 },
-                  { x: 2035.0, y: 931.0 },
+                  { x: 2450.0, y: 1132.0 },
+                  { x: 2554.0, y: 1137.0 },
+                  { x: 2552.0, y: 1179.0 },
+                  { x: 2448.0, y: 1174.0 },
                 ],
               },
               inferText: '김칫국',
@@ -5328,14 +5955,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2587.0, y: 888.0 },
-                  { x: 2790.0, y: 888.0 },
-                  { x: 2790.0, y: 931.0 },
-                  { x: 2587.0, y: 931.0 },
+                  { x: 2998.0, y: 1132.0 },
+                  { x: 3202.0, y: 1132.0 },
+                  { x: 3202.0, y: 1178.0 },
+                  { x: 2998.0, y: 1178.0 },
                 ],
               },
               inferText: '연근땅콩강정',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9995,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -5343,10 +5970,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 216.0, y: 933.0 },
-                  { x: 387.0, y: 933.0 },
-                  { x: 387.0, y: 976.0 },
-                  { x: 216.0, y: 976.0 },
+                  { x: 625.0, y: 1178.0 },
+                  { x: 804.0, y: 1178.0 },
+                  { x: 804.0, y: 1229.0 },
+                  { x: 625.0, y: 1229.0 },
                 ],
               },
               inferText: '가다랭이국',
@@ -5358,14 +5985,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 808.0, y: 933.0 },
-                  { x: 976.0, y: 933.0 },
-                  { x: 976.0, y: 976.0 },
-                  { x: 808.0, y: 976.0 },
+                  { x: 1217.0, y: 1178.0 },
+                  { x: 1396.0, y: 1178.0 },
+                  { x: 1396.0, y: 1229.0 },
+                  { x: 1217.0, y: 1229.0 },
                 ],
               },
               inferText: '달콤팥춘권',
-              inferConfidence: 0.9997,
+              inferConfidence: 0.9981,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5373,10 +6000,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1352.0, y: 933.0 },
-                  { x: 1619.0, y: 933.0 },
-                  { x: 1619.0, y: 976.0 },
-                  { x: 1352.0, y: 976.0 },
+                  { x: 1766.0, y: 1181.0 },
+                  { x: 2033.0, y: 1181.0 },
+                  { x: 2033.0, y: 1223.0 },
+                  { x: 1766.0, y: 1223.0 },
                 ],
               },
               inferText: '자색고구마크로켓',
@@ -5388,14 +6015,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1987.0, y: 933.0 },
-                  { x: 2190.0, y: 933.0 },
-                  { x: 2190.0, y: 976.0 },
-                  { x: 1987.0, y: 976.0 },
+                  { x: 2394.0, y: 1178.0 },
+                  { x: 2607.0, y: 1178.0 },
+                  { x: 2607.0, y: 1229.0 },
+                  { x: 2394.0, y: 1229.0 },
                 ],
               },
               inferText: '비빔채소만두',
-              inferConfidence: 0.9999,
+              inferConfidence: 1.0,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5403,14 +6030,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2587.0, y: 933.0 },
-                  { x: 2790.0, y: 933.0 },
-                  { x: 2790.0, y: 976.0 },
-                  { x: 2587.0, y: 976.0 },
+                  { x: 2995.0, y: 1178.0 },
+                  { x: 3208.0, y: 1178.0 },
+                  { x: 3208.0, y: 1229.0 },
+                  { x: 2995.0, y: 1229.0 },
                 ],
               },
               inferText: '쫄면채소무침',
-              inferConfidence: 0.9997,
+              inferConfidence: 1.0,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -5418,14 +6045,29 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 213.0, y: 981.0 },
-                  { x: 387.0, y: 981.0 },
-                  { x: 387.0, y: 1024.0 },
-                  { x: 213.0, y: 1024.0 },
+                  { x: 240.0, y: 1205.0 },
+                  { x: 352.0, y: 1205.0 },
+                  { x: 352.0, y: 1247.0 },
+                  { x: 240.0, y: 1247.0 },
+                ],
+              },
+              inferText: 'B. 일품',
+              inferConfidence: 0.9986,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 628.0, y: 1229.0 },
+                  { x: 798.0, y: 1229.0 },
+                  { x: 798.0, y: 1272.0 },
+                  { x: 628.0, y: 1272.0 },
                 ],
               },
               inferText: '옥수수빠스',
-              inferConfidence: 0.9999,
+              inferConfidence: 0.9993,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5433,10 +6075,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 824.0, y: 981.0 },
-                  { x: 960.0, y: 981.0 },
-                  { x: 960.0, y: 1024.0 },
-                  { x: 824.0, y: 1024.0 },
+                  { x: 1238.0, y: 1229.0 },
+                  { x: 1375.0, y: 1229.0 },
+                  { x: 1375.0, y: 1272.0 },
+                  { x: 1238.0, y: 1272.0 },
                 ],
               },
               inferText: '알새우칩',
@@ -5448,10 +6090,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1387.0, y: 981.0 },
-                  { x: 1587.0, y: 981.0 },
-                  { x: 1587.0, y: 1024.0 },
-                  { x: 1387.0, y: 1024.0 },
+                  { x: 1797.0, y: 1226.0 },
+                  { x: 2000.0, y: 1226.0 },
+                  { x: 2000.0, y: 1272.0 },
+                  { x: 1797.0, y: 1272.0 },
                 ],
               },
               inferText: '멕시칸샐러드',
@@ -5463,10 +6105,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1952.0, y: 981.0 },
-                  { x: 2219.0, y: 981.0 },
-                  { x: 2219.0, y: 1024.0 },
-                  { x: 1952.0, y: 1024.0 },
+                  { x: 2367.0, y: 1229.0 },
+                  { x: 2634.0, y: 1229.0 },
+                  { x: 2634.0, y: 1272.0 },
+                  { x: 2367.0, y: 1272.0 },
                 ],
               },
               inferText: '파프리카버섯볶음',
@@ -5478,14 +6120,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2587.0, y: 981.0 },
-                  { x: 2790.0, y: 981.0 },
-                  { x: 2790.0, y: 1024.0 },
-                  { x: 2587.0, y: 1024.0 },
+                  { x: 3001.0, y: 1229.0 },
+                  { x: 3202.0, y: 1229.0 },
+                  { x: 3202.0, y: 1272.0 },
+                  { x: 3001.0, y: 1272.0 },
                 ],
               },
               inferText: '만다린샐러드',
-              inferConfidence: 0.9972,
+              inferConfidence: 0.9963,
               type: 'NORMAL',
               lineBreak: true,
             },
@@ -5493,10 +6135,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 187.0, y: 1029.0 },
-                  { x: 413.0, y: 1029.0 },
-                  { x: 413.0, y: 1072.0 },
-                  { x: 187.0, y: 1072.0 },
+                  { x: 595.0, y: 1272.0 },
+                  { x: 832.0, y: 1272.0 },
+                  { x: 832.0, y: 1323.0 },
+                  { x: 595.0, y: 1323.0 },
                 ],
               },
               inferText: '샐러드&드레싱',
@@ -5508,10 +6150,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 779.0, y: 1029.0 },
-                  { x: 1005.0, y: 1029.0 },
-                  { x: 1005.0, y: 1072.0 },
-                  { x: 779.0, y: 1072.0 },
+                  { x: 1190.0, y: 1272.0 },
+                  { x: 1423.0, y: 1272.0 },
+                  { x: 1423.0, y: 1323.0 },
+                  { x: 1190.0, y: 1323.0 },
                 ],
               },
               inferText: '샐러드&드레싱',
@@ -5523,14 +6165,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1339.0, y: 1027.0 },
-                  { x: 1635.0, y: 1027.0 },
-                  { x: 1635.0, y: 1072.0 },
-                  { x: 1339.0, y: 1072.0 },
+                  { x: 1745.0, y: 1272.0 },
+                  { x: 2055.0, y: 1272.0 },
+                  { x: 2055.0, y: 1323.0 },
+                  { x: 1745.0, y: 1323.0 },
                 ],
               },
               inferText: '(햄-계육,돈육:국산)',
-              inferConfidence: 0.9986,
+              inferConfidence: 0.9979,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5538,13 +6180,58 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1987.0, y: 1029.0 },
-                  { x: 2190.0, y: 1029.0 },
-                  { x: 2190.0, y: 1072.0 },
-                  { x: 1987.0, y: 1072.0 },
+                  { x: 2394.0, y: 1272.0 },
+                  { x: 2607.0, y: 1272.0 },
+                  { x: 2607.0, y: 1323.0 },
+                  { x: 2394.0, y: 1323.0 },
                 ],
               },
               inferText: '열무된장나물',
+              inferConfidence: 0.9996,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 3032.0, y: 1272.0 },
+                  { x: 3171.0, y: 1272.0 },
+                  { x: 3171.0, y: 1323.0 },
+                  { x: 3032.0, y: 1323.0 },
+                ],
+              },
+              inferText: '&드레싱',
+              inferConfidence: 0.9999,
+              type: 'NORMAL',
+              lineBreak: true,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 662.0, y: 1323.0 },
+                  { x: 765.0, y: 1323.0 },
+                  { x: 765.0, y: 1366.0 },
+                  { x: 662.0, y: 1366.0 },
+                ],
+              },
+              inferText: '단무지',
+              inferConfidence: 0.9952,
+              type: 'NORMAL',
+              lineBreak: false,
+            },
+            {
+              valueType: 'ALL',
+              boundingPoly: {
+                vertices: [
+                  { x: 1223.0, y: 1323.0 },
+                  { x: 1390.0, y: 1323.0 },
+                  { x: 1390.0, y: 1366.0 },
+                  { x: 1223.0, y: 1366.0 },
+                ],
+              },
+              inferText: '사각단무지',
               inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: false,
@@ -5553,59 +6240,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2624.0, y: 1029.0 },
-                  { x: 2752.0, y: 1029.0 },
-                  { x: 2752.0, y: 1069.0 },
-                  { x: 2624.0, y: 1069.0 },
-                ],
-              },
-              inferText: '&드레싱',
-              inferConfidence: 1.0,
-              type: 'NORMAL',
-              lineBreak: true,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 245.0, y: 1075.0 },
-                  { x: 352.0, y: 1075.0 },
-                  { x: 352.0, y: 1117.0 },
-                  { x: 245.0, y: 1117.0 },
-                ],
-              },
-              inferText: '단무지',
-              inferConfidence: 0.9843,
-              type: 'NORMAL',
-              lineBreak: false,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 808.0, y: 1075.0 },
-                  { x: 976.0, y: 1075.0 },
-                  { x: 976.0, y: 1117.0 },
-                  { x: 808.0, y: 1117.0 },
-                ],
-              },
-              inferText: '사각단무지',
-              inferConfidence: 1.0,
-              type: 'NORMAL',
-              lineBreak: false,
-            },
-            {
-              valueType: 'ALL',
-              boundingPoly: {
-                vertices: [
-                  { x: 1400.0, y: 1075.0 },
-                  { x: 1571.0, y: 1075.0 },
-                  { x: 1571.0, y: 1117.0 },
-                  { x: 1400.0, y: 1117.0 },
+                  { x: 1815.0, y: 1323.0 },
+                  { x: 1985.0, y: 1323.0 },
+                  { x: 1985.0, y: 1366.0 },
+                  { x: 1815.0, y: 1366.0 },
                 ],
               },
               inferText: '단무지무침',
-              inferConfidence: 0.9963,
+              inferConfidence: 0.9972,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5613,10 +6255,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2035.0, y: 1075.0 },
-                  { x: 2139.0, y: 1075.0 },
-                  { x: 2139.0, y: 1117.0 },
-                  { x: 2035.0, y: 1117.0 },
+                  { x: 2446.0, y: 1320.0 },
+                  { x: 2549.0, y: 1320.0 },
+                  { x: 2549.0, y: 1366.0 },
+                  { x: 2446.0, y: 1366.0 },
                 ],
               },
               inferText: '깍두기',
@@ -5628,10 +6270,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2654.0, y: 1075.0 },
-                  { x: 2726.0, y: 1075.0 },
-                  { x: 2726.0, y: 1117.0 },
-                  { x: 2654.0, y: 1117.0 },
+                  { x: 3062.0, y: 1317.0 },
+                  { x: 3144.0, y: 1317.0 },
+                  { x: 3144.0, y: 1369.0 },
+                  { x: 3062.0, y: 1369.0 },
                 ],
               },
               inferText: '김치',
@@ -5643,14 +6285,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 216.0, y: 1120.0 },
-                  { x: 384.0, y: 1120.0 },
-                  { x: 384.0, y: 1163.0 },
-                  { x: 216.0, y: 1163.0 },
+                  { x: 628.0, y: 1366.0 },
+                  { x: 798.0, y: 1366.0 },
+                  { x: 798.0, y: 1411.0 },
+                  { x: 628.0, y: 1411.0 },
                 ],
               },
               inferText: '*ICE초코*',
-              inferConfidence: 0.9998,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5658,10 +6300,10 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 763.0, y: 1125.0 },
-                  { x: 1027.0, y: 1125.0 },
-                  { x: 1027.0, y: 1165.0 },
-                  { x: 763.0, y: 1165.0 },
+                  { x: 1171.0, y: 1369.0 },
+                  { x: 1439.0, y: 1369.0 },
+                  { x: 1439.0, y: 1411.0 },
+                  { x: 1171.0, y: 1411.0 },
                 ],
               },
               inferText: '*아이스티(레몬)*',
@@ -5673,14 +6315,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 1400.0, y: 1125.0 },
-                  { x: 1576.0, y: 1125.0 },
-                  { x: 1576.0, y: 1165.0 },
-                  { x: 1400.0, y: 1165.0 },
+                  { x: 1806.0, y: 1366.0 },
+                  { x: 1994.0, y: 1366.0 },
+                  { x: 1994.0, y: 1417.0 },
+                  { x: 1806.0, y: 1417.0 },
                 ],
               },
               inferText: '*복분자차*',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9998,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5688,14 +6330,14 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2035.0, y: 1125.0 },
-                  { x: 2144.0, y: 1125.0 },
-                  { x: 2144.0, y: 1163.0 },
-                  { x: 2035.0, y: 1163.0 },
+                  { x: 2440.0, y: 1366.0 },
+                  { x: 2561.0, y: 1366.0 },
+                  { x: 2561.0, y: 1414.0 },
+                  { x: 2440.0, y: 1414.0 },
                 ],
               },
               inferText: '*식혜*',
-              inferConfidence: 1.0,
+              inferConfidence: 0.9999,
               type: 'NORMAL',
               lineBreak: false,
             },
@@ -5703,21 +6345,21 @@ async function sendToServer() {
               valueType: 'ALL',
               boundingPoly: {
                 vertices: [
-                  { x: 2619.0, y: 1125.0 },
-                  { x: 2763.0, y: 1125.0 },
-                  { x: 2763.0, y: 1165.0 },
-                  { x: 2619.0, y: 1165.0 },
+                  { x: 3029.0, y: 1372.0 },
+                  { x: 3174.0, y: 1372.0 },
+                  { x: 3174.0, y: 1414.0 },
+                  { x: 3029.0, y: 1414.0 },
                 ],
               },
               inferText: '*유자차*',
-              inferConfidence: 0.9796,
+              inferConfidence: 0.989,
               type: 'NORMAL',
               lineBreak: true,
             },
           ],
         },
       ],
-      originalFileName: 'crop',
+      originalFileName: 'image (2) (2)',
       imageType: 'png',
     }
   } catch (err) {
@@ -5748,9 +6390,8 @@ const parsed2D = computed(() => {
       .join('\n')
     table[cell.rowIndex][cell.columnIndex] = text
   })
-
   // 여기서 ( or ) 가 들어간 셀은 빈 문자열로 치환
-  return table
+  return removeColumnsWithKeywords(table)
 })
 
 // 편집 가능한 복사본
@@ -5788,7 +6429,7 @@ async function save() {
   }
 
   for (let i = 0; i < transposed.length; i++) {
-    if (transposed[i][3] == '') {
+    if (transposed[i][2] == '') {
       let data = {
         date: '',
         course: '',
@@ -5797,8 +6438,8 @@ async function save() {
 
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'A'
-      for (let j = 3; j < transposed[i].length; j++) {
-        if (transposed[i][j] != '' || !/[()]/.test(transposed[i][j])) {
+      for (let j = 2; j < transposed[i].length; j++) {
+        if (transposed[i][j] != '' || !/[\(\)<>]/.test(transposed[i][j])) {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -5807,8 +6448,9 @@ async function save() {
           }
         }
       }
-
-      post.diet.push(data)
+      if (data.food.length != 0) {
+        post.diet.push(data)
+      }
     } else {
       let data = {
         date: '',
@@ -5817,9 +6459,9 @@ async function save() {
       }
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'A'
-      let j = 3
+      let j = 2
       while (transposed[i][j] != '') {
-        if (!/[()]/.test(transposed[i][j])) {
+        if (!/[\(\)<>]/.test(transposed[i][j])) {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -5829,7 +6471,9 @@ async function save() {
         }
         j++
       }
-      post.diet.push(data)
+      if (data.food.length != 0) {
+        post.diet.push(data)
+      }
 
       // B코스
       data = {
@@ -5841,7 +6485,7 @@ async function save() {
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'B'
       while (transposed[i][j] != '') {
-        if (!/[()]/.test(transposed[i][j])) {
+        if (!/[\(\)<>]/.test(transposed[i][j])) {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -5851,7 +6495,9 @@ async function save() {
         }
         j++
       }
-      post.diet.push(data)
+      if (data.food.length != 0) {
+        post.diet.push(data)
+      }
     }
   }
 
@@ -5883,4 +6529,44 @@ function parseKoreanDate(koreanDateStr) {
   return dateStr
 }
 
+const keywords = ['구분', '[20F]', '일반식', 'A.한식', 'B.일품']
+
+function removeColumnsWithKeywords(table) {
+  if (!table.length) return table
+
+  const numCols = table[0].length
+  const colsToRemove = new Set()
+
+  for (let col = 0; col < numCols; col++) {
+    for (let row = 0; row < table.length; row++) {
+      const cell = table[row][col]
+      if (keywords.some((keyword) => cell.includes(keyword))) {
+        colsToRemove.add(col)
+        break
+      }
+    }
+  }
+
+  // 열 제거
+  const cleaned = table.map((row) => row.filter((_, colIndex) => !colsToRemove.has(colIndex)))
+
+  return cleaned
+}
+
+async function handleUpload() {
+  const ok = await confirmDialog.value.open({
+    title: '식단 업로드',
+    message: `식단을 업로드하시겠습니까?<br><span class="text-danger small">음식이 아닌 단어가 있는지 확인해주세요</span>`,
+  })
+  if (!ok) return
+
+  save()
+}
 </script>
+
+<style scoped>
+.drop-area {
+  border: 2px dashed #ccc;
+  transition: background-color 0.3s;
+}
+</style>
