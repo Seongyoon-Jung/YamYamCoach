@@ -2,13 +2,22 @@ from flask import Flask, request, jsonify
 import json
 import logging
 import datetime
+import pprint
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # CORS 활성화 - 브라우저에서 직접 API 호출 가능
+# CORS 설정 수정 - credentials 허용
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # 콘솔 출력
+        logging.FileHandler(filename='recommend_server.log', encoding='utf-8')  # 파일 출력
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # 수신 데이터 로그 저장 경로
@@ -32,7 +41,35 @@ def recommend_dinner():
     try:
         # 요청 데이터 파싱
         request_data = request.get_json()
-        logger.info(f"수신된 요청: {request_data}")
+        
+        # 콘솔에 요청 데이터를 더 보기 좋게 출력
+        print("\n" + "="*50)
+        print(f"[API 요청 수신 시간] {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("="*50)
+        
+        print("\n[요청 데이터 전체]")
+        # pprint를 사용하여 더 보기 좋게 출력
+        pprint.pprint(request_data, width=100, depth=4)
+        
+        print("\n[사용자 정보]")
+        user_info = request_data.get('user', {})
+        print(f"성별: {'여성' if user_info.get('gender') else '남성'}")
+        print(f"나이: {user_info.get('age')}세")
+        print(f"키: {user_info.get('height')}cm")
+        print(f"몸무게: {user_info.get('weight')}kg")
+        print(f"목표 몸무게: {user_info.get('targetWeight')}kg")
+        
+        print("\n[오늘의 영양소 섭취 현황]")
+        nutrients = request_data.get('nutrients', {})
+        print(f"칼로리: {nutrients.get('calories', 0):.1f}kcal")
+        print(f"단백질: {nutrients.get('protein', 0):.1f}g")
+        print(f"탄수화물: {nutrients.get('carbohydrate', 0):.1f}g")
+        print(f"지방: {nutrients.get('fat', 0):.1f}g")
+        print(f"당류: {nutrients.get('sugar', 0):.1f}g")
+        
+        print(f"\n식사 횟수: {request_data.get('mealCount', 0)}회")
+        print(f"섭취한 음식 ID: {request_data.get('dishIds', [])}")
+        print("="*50 + "\n")
         
         # 요청 데이터 로그 저장
         save_request_log(request_data)

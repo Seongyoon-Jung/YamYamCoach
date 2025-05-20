@@ -1,0 +1,62 @@
+2025-05-20 12:21:58,394 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.221:5001
+2025-05-20 12:21:58,394 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-20 12:21:58,456 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:21:58,760 [WARNING]  * Debugger is active!
+2025-05-20 12:21:58,765 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:22:45,601 [INFO] 127.0.0.1 - - [20/May/2025 12:22:45] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:25:11,280 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.221:5001
+2025-05-20 12:25:11,280 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-20 12:25:11,289 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:25:11,562 [WARNING]  * Debugger is active!
+2025-05-20 12:25:11,567 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:31:01,415 [INFO] 127.0.0.1 - - [20/May/2025 12:31:01] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:31:29,165 [INFO] 127.0.0.1 - - [20/May/2025 12:31:29] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:38:40,636 [INFO] 127.0.0.1 - - [20/May/2025 12:38:40] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:38:49,331 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.221:5001
+2025-05-20 12:38:49,331 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-20 12:38:49,340 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:38:49,609 [WARNING]  * Debugger is active!
+2025-05-20 12:38:49,615 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:38:56,295 [INFO] 127.0.0.1 - - [20/May/2025 12:38:56] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:40:08,525 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:40:08,526 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:40:08,528 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:40:08,779 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:40:09,073 [WARNING]  * Debugger is active!
+2025-05-20 12:40:09,078 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:40:25,033 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:40:25,036 [INFO]  * Detected change in 'C:\\Users\\SSAFY\\yamyamPJT\\YamYamCoach\\recommend\\recommend_server.py', reloading
+2025-05-20 12:40:25,156 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:40:25,465 [WARNING]  * Debugger is active!
+2025-05-20 12:40:25,470 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:40:32,474 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.221:5001
+2025-05-20 12:40:32,474 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-20 12:40:32,482 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:40:32,789 [WARNING]  * Debugger is active!
+2025-05-20 12:40:32,789 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:40:37,322 [INFO] 127.0.0.1 - - [20/May/2025 12:40:37] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:40:37,586 [INFO] 응답 전송: {'recommendation': '연어 스테이크와 구운 야채, 그리고 과일 디저트', 'reason': '30-40대에게는 오메가3가 풍부한 생선과 섬유질 위주의 균형잡힌 식사를 추천합니다. 여성에게는 칼슘과 철분이 풍부한 식단이 좋습니다. 현재 BMI가 정상 범위이므로 균형 잡힌 식단을 유지하는 것이 좋습니다.', 'timestamp': '2025-05-20T12:40:37.583884'}
+2025-05-20 12:40:37,587 [INFO] 127.0.0.1 - - [20/May/2025 12:40:37] "POST /recommend HTTP/1.1" 200 -
+2025-05-20 12:42:11,187 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.221:5001
+2025-05-20 12:42:11,187 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-20 12:42:11,195 [INFO]  * Restarting with watchdog (windowsapi)
+2025-05-20 12:42:11,467 [WARNING]  * Debugger is active!
+2025-05-20 12:42:11,472 [INFO]  * Debugger PIN: 112-860-005
+2025-05-20 12:42:15,399 [INFO] 127.0.0.1 - - [20/May/2025 12:42:15] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-20 12:42:15,649 [INFO] 응답 전송: {'recommendation': '연어 스테이크와 구운 야채, 그리고 과일 디저트', 'reason': '30-40대에게는 오메가3가 풍부한 생선과 섬유질 위주의 균형잡힌 식사를 추천합니다. 여성에게는 칼슘과 철분이 풍부한 식단이 좋습니다. 현재 BMI가 정상 범위이므로 균형 잡힌 식단을 유지하는 것이 좋습니다.', 'timestamp': '2025-05-20T12:42:15.649965'}
+2025-05-20 12:42:15,649 [INFO] 127.0.0.1 - - [20/May/2025 12:42:15] "POST /recommend HTTP/1.1" 200 -

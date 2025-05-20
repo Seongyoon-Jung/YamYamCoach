@@ -13,6 +13,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/recommendation")
+@RequestMapping("/api")
 public class RecommendationController {
     
     private static final Logger logger = LoggerFactory.getLogger(RecommendationController.class);
@@ -42,9 +43,49 @@ public class RecommendationController {
     private RestTemplate restTemplate;
     
     /**
+     * 사용자 프로필 정보 제공 API
+     * 프론트엔드에서 호출하는 /api/user/profile 엔드포인트 구현
+     */
+    @GetMapping("/user/profile")
+    public ResponseEntity<?> getUserProfile(@AuthenticationPrincipal SecurityAccount principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "인증되지 않은 사용자입니다."));
+        }
+        
+        try {
+            int userId = principal.getUserId();
+            
+            // 사용자 정보 조회
+            UserEntity user = userRepository.findByUserId(userId);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false, "message", "사용자 정보를 찾을 수 없습니다."));
+            }
+            
+            // 응답 데이터 구성
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("userId", user.getUserId());
+            userInfo.put("gender", user.isGender());
+            userInfo.put("age", calculateAge(user.getBirthDate()));
+            userInfo.put("height", user.getHeight());
+            userInfo.put("weight", user.getWeight());
+            userInfo.put("targetWeight", user.getTargetWeight());
+            
+            logger.info("사용자 ID [{}]의 프로필 정보 요청 응답: {}", userId, userInfo);
+            return ResponseEntity.ok(Map.of("success", true, "user", userInfo));
+            
+        } catch (Exception e) {
+            logger.error("사용자 프로필 정보 처리 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "사용자 정보 조회 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
      * 저녁 메뉴 추천 요청
      */
-    @PostMapping("/dinner")
+    @PostMapping("/recommendation/dinner")
     public ResponseEntity<?> recommendDinner(@AuthenticationPrincipal SecurityAccount principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -99,7 +140,7 @@ public class RecommendationController {
             logger.info("사용자 ID [{}]의 저녁 메뉴 추천 요청 데이터: {}", userId, requestData);
             
             // 추천 시스템 서버로 요청 전송
-            String recommendationUrl = "http://localhost:5000/recommend";
+            String recommendationUrl = "http://localhost:5001/recommend";  // 포트 5001로 수정
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestData);
             
             try {
@@ -119,8 +160,8 @@ public class RecommendationController {
                 
                 // 임시 응답 반환 (추천 시스템 서버가 없는 경우)
                 Map<String, Object> mockRecommendation = new HashMap<>();
-                mockRecommendation.put("recommendation", "오늘은 닭가슴살 샐러드가 어떨까요? 단백질이 풍부하고 칼로리가 적습니다.");
-                mockRecommendation.put("reason", "섭취한 탄수화물이 높아 저녁은 단백질 위주로 추천합니다.");
+                mockRecommendation.put("recommendation", "볶음밥, 김치, 미역국");
+                mockRecommendation.put("reason", "오늘 섭취한 영양소를 분석한 결과, 균형 잡힌 한식 메뉴를 추천합니다. 볶음밥으로 적절한 탄수화물과 단백질을, 김치와 미역국으로 충분한 비타민과 미네랄을 섭취하세요.");
                 
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", true);
