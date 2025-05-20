@@ -3,16 +3,62 @@
     <!-- <input type="file" @change="handleFile" /> -->
 
     <ImageCropper @cropped="onCroppedFile"></ImageCropper>
-    <button v-if="imageFile" @click="sendToServer">분석 요청</button>
+    <button v-if="imageFile" class="btn btn-primary" @click="sendToServer">분석 요청</button>
 
-    <table v-if="tableData.length" class="table table-bordered mt-4">
-      <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
-        <td v-for="(cell, colIndex) in row" :key="colIndex">
-          <input type="text" class="form-control p-1" v-model="tableData[rowIndex][colIndex]" />
-        </td>
-      </tr>
-    </table>
-    <button v-if="tableData.length" type="button" @click="save">수정완료</button>
+    <div class="table-responsive" style="max-width: 100%">
+      <table
+        class="table table-bordered mt-4 text-center align-middle"
+      >
+        <thead class="table-primary">
+          <tr>
+            <th
+              v-for="(day, colIndex) in tableData[0]"
+              :key="'head-' + colIndex"
+              style="white-space: nowrap; padding: 0.5rem"
+            >
+              <div class="fw-bold fs-6">{{ day }}</div>
+            </th>
+          </tr>
+          <tr>
+            <th
+              v-for="(day, colIndex) in tableData[1]"
+              :key="'head-' + colIndex"
+              style="white-space: nowrap; padding: 0.5rem"
+            >
+              <div class="fw-bold fs-6">{{ day }}</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, rowIndex) in tableData.slice(2)" :key="'row-' + rowIndex">
+            <td
+              v-for="(cell, colIndex) in row"
+              :key="'cell-' + colIndex"
+              style="padding: 0.25rem; max-width: 140px"
+            >
+              <input
+                type="text"
+                v-model="tableData[rowIndex + 2][colIndex]"
+                class="form-control border-0 p-0"
+                style="
+                  width: 100%;
+                  min-width: 0;
+                  height: auto;
+                  resize: none;
+                  overflow-wrap: break-word;
+                  white-space: pre-line;
+                  font-size: 0.85rem;
+                  background-color: transparent;
+                "
+              ></input>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button v-if="tableData.length" type="button" class="btn btn-primary" @click="save">
+      수정완료
+    </button>
   </div>
 </template>
 
@@ -5836,4 +5882,5 @@ function parseKoreanDate(koreanDateStr) {
   const dateStr = `${currentYear}-${month}-${day}` // 예: 2025-05-20
   return dateStr
 }
+
 </script>
