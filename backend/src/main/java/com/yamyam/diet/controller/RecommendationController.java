@@ -6,7 +6,9 @@ import com.yamyam.diet.repository.DishRecordRepository;
 import com.yamyam.diet.repository.DishRepository;
 import com.yamyam.dto.SecurityAccount;
 import com.yamyam.entity.UserEntity;
+import com.yamyam.entity.PersonaEntity;
 import com.yamyam.repository.UserRepository;
+import com.yamyam.repository.PersonaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,9 @@ public class RecommendationController {
     
     @Autowired
     private DishRepository dishRepository;
+    
+    @Autowired
+    private PersonaRepository personaRepository;
     
     @Autowired
     private RestTemplate restTemplate;
@@ -124,6 +129,25 @@ public class RecommendationController {
             userInfo.put("height", user.getHeight());
             userInfo.put("weight", user.getWeight());
             userInfo.put("targetWeight", user.getTargetWeight());
+            
+            // 페르소나 정보(질병 태그) 추가
+            PersonaEntity persona = user.getPersona();
+            String diseaseTags = "";
+            
+            // 페르소나가 있으면 disease_tags 가져오기
+            if (persona != null) {
+                try {
+                    diseaseTags = persona.getDiseaseTags();
+                    logger.info("사용자 ID [{}]의 페르소나: {}, disease_tags: {}", userId, persona.getName(), diseaseTags);
+                } catch (Exception e) {
+                    logger.error("페르소나 정보 처리 중 오류 발생:", e);
+                }
+            } else {
+                logger.info("사용자 ID [{}]의 페르소나가 없습니다", userId);
+            }
+            
+            // disease_tags 정보 추가
+            userInfo.put("diseaseTags", diseaseTags);
             
             // 오늘 섭취한 영양소 정보 실제 계산
             double totalCalories = 0.0;
