@@ -6,8 +6,15 @@ import pprint
 from flask_cors import CORS
 
 app = Flask(__name__)
-# CORS 설정 수정 - credentials 허용
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
+# CORS 설정 수정 - 모든 요청 허용
+CORS(app, 
+     resources={r"/*": {
+         "origins": "*", 
+         "allow_headers": "*", 
+         "expose_headers": "*", 
+         "methods": ["GET", "POST", "OPTIONS"]
+     }}, 
+     supports_credentials=True)
 
 # 로깅 설정
 logging.basicConfig(
@@ -39,6 +46,12 @@ def recommend_dinner():
     - reason: 추천 이유
     """
     try:
+        # 요청 헤더 출력
+        print("\n" + "="*50)
+        print("[요청 헤더]")
+        print(request.headers)
+        print("="*50 + "\n")
+        
         # 요청 데이터 파싱
         request_data = request.get_json()
         
@@ -61,14 +74,26 @@ def recommend_dinner():
         
         print("\n[오늘의 영양소 섭취 현황]")
         nutrients = request_data.get('nutrients', {})
+        
+        # 영양소 데이터 확인 및 디버깅 정보 출력
+        if not nutrients or all(value == 0 for value in nutrients.values()):
+            print("\033[93m경고: 영양소 데이터가 없거나 모두 0입니다!\033[0m")
+            print("영양소 데이터 원본:", nutrients)
+        
         print(f"칼로리: {nutrients.get('calories', 0):.1f}kcal")
         print(f"단백질: {nutrients.get('protein', 0):.1f}g")
         print(f"탄수화물: {nutrients.get('carbohydrate', 0):.1f}g")
         print(f"지방: {nutrients.get('fat', 0):.1f}g")
         print(f"당류: {nutrients.get('sugar', 0):.1f}g")
         
+        # 음식 ID 목록 확인
+        dish_ids = request_data.get('dishIds', [])
+        if not dish_ids:
+            print("\033[93m경고: 음식 ID 목록이 비어 있습니다!\033[0m")
+        else:
+            print(f"\n음식 ID 목록 (총 {len(dish_ids)}개): {dish_ids}")
+        
         print(f"\n식사 횟수: {request_data.get('mealCount', 0)}회")
-        print(f"섭취한 음식 ID: {request_data.get('dishIds', [])}")
         print("="*50 + "\n")
         
         # 요청 데이터 로그 저장
