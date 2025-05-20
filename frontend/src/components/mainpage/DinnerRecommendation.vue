@@ -168,7 +168,30 @@ const fetchUserInfo = async () => {
 
     if (response.data && response.data.success && response.data.user) {
       console.log('사용자 정보 가져오기 성공:', response.data.user)
-      userInfo.value = response.data.user
+
+      const userData = response.data.user
+
+      // 페르소나 ID가 있으면 질병 태그 정보도 함께 가져오도록 추가 요청
+      if (userData.personaId) {
+        try {
+          console.log('사용자의 페르소나 ID:', userData.personaId)
+          const personaResponse = await axios.get(`/api/personas/${userData.personaId}`)
+
+          if (personaResponse.data && personaResponse.data.success) {
+            console.log('페르소나 정보 가져오기 성공:', personaResponse.data.persona)
+            // diseaseTags 정보 추가
+            userData.diseaseTags = personaResponse.data.persona.diseaseTags || ''
+            console.log('추가된 질병 태그 정보:', userData.diseaseTags)
+          }
+        } catch (personaError) {
+          console.warn('페르소나 정보 조회 실패, 기본값 사용:', personaError)
+          userData.diseaseTags = ''
+        }
+      } else {
+        userData.diseaseTags = ''
+      }
+
+      userInfo.value = userData
       return true
     } else {
       console.warn('사용자 정보를 가져올 수 없습니다. 응답:', response.data)
@@ -179,6 +202,7 @@ const fetchUserInfo = async () => {
         height: 165,
         weight: 60,
         targetWeight: 55,
+        diseaseTags: '',
       }
       console.log('기본 사용자 정보 사용:', userInfo.value)
     }
@@ -192,6 +216,7 @@ const fetchUserInfo = async () => {
       height: 165,
       weight: 60,
       targetWeight: 55,
+      diseaseTags: '',
     }
     console.log('오류로 인한 기본 사용자 정보 사용:', userInfo.value)
   }
