@@ -45,3 +45,6 @@ build/
 
 # API KEY 숨기기
 application-API-KEY.properties
+
+# 뉴스api를 위한 텍스트 숨기기
+last_run_naver_news_api.txt
