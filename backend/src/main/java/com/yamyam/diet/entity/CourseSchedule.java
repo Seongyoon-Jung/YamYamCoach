@@ -23,7 +23,14 @@ public class CourseSchedule {
     @OneToMany(mappedBy = "courseSchedule", cascade = CascadeType.ALL)
     private List<ScheduleDish> scheduleDishes;
 
-    // Getters
+    
+    public CourseSchedule(LocalDate scheduleDate, String courseType, String courseName) {
+		this.scheduleDate = scheduleDate;
+		this.courseType = courseType;
+		this.courseName = courseName;
+	}
+
+	// Getters
     public int getScheduleId() {
         return scheduleId;
     }
