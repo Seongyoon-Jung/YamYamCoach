@@ -50,8 +50,20 @@
         </div>
       </div>
 
-      <!-- 영양소 정보 표시 -->
-      <div v-if="hasRecords && totalNutrients" class="card-footer">
+      <!-- 추천 이후에는 레시피 링크, 그 전에는 영양소 정보 표시 -->
+      <div v-if="recommendation" class="card-footer">
+        <div class="recipe-links">
+          <h6 class="mb-2 text-primary">추천 메뉴 레시피</h6>
+          <div class="d-flex flex-wrap">
+            <div v-for="(food, index) in parsedFoodItems" :key="index" class="me-3 mb-2">
+              <a :href="getRecipeLink(food)" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-book me-1"></i>{{ food }} 레시피
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="hasRecords && totalNutrients" class="card-footer">
         <div class="nutrition-summary">
           <h6 class="mb-2 text-muted">오늘의 영양소 섭취 요약</h6>
           <div class="d-flex flex-wrap small">
@@ -98,6 +110,24 @@ const totalNutrients = reactive({
 })
 const componentKey = ref(0) // 컴포넌트 강제 리렌더링용 키
 const todayDietNutrients = ref(null) // TodayDiet 컴포넌트로부터 받은 영양소 정보
+
+// 추천된 음식을 개별 항목으로 파싱
+const parsedFoodItems = computed(() => {
+  if (!recommendation.value || !recommendation.value.recommendation) return []
+
+  // 쉼표로 구분된 음식 항목들을 배열로 변환
+  return recommendation.value.recommendation
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .slice(0, 3) // 최대 3개 항목으로 제한
+})
+
+// 음식 이름에 따른 레시피 검색 링크 생성
+const getRecipeLink = (foodName) => {
+  // 10000개 레시피 사이트에서 검색하는 URL
+  return `https://www.10000recipe.com/recipe/list.html?q=${encodeURIComponent(foodName)}`
+}
 
 // 오늘 기록이 있는지 확인
 const hasRecords = computed(() => {
