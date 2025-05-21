@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-white bg-white fixed-top border-bottom border-3">
+  <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom border-3">
     <div class="container position-relative">
       <!-- 브랜드 + 주요 네비게이션 -->
       <RouterLink class="navbar-brand fw-bold me-4" to="/">냠냠코치</RouterLink>
@@ -23,7 +23,9 @@
             class="nav-item d-flex align-items-center ms-3"
             style="height: 1.5rem; overflow: hidden; width: 500px"
           >
-            <span class="badge bg-light text-primary me-2">나의 맞춤 뉴스</span>
+            <router-link to="/news" class="text-decoration-none badge bg-light text-primary me-2"
+              >나의 맞춤 뉴스</router-link
+            >
             <div style="height: 1.5rem; overflow: hidden; position: relative">
               <transition-group
                 name="slide-down"
