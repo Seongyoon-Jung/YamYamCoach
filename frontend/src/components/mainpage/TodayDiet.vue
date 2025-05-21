@@ -1,5 +1,5 @@
 <template>
-  <div class="col-md-6 mb-4 today-diet-component">
+  <div class="today-diet-component h-100">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>오늘의 식단</span>

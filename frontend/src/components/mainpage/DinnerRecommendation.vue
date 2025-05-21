@@ -1,5 +1,5 @@
 <template>
-  <div class="col-md-6 mb-4 dinner-recommendation-component" :key="componentKey">
+  <div class="dinner-recommendation-component h-100" :key="componentKey">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>저녁 메뉴 추천</span>
