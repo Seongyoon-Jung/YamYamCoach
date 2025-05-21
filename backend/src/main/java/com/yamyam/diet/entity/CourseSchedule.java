@@ -5,7 +5,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "course_schedule")
+@Table(name = "course_schedule",
+		uniqueConstraints = {
+			   @UniqueConstraint(columnNames = { "schedule_date", "course_type" })
+    		}
+		)
 public class CourseSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +27,9 @@ public class CourseSchedule {
     @OneToMany(mappedBy = "courseSchedule", cascade = CascadeType.ALL)
     private List<ScheduleDish> scheduleDishes;
 
+    public CourseSchedule() {
+		// TODO Auto-generated constructor stub
+	}
     
     public CourseSchedule(LocalDate scheduleDate, String courseType, String courseName) {
 		this.scheduleDate = scheduleDate;

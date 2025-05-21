@@ -20,7 +20,9 @@
       <button class="btn btn-secondary" @click="() => fileInput.click()">파일 선택</button>
     </div>
 
-    <h5 v-if="tableData.length > 0" class="text-danger">음식이 아닌 것은 꼭 지워주세요!</h5>
+    <h5 v-if="tableData.length > 0" class="text-danger">
+      음식이 아닌 것 및 원산지 표기는 꼭 지워주세요!
+    </h5>
     <!-- 이미지 + 테이블 나란히 -->
     <div class="d-flex gap-3" style="width: 100%">
       <!-- 이미지 영역 -->
@@ -110,6 +112,7 @@ import { ref, computed, watch } from 'vue'
 import axios from '@/plugins/axios'
 import ImageCropper from '@/components/admin/ImageCropper.vue'
 import ConfirmDialog from '@/components/dialog/ConfirmDialog.vue'
+import router from '@/router'
 
 const result = ref(null)
 const imageFile = ref(null)
@@ -133,6 +136,7 @@ function syncTableWidth() {
 }
 
 function syncScroll(source) {
+  //console.log(`syncScroll from ${source}`)
   if (isSyncingScroll) return
 
   isSyncingScroll = true
@@ -6406,18 +6410,9 @@ watch(
   { immediate: true },
 )
 
-// (옵션) 수정된 값을 백으로 보내려면 formData를 순회해서 POST
-async function saveEdited() {
-  // 예시: formData 전체를 서버로 전송
-  try {
-    // await axios.post('/api/course_schedule/bulk', { data: formData.value })
-    alert('저장 완료!')
-  } catch {
-    alert('저장 실패')
-  }
-}
-
 async function save() {
+  const courseLength = Math.floor(tableData.value.length / 2)
+  console.log('길이 : ', tableData.value.length)
   const transposed = transpose(tableData.value)
 
   // for (let i = 0; i < tableData.value.length; i++) {
@@ -6429,6 +6424,7 @@ async function save() {
   }
 
   for (let i = 0; i < transposed.length; i++) {
+    // 단일메뉴
     if (transposed[i][2] == '') {
       let data = {
         date: '',
@@ -6439,7 +6435,7 @@ async function save() {
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'A'
       for (let j = 2; j < transposed[i].length; j++) {
-        if (transposed[i][j] != '' || !/[\(\)<>]/.test(transposed[i][j])) {
+        if (transposed[i][j] != '') {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -6459,9 +6455,8 @@ async function save() {
       }
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'A'
-      let j = 2
-      while (transposed[i][j] != '') {
-        if (!/[\(\)<>]/.test(transposed[i][j])) {
+      for (let j = 2; j < courseLength; j++) {
+        if (transposed[i][j] != '') {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -6469,7 +6464,6 @@ async function save() {
             data.food.push(...transposed[i][j].split('*').filter((s) => s !== ''))
           }
         }
-        j++
       }
       if (data.food.length != 0) {
         post.diet.push(data)
@@ -6481,11 +6475,11 @@ async function save() {
         course: '',
         food: [],
       }
-      j++
       data.date = parseKoreanDate(transposed[i][0])
       data.course = 'B'
-      while (transposed[i][j] != '') {
-        if (!/[\(\)<>]/.test(transposed[i][j])) {
+
+      for (let j = courseLength + 1; j < transposed[i].length; j++) {
+        if (transposed[i][j] != '') {
           if (transposed[i][j].startsWith('&')) {
             let str = data.food.pop() + transposed[i][j]
             data.food.push(str)
@@ -6493,7 +6487,6 @@ async function save() {
             data.food.push(...transposed[i][j].split('*').filter((s) => s !== ''))
           }
         }
-        j++
       }
       if (data.food.length != 0) {
         post.diet.push(data)
@@ -6509,7 +6502,10 @@ async function save() {
 
   try {
     const res = await axios.post('/api/foods', post)
-  } catch (err) {}
+    router.push('/admin')
+  } catch (err) {
+    alert('실패')
+  }
 }
 
 function transpose(matrix) {
@@ -6556,7 +6552,7 @@ function removeColumnsWithKeywords(table) {
 async function handleUpload() {
   const ok = await confirmDialog.value.open({
     title: '식단 업로드',
-    message: `식단을 업로드하시겠습니까?<br><span class="text-danger small">음식이 아닌 단어가 있는지 확인해주세요</span>`,
+    message: `식단을 업로드하시겠습니까?<br><span class="text-danger small">음식이 아니거나 원산지 표기가 있는지 확인해주세요</span>`,
   })
   if (!ok) return
 
