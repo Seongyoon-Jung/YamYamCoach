@@ -32,6 +32,8 @@ public class FoodsController {
 	    }
 	    
 	    foodService.saveAllCourseSchedule(request.getDiet());
+	    foodService.saveAllDish(request.getDiet());
+	    foodService.saveAllScheduleDish(request.getDiet());
 	    
 	    
 	    return ResponseEntity.ok("OK");
