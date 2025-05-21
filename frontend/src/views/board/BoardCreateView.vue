@@ -63,23 +63,33 @@ const handleImageUpload = (e) => {
 
 const submitPost = async () => {
   try {
-    // imageFile 처리해주고 이미지 주소를 보내주어야함
+    const formData = new FormData()
 
-    const data = {
+    // DTO 데이터 → Blob(JSON)으로 감싸기
+    const dto = {
       username: accountStore.username,
       title: title.value,
       content: content.value,
-      imageFile: null,
+    }
+    formData.append('board', new Blob([JSON.stringify(dto)], { type: 'application/json' }))
+
+    // 파일이 있을 때만 첨부
+    if (imageFile.value) {
+      formData.append('file', imageFile.value)
     }
 
-    console.log(data)
-    await axios.post('/api/board', data)
+    await axios.post('/api/board', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
 
-    router.push('/board') // 게시판 목록으로 이동
+    router.push('/board')
   } catch (err) {
     console.error('게시글 등록 실패', err)
   }
 }
+
 </script>
 
 <style scoped>

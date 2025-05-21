@@ -1,5 +1,6 @@
 package com.yamyam.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -11,20 +12,25 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.yamyam.dto.request.BoardRequest;
 import com.yamyam.dto.response.BoardResponse;
 import com.yamyam.dto.response.CommentResponse;
 import com.yamyam.service.BoardService;
+import com.yamyam.service.S3UploadService;
 
 @RestController
 @RequestMapping("/api/board")
 public class BoardController {
 	
 	private final BoardService boardService;
-	public BoardController(BoardService boardService) {
+	private final S3UploadService s3UploadService;
+	public BoardController(BoardService boardService, S3UploadService s3UploadService) {
 		this.boardService = boardService;
+		this.s3UploadService = s3UploadService;
 	}
 
 	// 게시판 글 조회
@@ -32,11 +38,30 @@ public class BoardController {
 	public ResponseEntity<List<BoardResponse>> getBoardList(){		
 		return ResponseEntity.ok(boardService.getAll());
 	}
-	
-	// 게시판 글 작성
+
 	@PostMapping("")
-	public void writeBoard(@RequestBody BoardRequest boardRequest) {
-		boardService.writeBoard(boardRequest);
+	public void writeBoard(@RequestPart("board") BoardRequest boardRequest,  @RequestPart(value = "file", required = false) MultipartFile file) {
+	    String imageUrl = null;
+
+	    if (file != null && !file.isEmpty()) {
+	        System.out.println("===== 업로드된 파일 정보 =====");
+	        System.out.println("파일명: " + file.getOriginalFilename());
+	        System.out.println("파일 크기: " + file.getSize() + " bytes");
+	        System.out.println("파일 타입: " + file.getContentType());
+
+	        try {
+	            imageUrl = s3UploadService.saveFile(file, "board");
+	        } catch (IOException e) {
+	            System.err.println("파일 업로드 실패: " + e.getMessage());
+	            // 필요한 경우 사용자 정의 예외로 변환하여 던질 수도 있음
+	            throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.");
+	        }
+	    } else {
+	        System.out.println("파일이 업로드되지 않았습니다.");
+	    }
+
+	    // imageUrl을 boardRequest에 담거나, 따로 저장 처리
+	    boardService.writeBoard(boardRequest, imageUrl);
 	}
 	
 	// 게시판 글 수정

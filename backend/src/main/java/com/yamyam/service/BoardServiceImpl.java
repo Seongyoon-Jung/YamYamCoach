@@ -78,11 +78,11 @@ public class BoardServiceImpl implements BoardService{
 	}
 	
 	@Override
-	public void writeBoard(BoardRequest boardRequest) {
+	public void writeBoard(BoardRequest boardRequest, String imageUrl) {
 		
 		UserEntity userEntity = userRepository.findByUsername(boardRequest.getUsername());
 		
-		BoardEntity data = new BoardEntity(userEntity, boardRequest.getTitle(), boardRequest.getContent(), boardRequest.getImageUrl());
+		BoardEntity data = new BoardEntity(userEntity, boardRequest.getTitle(), boardRequest.getContent(), imageUrl);
 		
 		boardRepository.save(data);
 	}
