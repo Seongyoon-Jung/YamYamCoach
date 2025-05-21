@@ -29,6 +29,12 @@ const routes = [
     ],
   },
   {
+    path: '/news',
+    name: 'NewsView',
+    component: () => import('../views/news/NewsView.vue'),
+    meta: { title: '내 맞춤 뉴스', requiresAuth: true },
+  },
+  {
     path: '/my',
     name: 'MyView',
     component: () => import('../views/user/MyView.vue'),

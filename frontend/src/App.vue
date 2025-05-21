@@ -2,7 +2,7 @@
   <!-- 일반 사용자 화면: ROLE_ADMIN이 아니거나, 현재 경로가 /admin으로 시작하지 않는 경우 -->
   <div v-if="!isAdmin || !isAdminRoute" id="app" class="d-flex flex-column min-vh-100">
     <HeaderComponent />
-    <main class="container bg-light flex-grow-1 pt-5">
+    <main class="container bg-light flex-grow-1 px-0">
       <router-view />
     </main>
     <FooterComponent />
