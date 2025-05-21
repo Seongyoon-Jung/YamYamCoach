@@ -10,11 +10,11 @@
         </div>
       </div>
       <div class="card-body">
-        <div v-if="recommendation" class="recommendation-result">
+        <div v-if="recommendation && recommendation.recommendation_text" class="recommendation-result">
           <div class="card mb-3">
             <div class="card-body">
               <h5 class="card-title text-primary mb-3">추천 메뉴</h5>
-              <p class="card-text h5 mb-4">{{ recommendation.recommendation }}</p>
+              <p class="card-text h5 mb-4">{{ recommendation.recommendation_text }}</p>
 
               <h6 class="text-muted mb-2">추천 이유</h6>
               <p class="card-text">{{ recommendation.reason }}</p>
@@ -51,13 +51,13 @@
       </div>
 
       <!-- 추천 이후에는 레시피 링크, 그 전에는 영양소 정보 표시 -->
-      <div v-if="recommendation" class="card-footer">
+      <div v-if="recommendation && recommendation.recommended_dishes && recommendation.recommended_dishes.length > 0" class="card-footer">
         <div class="recipe-links">
           <h6 class="mb-2 text-primary">추천 메뉴 레시피</h6>
           <div class="d-flex flex-wrap">
-            <div v-for="(food, index) in parsedFoodItems" :key="index" class="me-3 mb-2">
-              <a :href="getRecipeLink(food)" target="_blank" class="btn btn-sm btn-outline-success">
-                <i class="bi bi-book me-1"></i>{{ food }} 레시피
+            <div v-for="(foodName, index) in parsedFoodItems" :key="index" class="me-3 mb-2">
+              <a :href="getRecipeLink(foodName)" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-book me-1"></i>{{ foodName }} 레시피
               </a>
             </div>
           </div>
@@ -111,15 +111,13 @@ const totalNutrients = reactive({
 const componentKey = ref(0) // 컴포넌트 강제 리렌더링용 키
 const todayDietNutrients = ref(null) // TodayDiet 컴포넌트로부터 받은 영양소 정보
 
-// 추천된 음식을 개별 항목으로 파싱
+// 추천된 음식을 개별 항목으로 파싱 (레시피 링크용)
 const parsedFoodItems = computed(() => {
-  if (!recommendation.value || !recommendation.value.recommendation) return []
-
-  // 쉼표로 구분된 음식 항목들을 배열로 변환
-  return recommendation.value.recommendation
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
+  if (!recommendation.value || !recommendation.value.recommended_dishes) return []
+  // 서버에서 받은 recommended_dishes 배열의 각 항목에서 name을 추출
+  return recommendation.value.recommended_dishes
+    .map(item => item.name)
+    .filter(name => name && name.length > 0)
     .slice(0, 3) // 최대 3개 항목으로 제한
 })
 
@@ -257,6 +255,7 @@ const getDinnerRecommendation = async () => {
   try {
     isLoading.value = true
     recommendationError.value = null
+    recommendation.value = null // 이전 추천 결과 초기화
 
     // 사용자 정보와 영양소 정보 업데이트
     console.log('추천 요청 전 데이터 새로고침 시작...')
@@ -293,30 +292,9 @@ const getDinnerRecommendation = async () => {
         fat: nutrientsToUse.fat || 0,
         sugar: nutrientsToUse.sugar || 0,
       },
-      mealCount: userRecords.value.length || 0,
-      dishIds: dishIds.value || [],
     }
 
     console.log('추천 요청 데이터:', JSON.stringify(requestData, null, 2))
-
-    try {
-      // 백엔드 API를 통한 요청 시도
-      console.log('백엔드 API를 통한 추천 요청 시도...')
-      const backendResponse = await axios.post('/api/recommendation/dinner')
-      console.log('백엔드 API 응답:', backendResponse.data)
-
-      if (backendResponse.data && backendResponse.data.success && backendResponse.data.data) {
-        recommendation.value = {
-          recommendation: backendResponse.data.data.recommendation,
-          reason: backendResponse.data.data.reason,
-        }
-        return
-      } else {
-        console.warn('백엔드 API 응답이 유효하지 않아 Python 서버 직접 호출 시도')
-      }
-    } catch (backendError) {
-      console.error('백엔드 API 호출 실패, Python 서버 직접 호출 시도:', backendError)
-    }
 
     // Python 서버로 직접 요청
     console.log('Python 서버 직접 호출 시도...')
@@ -324,33 +302,40 @@ const getDinnerRecommendation = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: false, // 자격 증명 포함하지 않음
+      withCredentials: false, 
     })
 
     console.log('Python 서버 응답:', pythonResponse.data)
 
     // 응답 처리
-    if (pythonResponse.data) {
+    if (pythonResponse.data && pythonResponse.data.recommendations) {
+      const recommendedDishes = pythonResponse.data.recommendations; // 서버의 recommendations는 배열
+      const reason = pythonResponse.data.reason || '추천 이유를 가져오지 못했습니다.';
+      
+      // 화면 표시용 추천 메뉴 텍스트 (쉼표로 구분)
+      const recommendationText = recommendedDishes.map(item => item.name).join(', ');
+
       recommendation.value = {
-        recommendation: pythonResponse.data.recommendation,
-        reason: pythonResponse.data.reason,
-      }
+        recommendation_text: recommendationText, // 화면 표시용 텍스트
+        recommended_dishes: recommendedDishes,   // 원본 음식 객체 배열 (id, name 포함)
+        reason: reason,
+        // 필요하다면 nutrition_targets, user_profile 등도 여기에 저장 가능
+        nutrition_targets: pythonResponse.data.nutrition_targets,
+        user_profile: pythonResponse.data.user_profile,
+        timestamp: pythonResponse.data.timestamp
+      };
+      console.log("업데이트된 recommendation 객체: ", recommendation.value);
     } else {
-      // 응답이 없는 경우 기본 메뉴 제공
-      recommendation.value = {
-        recommendation: '볶음밥, 김치, 미역국',
-        reason:
-          '오늘 섭취한 영양소를 분석한 결과, 균형 잡힌 한식 메뉴를 추천합니다. 볶음밥으로 적절한 탄수화물과 단백질을, 김치와 미역국으로 충분한 비타민과 미네랄을 섭취하세요.',
-      }
+      console.warn("Python 서버로부터 유효한 추천 데이터를 받지 못했습니다.", pythonResponse.data);
+      recommendationError.value = '추천 메뉴를 받아오지 못했습니다. 서버 응답을 확인해주세요.';
+      // 기본 메뉴 제공 로직 (선택적)
+      // recommendation.value = { ... 기본 추천 ... }
     }
   } catch (error) {
-    console.error('메뉴 추천 요청 실패:', error)
-    // 오류 시에도 기본 메뉴 제공
-    recommendation.value = {
-      recommendation: '볶음밥, 김치, 미역국',
-      reason:
-        '서버 연결에 문제가 있어 기본 추천 메뉴를 제공합니다. 균형 잡힌 한식 메뉴로 건강한 저녁 식사를 즐기세요.',
-    }
+    console.error('메뉴 추천 요청 실패:', error);
+    recommendationError.value = '메뉴 추천 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    // 오류 시 기본 메뉴 제공 로직 (선택적)
+    // recommendation.value = { ... 기본 추천 ... }
   } finally {
     isLoading.value = false
   }
