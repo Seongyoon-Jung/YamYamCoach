@@ -6,7 +6,6 @@ import pprint
 from flask_cors import CORS
 import pandas as pd
 import os
-import random # 추가
 import numpy as np # 추가
 import pymysql # DB동기화를 위해 추가
 import warnings # DB동기화를 위해 추가
@@ -55,11 +54,11 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pandas")
 CATEGORY_COMBOS = [
     ["국 및 탕류", "생채·무침류"], ["국 및 탕류", "볶음류"], ["국 및 탕류", "나물·숙채류"],
     ["국 및 탕류", "조림류"], ["국 및 탕류", "구이류"], ["국 및 탕류", "튀김류"],
-    ["국 및 탕류", "전·적 및 부침류"], ["국 및 탕류", "장류, 양념류"], ["국 및 탕류", "장아찌·절임류"],
+    ["국 및 탕류", "전·적 및 부침류"], ["국 및 탕류", "장아찌·절임류"],
     ["국 및 탕류", "젓갈류"],
     ["찌개 및 전골류", "생채·무침류"], ["찌개 및 전골류", "볶음류"], ["찌개 및 전골류", "나물·숙채류"],
     ["찌개 및 전골류", "조림류"], ["찌개 및 전골류", "구이류"], ["찌개 및 전골류", "튀김류"],
-    ["찌개 및 전골류", "전·적 및 부침류"], ["찌개 및 전골류", "장류, 양념류"], ["찌개 및 전골류", "장아찌·절임류"],
+    ["찌개 및 전골류", "전·적 및 부침류"], ["찌개 및 전골류", "장아찌·절임류"],
     ["찌개 및 전골류", "젓갈류"],
 ]
 SINGLE_CATEGORIES = ["면 및 만두류", "죽 및 스프류", "밥류"]
@@ -252,82 +251,78 @@ def filter_foods_by_conditions(foods_df, category, disease_tags, evening_targets
     return candidate_foods.sort_values(by='score', ascending=False).head(num_recommendations)
 
 def recommend_dinner_menu(user_info, lunch_nutrients, foods_df, daily_target_macros, evening_target_macros):
-    # 이 함수의 로깅(print문)은 logger.info() 등으로 바꾸는 것이 서버 환경에 더 적합하나, 우선은 recSys_demo.py의 로직을 그대로 유지합니다.
-    # 서버 환경에서는 print() 출력이 표준 출력으로 가며, 이는 Flask 로거와 별개로 동작할 수 있습니다.
-    
-    # bmi = calculate_bmi(user_info['weight'], user_info['height']) # API 핸들러에서 이미 계산 및 로깅됨
-    # print(f"사용자 BMI: {bmi}") # API 핸들러에서 이미 로깅됨
-    # if bmi > 25: user_info['diseaseTags'] = user_info.get('diseaseTags','') + ",obesity" # API 핸들러에서 이미 처리
-
+    """저녁 메뉴 추천 메인 로직 - 모든 조합을 평가해 상위 3개 추천 (무작위성 제거)"""
+    bmi = calculate_bmi(user_info['weight'], user_info['height'])
+    if bmi > 25:
+        user_info['diseaseTags'] = user_info.get('diseaseTags','') + ",obesity"
     disease_tags_str = user_info.get('diseaseTags', "")
     parsed_disease_tags = [tag.strip().lower() for tag in disease_tags_str.split(',') if tag.strip()]
+    eer_result = calculate_personalized_eer(user_info)
+    daily_eer = eer_result['personalized_eer']
+    daily_target_macros = calculate_macro_targets(daily_eer, disease_tags_str)
+    evening_target_macros = calculate_evening_targets(daily_target_macros, lunch_nutrients)
 
-    # 일일 목표 칼로리 및 영양소 계산은 API 핸들러에서 이미 수행했으므로, 전달받은 daily_target_macros를 사용합니다.
-    # eer_result = calculate_personalized_eer(user_info) # API 핸들러에서 호출
-    # daily_eer = eer_result['personalized_eer'] # API 핸들러에서 계산
-    # daily_target_macros = calculate_macro_targets(daily_eer, disease_tags_str) # API 핸들러에서 호출
-
-    # 점심 섭취량 반영하여 저녁 목표 영양소 계산은 API 핸들러에서 이미 수행 후 evening_target_macros로 전달됨.
+    candidate_results = []
+    # 1. 단일 카테고리 (순서대로)
+    for single_cat in SINGLE_CATEGORIES:
+        recommended_food = filter_foods_by_conditions(foods_df, single_cat, parsed_disease_tags, evening_target_macros, 10)
+        if not recommended_food.empty:
+            food_item = recommended_food.sort_values(by='score', ascending=False).iloc[0]
+            score = food_item['score']
+            candidate_results.append({
+                'combo': [single_cat],
+                'foods': [{'name': food_item['food_name'], 'id': food_item['food_id']}],
+                'score': score,
+                'reason': f"{single_cat}에서 {food_item['food_name']} (점수: {score:.2f})"
+            })
+    # 2. 조합 카테고리 (순서대로)
+    for combo in CATEGORY_COMBOS:
+        temp_foods = []
+        temp_score = 0
+        temp_reason = []
+        for category_in_combo in combo:
+            recommended_food = filter_foods_by_conditions(foods_df, category_in_combo, parsed_disease_tags, evening_target_macros, 10)
+            if not recommended_food.empty:
+                food_item = recommended_food.sort_values(by='score', ascending=False).iloc[0]
+                temp_foods.append({'name': food_item['food_name'], 'id': food_item['food_id']})
+                temp_score += food_item['score']
+                temp_reason.append(f"{category_in_combo}의 {food_item['food_name']} (점수: {food_item['score']:.2f})")
+        if temp_foods:
+            candidate_results.append({
+                'combo': combo,
+                'foods': temp_foods,
+                'score': temp_score,
+                'reason': ' / '.join(temp_reason)
+            })
+    candidate_results.sort(key=lambda x: x['score'], reverse=True)
+    # 중복 없는 조합 3개만 rank=1,2,3으로 반환 (조합 단위로 중복 음식 체크)
+    top_results = []
+    used_ids = set()
+    for result in candidate_results:
+        # 조합 내 음식이 상위 rank에서 이미 추천된 음식과 겹치면 이 조합은 스킵
+        food_ids = set(food['id'] for food in result['foods'])
+        if used_ids & food_ids:
+            continue
+        top_results.append(result)
+        used_ids.update(food_ids)
+        if len(top_results) >= 3:
+            break
 
     recommendations = []
-    recommendation_reasons = []
-    
-    if random.random() < 0.3 and SINGLE_CATEGORIES:
-        chosen_category = random.choice(SINGLE_CATEGORIES)
-        recommended_food_df = filter_foods_by_conditions(foods_df, chosen_category, parsed_disease_tags, evening_target_macros, 1)
-        if not recommended_food_df.empty:
-            food_item = recommended_food_df.iloc[0]
-            recommendations.append({'name': food_item['food_name'], 'id': food_item['food_id']})
-            reasons = [f"{chosen_category}에서 {food_item['food_name']}"]
-            if 'diabetes' in parsed_disease_tags and food_item['sugar'] < (foods_df['sugar'].mean() / 2): reasons.append("당뇨 관리를 위해 당 함량이 낮은 편입니다.")
-            if 'hypertension' in parsed_disease_tags and food_item['sodium'] < (foods_df['sodium'].mean() / 2): reasons.append("고혈압 관리를 위해 나트륨 함량이 낮은 편입니다.")
-            protein_needed = (evening_target_macros.get('protein',{}).get('min_g',0) + evening_target_macros.get('protein',{}).get('max_g',0)) / 2
-            if protein_needed > 10 and food_item['protein'] > foods_df['protein'].quantile(0.7): reasons.append("저녁에 필요한 단백질 보충에 도움됩니다.")
-            recommendation_reasons.append(" ".join(reasons))
-    else:
-        if CATEGORY_COMBOS:
-            chosen_combo = random.choice(CATEGORY_COMBOS)
-            temp_recs = []
-            temp_reasons_details = []
-            for category_in_combo in chosen_combo:
-                recommended_food_df = filter_foods_by_conditions(foods_df, category_in_combo, parsed_disease_tags, evening_target_macros, 1)
-                if not recommended_food_df.empty:
-                    food_item = recommended_food_df.iloc[0]
-                    temp_recs.append({'name': food_item['food_name'], 'id': food_item['food_id']})
-                    reason_detail = f"{category_in_combo}의 {food_item['food_name']}(은)는"
-                    details = []
-                    if 'diabetes' in parsed_disease_tags and food_item['sugar'] < (foods_df['sugar'].mean() * 0.7): details.append("당 함량이 비교적 낮고")
-                    if 'hypertension' in parsed_disease_tags and food_item['sodium'] < (foods_df['sodium'].mean() * 0.7): details.append("나트륨 함량이 비교적 낮으며")
-                    protein_needed = (evening_target_macros.get('protein',{}).get('min_g',0) + evening_target_macros.get('protein',{}).get('max_g',0)) / 2
-                    if protein_needed > 10 and food_item['protein'] > foods_df['protein'].quantile(0.6): details.append("단백질 보충에 좋습니다.")
-                    
-                    if not details: temp_reasons_details.append(f"{reason_detail} 균형잡힌 선택입니다.")
-                    else: temp_reasons_details.append(f"{reason_detail} {' '.join(details).strip()}")
-            
-            if temp_recs:
-                recommendations.extend(temp_recs)
-                recommendation_reasons.append(" ".join(temp_reasons_details))
-
+    reasons = []
+    for result in top_results:
+        recommendations.extend(result['foods'])
+        reasons.append(result['reason'])
     if not recommendations:
-        # logger.info("카테고리 내 추천 실패. 전체 음식 데이터에서 확장 검색 시도...") # API 핸들러 로깅으로 대체 가능
-        best_overall_food_df = filter_foods_by_conditions(foods_df, None, parsed_disease_tags, evening_target_macros, 1)
-        if not best_overall_food_df.empty:
-            food_item = best_overall_food_df.iloc[0]
+        best_overall_food = filter_foods_by_conditions(foods_df, None, parsed_disease_tags, evening_target_macros, 10)
+        if not best_overall_food.empty:
+            food_item = best_overall_food.sort_values(by='score', ascending=False).iloc[0]
             recommendations.append({'name': food_item['food_name'], 'id': food_item['food_id']})
-            reason_detail = f"카테고리 조건에 맞는 음식을 찾지 못해 전체 음식 중 사용자님께 가장 적합할 것으로 판단되는 '{food_item['food_name']}'(을)를 추천합니다."
-            details = []
-            if 'diabetes' in parsed_disease_tags and food_item['sugar'] < (foods_df['sugar'].mean() * 0.8): details.append("당 함량이 비교적 낮고")
-            if 'hypertension' in parsed_disease_tags and food_item['sodium'] < (foods_df['sodium'].mean() * 0.8): details.append("나트륨 함량이 비교적 낮으며")
-            protein_needed = (evening_target_macros.get('protein',{}).get('min_g',0) + evening_target_macros.get('protein',{}).get('max_g',0)) / 2
-            if protein_needed > 5 and food_item['protein'] > foods_df['protein'].quantile(0.5): details.append("단백질 보충에 도움될 수 있습니다.")
-            
-            if not details: recommendation_reasons.append(f"{reason_detail} 전반적인 영양 균형을 고려했습니다.")
-            else: recommendation_reasons.append(f"{reason_detail} {' '.join(details).strip()}")
+            reasons.append(f"전체 음식 중 '{food_item['food_name']}'(점수: {food_item['score']:.2f})를 추천합니다.")
         else:
             recommendations.append({'name': "정보 부족으로 추천 불가", 'id': "N/A"})
-            recommendation_reasons.append("모든 조건에서 적합한 음식을 찾지 못했습니다. 입력값을 확인하거나 관리자에게 문의하세요.")
-        
-    return {"recommended_dishes": recommendations, "reason": ". ".join(recommendation_reasons) + "."}
+            reasons.append("모든 조건에서 적합한 음식을 찾지 못했습니다. 입력값을 확인하거나 관리자에게 문의하세요.")
+    return {"recommended_dishes": recommendations, "reason": " | ".join(reasons)}
 
 # --- DB 초기화 및 데이터 적재 함수 (insertFoodDB.py 로직 기반) ---
 def initialize_database_from_csv():
@@ -579,9 +574,41 @@ def recommend_dinner_api():
         logger.info(f"추천 결과: {dinner_recommendation_result}")
 
         # API 응답 구성
+        # rank 부여: 각 조합별로 1, 2, 3
+        recommendations = dinner_recommendation_result.get("recommended_dishes", [])
+        reasons = dinner_recommendation_result.get("reason", "추천 이유를 생성하지 못했습니다.")
+        # 3개 조합(최대) 기준으로 rank 부여
+        ranked_recommendations = []
+        rank = 1
+        idx = 0
+        # recommendations는 조합별로 foods가 extend되어 있으므로, 2개씩(혹은 1개)씩 rank를 부여
+        # reasons는 ' | '로 구분된 문자열이므로 split
+        reason_list = reasons.split(' | ') if isinstance(reasons, str) else reasons
+        # foods_per_rank: 각 rank별 음식 개수(조합별 음식 수)
+        foods_per_rank = []
+        temp_idx = 0
+        for reason in reason_list:
+            # 각 조합별 음식 개수 추정 (rank별로 몇 개씩 묶을지)
+            # 실제로는 조합별 foods 수를 알 수 있어야 함. 여기서는 2개씩(조합) 또는 1개(단일)로 가정
+            # recommendations에서 중복이 있을 수 있으니, 2개씩 묶고 남은 건 1개로 처리
+            if temp_idx + 2 <= len(recommendations):
+                foods_per_rank.append(2)
+                temp_idx += 2
+            else:
+                foods_per_rank.append(1)
+                temp_idx += 1
+        # rank 부여
+        idx = 0
+        for r, cnt in enumerate(foods_per_rank):
+            for _ in range(cnt):
+                if idx < len(recommendations):
+                    rec = dict(recommendations[idx])
+                    rec['rank'] = r + 1
+                    ranked_recommendations.append(rec)
+                    idx += 1
         response = {
-            "recommendations": dinner_recommendation_result.get("recommended_dishes", []),
-            "reason": dinner_recommendation_result.get("reason", "추천 이유를 생성하지 못했습니다."),
+            "recommendations": ranked_recommendations,
+            "reasons": reasons,
             "user_profile": { # 사용자 관련 정보 그룹화
                 "bmi": bmi,
                 "disease_tags_updated": user_info.get('diseaseTags', '')

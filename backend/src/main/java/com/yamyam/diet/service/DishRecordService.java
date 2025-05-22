@@ -1,6 +1,4 @@
 package com.yamyam.diet.service;
-
-import com.yamyam.dto.request.DishRecordRequest;
 import com.yamyam.diet.entity.CourseSchedule;
 import com.yamyam.diet.entity.Dish;
 import com.yamyam.diet.entity.DishRecord;
@@ -17,14 +15,12 @@ import org.springframework.transaction.annotation.Propagation;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class DishRecordService {
