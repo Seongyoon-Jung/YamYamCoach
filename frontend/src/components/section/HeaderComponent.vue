@@ -23,7 +23,10 @@
             class="nav-item d-flex align-items-center ms-3"
             style="height: 1.5rem; overflow: hidden; width: 500px"
           >
-            <router-link to="/news" class="text-decoration-none badge bg-light text-primary me-2"
+            <router-link
+              v-if="isLoggedIn"
+              to="/news"
+              class="text-decoration-none badge bg-light text-primary me-2"
               >나의 맞춤 뉴스</router-link
             >
             <div style="height: 1.5rem; overflow: hidden; position: relative">

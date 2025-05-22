@@ -29,7 +29,7 @@ public class NewsEntity {
     @Column(name="tags", nullable = false)
     private String tags;
     
-    @Column(name = "news_url",nullable = false)
+    @Column(name = "news_url",nullable = false, unique=true)
     private String newsUrl;
 
     @Column(name = "image_url",nullable = false)
