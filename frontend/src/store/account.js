@@ -7,19 +7,22 @@ export const userAccountStore = defineStore('account', {
     username: '',
     personaId: false,
     role: '',
+    profileUrl: '',
   }),
   actions: {
-    setAccount({ userId, username, personaId, role }) {
+    setAccount({ userId, username, personaId, role, profileUrl }) {
       this.userId = userId
       this.username = username
       this.personaId = personaId
       this.role = role
+      this.profileUrl = profileUrl
     },
     clearAccount() {
       this.userId = null
       this.username = ''
       this.personaId = false
       this.role = ''
+      this.profileUrl = ''
     },
   },
 })

@@ -6,6 +6,7 @@ public class CommentResponse {
 //	board_id, user_id, content, created_at, updated_at
 	private int commentId;
 	private String username;
+	private String profileUrl;
 	private String content;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
@@ -13,10 +14,11 @@ public class CommentResponse {
 	public CommentResponse() {
 	}
 
-	public CommentResponse(int commentId, String username, String content, LocalDateTime createdAt,
+	public CommentResponse(int commentId, String username, String profileUrl, String content, LocalDateTime createdAt,
 			LocalDateTime updatedAt) {
 		this.commentId = commentId;
 		this.username = username;
+		this.profileUrl = profileUrl;
 		this.content = content;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
@@ -36,6 +38,14 @@ public class CommentResponse {
 
 	public void setUsername(String userName) {
 		this.username = userName;
+	}
+	
+	public String getProfileUrl() {
+		return profileUrl;
+	}
+
+	public void setProfileUrl(String profileUrl) {
+		this.profileUrl = profileUrl;
 	}
 
 	public String getContent() {

@@ -7,18 +7,21 @@ public class CurrentUserResponse {
 	private String username;
 	private Integer personaId;
 	private String role;
+	private String profileUrl;
 	
 	public CurrentUserResponse() {
 		// TODO Auto-generated constructor stub
 	}
-	
-	public CurrentUserResponse(int userId, String username, Integer personaId, String role) {
+
+	public CurrentUserResponse(int userId, String username, Integer personaId, String role, String profileUrl) {
+		super();
 		this.userId = userId;
 		this.username = username;
 		this.personaId = personaId;
 		this.role = role;
+		this.profileUrl = profileUrl;
 	}
-
+	
 	public int getUserId() {
 		return userId;
 	}
@@ -51,9 +54,13 @@ public class CurrentUserResponse {
 		this.role = role;
 	}
 
-	@Override
-	public String toString() {
-		return "CurrentUserResponse [userId=" + userId + ", username=" + username + ", personaId=" + personaId
-				+ ", role=" + role + "]";
+	public String getProfileUrl() {
+		return profileUrl;
 	}
+
+	public void setProfileUrl(String profileUrl) {
+		this.profileUrl = profileUrl;
+	}
+
+	
 }

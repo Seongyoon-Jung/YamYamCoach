@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class BoardResponse {
 	private int boardId;
 	private String username;
+	private String profileUrl;
 	private String title;
 	private String content;
 	private LocalDateTime createdAt;
@@ -16,10 +17,13 @@ public class BoardResponse {
 	public BoardResponse() {
 	}
 
-	public BoardResponse(int boardId, String username, String title, String content, LocalDateTime createdAt,
-			LocalDateTime updatedAt, int viewCount, int likeCount, String imageUrl) {
+	
+
+	public BoardResponse(int boardId, String username, String profileUrl, String title, String content,
+			LocalDateTime createdAt, LocalDateTime updatedAt, int viewCount, int likeCount, String imageUrl) {
 		this.boardId = boardId;
 		this.username = username;
+		this.profileUrl = profileUrl;
 		this.title = title;
 		this.content = content;
 		this.createdAt = createdAt;
@@ -28,6 +32,8 @@ public class BoardResponse {
 		this.likeCount = likeCount;
 		this.imageUrl = imageUrl;
 	}
+
+
 
 	public int getBoardId() {
 		return boardId;
@@ -44,6 +50,16 @@ public class BoardResponse {
 	public void setUsername(String userName) {
 		this.username = userName;
 	}
+	
+	public String getProfileUrl() {
+		return profileUrl;
+	}
+
+	public void setProfileUrl(String profileUrl) {
+		this.profileUrl = profileUrl;
+	}
+
+
 
 	public String getTitle() {
 		return title;

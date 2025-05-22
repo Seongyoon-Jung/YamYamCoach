@@ -34,6 +34,7 @@ async function bootstrap() {
         username: '',
         personaId: null,
         role: '',
+        profileUrl: '',
       })
     } else {
       accountStore.setAccount({
@@ -41,6 +42,7 @@ async function bootstrap() {
         username: res.data.username,
         personaId: res.data.personaId,
         role: res.data.role,
+        profileUrl: res.data.profileUrl,
       })
     }
   } catch (e) {}

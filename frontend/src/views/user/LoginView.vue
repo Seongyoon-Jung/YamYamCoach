@@ -110,6 +110,7 @@ const login = async () => {
       username: res.data.username,
       personaId: res.data.personaId,
       role: res.data.role,
+      profileUrl: res.data.profileUrl,
     })
 
     if (res.data.role === 'ROLE_ADMIN') {
