@@ -14,13 +14,16 @@
           <div v-for="course in courses" :key="course.type" class="col-6 text-center">
             <div v-if="course.dishes && course.dishes.length > 0">
               <img
-                :src="getDishImage(course.dishes[0].name)"
-                class="rounded mb-2"
-                style="width: 120px; height: 80px; object-fit: cover"
-                :alt="course.dishes[0].name"
+                :src="course.img_url || getDishImage(course.dishes[0].name)"
+                class="rounded mb-2 today-diet-img"
+                :alt="course.course_name"
+                style="cursor: pointer"
+                @click="openCourseTab(course.type)"
               />
             </div>
-            <div class="fw-bold">{{ course.course_name }}</div>
+            <div class="fw-bold" style="cursor: pointer" @click="openCourseTab(course.type)">
+              {{ course.course_name }}
+            </div>
           </div>
         </div>
         <div v-if="courses && courses.length === 0" class="text-muted mt-3">
@@ -864,9 +867,45 @@ const getScheduleIdForCourse = (courseType) => {
   )
   return courseType === 'A' ? baseId : baseId + 1 // 예시: A코스는 홀수, B코스는 짝수
 }
+
+// 코스 이미지/텍스트 클릭 시 해당 탭으로 이동하며 모달 오픈
+const openCourseTab = (courseType) => {
+  selectedCourse.value = courseType
+  showModal.value = true
+}
 </script>
 
 <style scoped>
+.today-diet-component .card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.today-diet-component .row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.today-diet-component .col-6.text-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.today-diet-img {
+  width: 120px;
+  height: 80px;
+  object-fit: contain;
+  background: #f8f8f8;
+  display: block;
+}
+
 .dish-item {
   width: 120px;
   text-align: center;

@@ -98,14 +98,14 @@ INSERT INTO dish (
 
 -- 오늘 및 내일의 코스 스케줄 설정
 -- 오늘의 코스 스케줄
-INSERT INTO course_schedule (schedule_date, course_type, course_name) VALUES
-(CURRENT_DATE(), 'A', '비빔밥&도토리묵무침'),
-(CURRENT_DATE(), 'B', '해물볶음우동&옥수수빠스');
+INSERT INTO course_schedule (schedule_date, course_type, course_name, img_url) VALUES
+(CURRENT_DATE(), 'A', '비빔밥&도토리묵무침', 'https://ifh.cc/g/dFf9jl.jpg'),
+(CURRENT_DATE(), 'B', '해물볶음우동&옥수수빠스', 'https://ifh.cc/g/r8oMLo.jpg');
 
 -- 내일의 코스 스케줄
-INSERT INTO course_schedule (schedule_date, course_type, course_name) VALUES
-(DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY), 'A', '닭매운찜&부추전'),
-(DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY), 'B', '양지쌀국수&미니파인애플');
+INSERT INTO course_schedule (schedule_date, course_type, course_name, img_url) VALUES
+(DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY), 'A', '닭매운찜&부추전', 'https://ifh.cc/g/J3c3xR.jpg'),
+(DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY), 'B', '양지쌀국수&미니파인애플', 'https://ifh.cc/g/ndv8aG.jpg');
 
 -- schedule_dish 테이블에 데이터 삽입
 -- 오늘 A 코스 메뉴 (schedule_id = 1)

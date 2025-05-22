@@ -37,6 +37,7 @@ public class CourseService {
             course.put("type", schedule.getCourseType());
             course.put("course_name", schedule.getCourseName());
             course.put("schedule_id", schedule.getScheduleId());
+            course.put("img_url", schedule.getImgUrl());
             
             List<Map<String, Object>> dishes = new ArrayList<>();
             schedule.getScheduleDishes().forEach(scheduleDish -> {

@@ -24,6 +24,9 @@ public class CourseSchedule {
     @Column(nullable = false, length = 100)
     private String courseName;
 
+    @Column(name = "img_url")
+    private String imgUrl;
+
     @OneToMany(mappedBy = "courseSchedule", cascade = CascadeType.ALL)
     private List<ScheduleDish> scheduleDishes;
 
@@ -54,6 +57,10 @@ public class CourseSchedule {
         return courseName;
     }
 
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
     public List<ScheduleDish> getScheduleDishes() {
         return scheduleDishes;
     }
@@ -73,6 +80,10 @@ public class CourseSchedule {
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
     }
 
     public void setScheduleDishes(List<ScheduleDish> scheduleDishes) {
