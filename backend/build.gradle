@@ -13,14 +13,30 @@ java {
 	}
 }
 
+// 인코딩 설정 추가
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// Gradle 실행 시 콘솔 인코딩 설정
+tasks.withType(JavaExec) {
+    systemProperty "file.encoding", "UTF-8"
+}
+
 repositories {
 	mavenCentral()
 }
 
 dependencies {
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    implementation 'org.apache.httpcomponents.core5:httpcore5'
+	implementation 'org.jsoup:jsoup:1.17.2' //크롤링 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261' // AWS S3 의존성 추가
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

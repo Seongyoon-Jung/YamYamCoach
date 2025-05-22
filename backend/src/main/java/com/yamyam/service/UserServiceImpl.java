@@ -75,7 +75,16 @@ public class UserServiceImpl implements UserService{
 	    
 	    UserEntity userEntity = userRepository.findByEmail(email);
 
-	    CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), userEntity.isSurveyed());
+	    Integer personaId;
+        if(userEntity.getPersona() == null) {
+        	personaId = null;
+        }
+        else{
+        	personaId = userEntity.getPersona().getPersonaId();
+        }
+        
+        
+        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), personaId, userEntity.getRole(), userEntity.getProfileUrl());
 	    
         return currentUserResponse;
 	}

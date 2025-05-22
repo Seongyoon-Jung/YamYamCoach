@@ -9,6 +9,32 @@ const routes = [
     meta: { title: '홈' },
   },
   {
+    path: '/admin',
+    name: 'AdminView',
+    component: () => import('../views/admin/AdminView.vue'),
+    meta: { title: '관리자페이지', requiresAuth: true, requiresRole: true },
+    children: [
+      {
+        path: '',
+        component: () => import('../components/admin/AdminDashboard.vue'),
+      },
+      {
+        path: 'users',
+        component: () => import('../components/admin/AdminUsers.vue'),
+      },
+      {
+        path: 'diet-upload',
+        component: () => import('../components/admin/AdminDietUpload.vue'),
+      },
+    ],
+  },
+  {
+    path: '/news',
+    name: 'NewsView',
+    component: () => import('../views/news/NewsView.vue'),
+    meta: { title: '내 맞춤 뉴스', requiresAuth: true },
+  },
+  {
     path: '/my',
     name: 'MyView',
     component: () => import('../views/user/MyView.vue'),
@@ -27,10 +53,30 @@ const routes = [
     meta: { title: '커뮤니티' },
   },
   {
+    path: '/board/create',
+    name: 'BoardCreateView',
+    component: () => import('../views/board/BoardCreateView.vue'),
+    meta: { title: '작성', requiresAuth: true },
+  },
+  {
+    path: '/board/:id',
+    name: 'BoardDetailView',
+    component: () => import('../views/board/BoardDetailView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  }, // 상세 페이지 라우트
+  {
+    path: '/board/modify/:id',
+    name: 'BoardModifyView',
+    component: () => import('../views/board/BoardModifyView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/survey',
     name: 'SurveyView',
     component: () => import('../views/user/SurveyView.vue'),
-    meta: { title: '설문조사' },
+    meta: { title: '설문조사', requiresAuth: true },
   },
   {
     path: '/login',
@@ -75,10 +121,18 @@ router.beforeEach((to, from, next) => {
   const accountStore = userAccountStore()
 
   if (to.meta.requiresAuth) {
-    if (accountStore.username) {
-      return next()
+    if (to.meta.requiresRole) {
+      if (accountStore.role === 'ROLE_ADMIN') {
+        return next()
+      } else {
+        return next({ name: 'notFound' })
+      }
     } else {
-      return next({ name: 'LoginView' })
+      if (accountStore.username) {
+        return next()
+      } else {
+        return next({ name: 'LoginView' })
+      }
     }
   }
 

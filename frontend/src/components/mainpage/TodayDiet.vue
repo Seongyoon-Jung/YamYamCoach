@@ -1,11 +1,13 @@
 <template>
-  <div class="col-md-6 mb-4">
+  <div class="today-diet-component h-100">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>오늘의 식단</span>
-        <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
-          {{ modalButtonText }}
-        </button>
+        <div>
+          <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
+            {{ modalButtonText }}
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <div class="row">
@@ -32,9 +34,7 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">
-              {{ isEditMode ? '식사기록 수정하기' : '식사기록하기' }} - {{ getCurrentCourseName }}
-            </h5>
+            <h5 class="modal-title">식사 기록 - {{ getCurrentCourseName }}</h5>
             <button type="button" class="btn-close" @click="showModal = false"></button>
           </div>
           <div class="modal-body">
@@ -67,8 +67,8 @@
                     <div
                       v-for="course in courses"
                       :key="course.type"
-                      class="tab-pane"
-                      :class="{ active: selectedCourse === course.type }"
+                      class="tab-pane fade"
+                      :class="{ 'show active': selectedCourse === course.type }"
                     >
                       <div v-if="course.dishes && course.dishes.length > 0">
                         <div class="p-2 border-bottom text-end">
@@ -86,9 +86,8 @@
                                 class="form-check-input"
                                 type="checkbox"
                                 :id="`dish-${dish.id}`"
-                                v-model="selectedDishes[dish.id]"
-                                @change="_chartRenderKey++"
-                                :disabled="isOtherCourseSelected(course.type)"
+                                :checked="selectedDishes[dish.id.toString()]"
+                                @click="toggleDishSelection(dish.id.toString())"
                               />
                               <label class="form-check-label" :for="`dish-${dish.id}`">
                                 {{ dish.name }}
@@ -250,6 +249,29 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- 디버깅 정보 (개발 모드에서만 표시) -->
+                    <div v-if="isDebugMode" class="mt-3 p-2 bg-light border border-warning rounded">
+                      <p class="small mb-1 text-warning"><strong>디버깅 정보 (개발용):</strong></p>
+                      <p class="small mb-0">
+                        선택된 음식:
+                        {{
+                          Object.keys(selectedDishes).filter((key) => selectedDishes[key]).length
+                        }}개
+                      </p>
+                      <p class="small mb-0">음식별 영양소 데이터 샘플:</p>
+                      <ul class="small">
+                        <li
+                          v-for="(dish, index) in selectedDishesNutrients"
+                          :key="index"
+                          v-if="index < 1"
+                        >
+                          {{ dish.name }}: {{ dish.calories }}kcal, 단백질 {{ dish.protein }}g,
+                          탄수화물 {{ dish.carbohydrate }}g, 지방 {{ dish.fat }}g, 당
+                          {{ dish.sugar }}g
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
                   <!-- 영양소 범례 -->
@@ -282,10 +304,11 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showModal = false">취소</button>
-            <button type="button" class="btn btn-primary" @click="saveMealRecord">
-              {{ isEditMode ? '수정하기' : '저장하기' }}
+            <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
+            <button v-if="!isEditMode" type="button" class="btn btn-primary" @click="handleSave">
+              저장
             </button>
+            <button v-else type="button" class="btn btn-primary" @click="handleUpdate">수정</button>
           </div>
         </div>
       </div>
@@ -296,7 +319,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import axios from '@/plugins/axios'
+import eventBus from '@/utils/eventBus'
 
+// 개발 환경에서는 true, 운영 환경에서는 false로 설정
+const isDebugMode = ref(false) // 디버깅 모드 설정 (개발 중에만 true로 변경)
 const showModal = ref(false)
 const selectedCourse = ref('A')
 const courses = ref([])
@@ -307,6 +333,8 @@ const totalCalories = ref(750)
 const _chartRenderKey = ref(0)
 const userRecords = ref([])
 const isEditMode = ref(false)
+const isSavingManually = ref(false)
+const autoSaveTimeout = ref(null)
 
 const colors = [
   'rgba(255, 99, 132, 0.7)',
@@ -328,16 +356,44 @@ const currentCourseDishes = computed(() => {
 
 const selectedDishesNutrients = computed(() => {
   const result = []
+  const processedDishIds = new Set() // 이미 처리한 음식 ID를 추적하기 위한 Set
+
   courses.value.forEach((course) => {
+    if (!course.dishes) return
+
     course.dishes.forEach((dish) => {
-      if (selectedDishes[dish.id]) {
+      if (!dish || !dish.id) return
+
+      const dishId = dish.id.toString()
+
+      // 이미 처리된 음식 ID는 건너뜁니다
+      if (processedDishIds.has(dishId)) {
+        console.log(
+          `음식 [${dish.name}](ID: ${dishId})은 이미 처리되었습니다. 중복 계산을 방지합니다.`,
+        )
+        return
+      }
+
+      if (selectedDishes[dishId]) {
+        // 이 음식 ID를 처리된 것으로 표시
+        processedDishIds.add(dishId)
+
+        // 콘솔에 개별 음식 영양소 정보 출력
+        console.log(`음식 [${dish.name}]의 영양소:`, {
+          calorie: dish.calorie,
+          protein: dish.protein,
+          carbohydrate: dish.carbohydrate,
+          fat: dish.fat,
+          sugar: dish.sugar,
+        })
+
         result.push({
-          name: dish.name,
+          name: dish.name || '이름 없음',
           calories: Number(dish.calorie || 0),
           protein: Number(dish.protein || 0),
           carbohydrate: Number(dish.carbohydrate || 0),
           fat: Number(dish.fat || 0),
-          sugar: Number(dish.sugarG || 0),
+          sugar: Number(dish.sugar || 0),
         })
       }
     })
@@ -346,7 +402,7 @@ const selectedDishesNutrients = computed(() => {
 })
 
 const totalNutrientValues = computed(() => {
-  return selectedDishesNutrients.value.reduce(
+  const result = selectedDishesNutrients.value.reduce(
     (totals, dish) => {
       totals.calories += dish.calories
       totals.protein += dish.protein
@@ -357,17 +413,21 @@ const totalNutrientValues = computed(() => {
     },
     { calories: 0, protein: 0, carbohydrate: 0, fat: 0, sugar: 0 },
   )
+
+  // 합계 계산 결과를 로그에 출력
+  console.log('영양소 합계 계산 결과:', result)
+
+  return result
 })
 
 const maxValues = computed(() => {
   // 사용자 요청에 따라 고정 최대값 설정
-  // 칼로리는 2000, 나머지는 300으로 설정
   return {
-    calories: 2000,
-    protein: 300,
-    carbohydrate: 300,
-    fat: 300,
-    sugar: 300,
+    calories: 2000, // 일일 권장 칼로리
+    protein: 100, // 일일 권장 단백질(g)
+    carbohydrate: 300, // 일일 권장 탄수화물(g)
+    fat: 50, // 일일 권장 지방(g)
+    sugar: 50, // 일일 권장 당(g)
   }
 })
 
@@ -375,59 +435,121 @@ const fetchTodayCourses = async () => {
   try {
     // 오늘의 코스 정보 가져오기
     const response = await axios.get('/api/courses/today')
-    courses.value = response.data.courses
+    console.log('오늘의 코스 정보:', response.data)
 
-    // 사용자의 이전 기록 가져오기
-    try {
-      const recordsResponse = await axios.get('/api/meal-records/today')
-      userRecords.value = recordsResponse.data || []
-      console.log('사용자의 이전 기록:', userRecords.value)
+    // 중복 음식 ID 처리를 위한 임시 저장소
+    const seenDishIds = new Set()
+    const duplicatedDishIds = new Set()
 
-      // 이전 기록이 있으면 수정 모드로 설정
-      isEditMode.value = userRecords.value.length > 0
-    } catch (error) {
-      console.error('사용자 기록 조회 실패:', error)
-      userRecords.value = []
-      isEditMode.value = false
+    // 모든 코스에서 중복된 음식 ID 찾기
+    response.data.courses.forEach((course) => {
+      if (course.dishes && course.dishes.length > 0) {
+        course.dishes.forEach((dish) => {
+          if (dish.id) {
+            const dishId = dish.id.toString()
+            if (seenDishIds.has(dishId)) {
+              duplicatedDishIds.add(dishId)
+              console.log(`중복된 음식 ID 발견: ${dishId} (${dish.name})`)
+            } else {
+              seenDishIds.add(dishId)
+            }
+          }
+        })
+      }
+    })
+
+    // 중복이 있으면 사용자에게 알림
+    if (duplicatedDishIds.size > 0) {
+      console.warn(
+        `중복된 음식이 ${duplicatedDishIds.size}개 발견되었습니다. 영양소 계산 시 중복을 제거합니다.`,
+      )
     }
 
-    // 모든 선택 상태 초기화
-    courses.value.forEach((course) => {
-      selectedCourses[course.type] = false
-      course.dishes.forEach((dish) => {
-        selectedDishes[dish.id] = false
+    // 중복 음식 처리 완료 후 코스 정보 저장
+    courses.value = response.data.courses
+
+    // 디버깅용 - 첫 번째 코스의 첫 번째 음식 영양소 정보 확인
+    if (
+      courses.value &&
+      courses.value.length > 0 &&
+      courses.value[0].dishes &&
+      courses.value[0].dishes.length > 0
+    ) {
+      const sampleDish = courses.value[0].dishes[0]
+      console.log('음식 영양소 샘플:', {
+        dish_name: sampleDish.name,
+        calorie: sampleDish.calorie,
+        protein: sampleDish.protein,
+        carbohydrate: sampleDish.carbohydrate,
+        fat: sampleDish.fat,
+        sugar: sampleDish.sugar,
       })
-    })
+    }
+
+    // 모든 선택 상태를 false로 초기화 (완전히 삭제하지 않음)
+    for (const key in selectedDishes) {
+      selectedDishes[key] = false
+    }
+
+    // 사용자의 이전 기록 가져오기
+    const recordsResponse = await axios.get('/api/meal-records/today')
+    console.log('사용자의 이전 기록:', recordsResponse.data)
+    userRecords.value = recordsResponse.data || []
 
     // 사용자의 이전 기록에 있는 음식들 체크 표시
     if (userRecords.value.length > 0) {
       userRecords.value.forEach((record) => {
-        // console.log를 추가하여 실제 데이터 확인
-        console.log('검사할 기록:', record)
-        // 백엔드에서 dishId로 반환될 수 있으므로 둘 다 확인
         const dishId = record.dishId || record.dish_id
-        console.log('사용할 dish ID:', dishId)
         if (dishId) {
-          // 문자열로 변환하여 비교 (키가 문자열인 경우가 있을 수 있음)
+          console.log('체크할 음식 ID:', dishId)
           selectedDishes[dishId.toString()] = true
         }
       })
 
       // 코스 선택 상태 업데이트
       courses.value.forEach((course) => {
-        const allSelected = course.dishes.every((dish) => selectedDishes[dish.id])
+        const allSelected =
+          course.dishes &&
+          course.dishes.every((dish) => dish && dish.id && selectedDishes[dish.id.toString()])
         selectedCourses[course.type] = allSelected
       })
+
+      // 첫 번째 기록의 코스 타입을 기본으로 설정
+      if (userRecords.value[0] && userRecords.value[0].courseType) {
+        selectedCourse.value = userRecords.value[0].courseType
+      }
     }
+
+    // isEditMode 설정
+    isEditMode.value = userRecords.value.length > 0
+
+    // 차트 갱신
+    _chartRenderKey.value++
+
+    console.log('초기화 완료:', {
+      isEditMode: isEditMode.value,
+      selectedCourse: selectedCourse.value,
+      selectedDishes: { ...selectedDishes },
+      courses: courses.value.map((c) => ({
+        type: c.type,
+        name: c.course_name,
+        dishes: c.dishes?.length || 0,
+      })),
+    })
   } catch (error) {
     console.error('오늘의 코스 조회 실패:', error)
+    isEditMode.value = false
   }
 }
 
 const getDishImage = (dishName) =>
   `https://via.placeholder.com/120x80?text=${encodeURIComponent(dishName)}`
 
-const calculateTotalCalories = (course) => course.dishes.reduce((t, d) => t + d.calorie, 0)
+const calculateTotalCalories = (course) => {
+  return course.dishes.reduce((total, dish) => {
+    return total + Number(dish.calorie || 0)
+  }, 0)
+}
 
 // 중복 기록 정리 함수 추가
 const cleanupRecords = async () => {
@@ -444,174 +566,183 @@ const cleanupRecords = async () => {
   }
 }
 
-// saveMealRecord 함수 수정
-const saveMealRecord = async () => {
+// 신규 저장 핸들러
+const handleSave = async () => {
+  console.log('handleSave 호출됨')
+  isSavingManually.value = true
   try {
-    // 선택된 음식들만 필터링
     const selectedMeals = []
+    const processedDishIds = new Set() // 중복 제거를 위한 Set
 
-    console.log('selectedDishes 상태:', selectedDishes)
-    let checkedCount = 0
-    Object.keys(selectedDishes).forEach((key) => {
-      if (selectedDishes[key]) checkedCount++
-    })
-    console.log('선택된 체크박스 수:', checkedCount)
-
-    // 현재 날짜 구하기 (서버와 일치시키기 위함)
-    const today = new Date()
-    const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    console.log('현재 날짜:', formattedDate)
-
-    // 수동으로 schedule_id 할당
-    const getScheduleIdForCourse = (courseType) => {
-      // 오늘 날짜의 A코스는 항상 홀수, B코스는 항상 짝수로 설정
-      // 실제 데이터베이스 값과 일치하도록 적절히 조정 필요
-      const baseId = (Number(formattedDate.replace(/-/g, '')) % 10) + 1
-      return courseType === 'A' ? baseId : baseId + 1
-    }
-
-    // 코스별로 처리
     courses.value.forEach((course) => {
-      // 현재 코스에 schedule_id가 없으면 자동 할당
-      const scheduleId = course.schedule_id || getScheduleIdForCourse(course.type)
-      console.log(`코스 ${course.type}에 schedule_id ${scheduleId} 할당됨`)
-
       course.dishes.forEach((dish) => {
-        if (selectedDishes[dish.id]) {
-          const dishId = parseInt(dish.id)
-
-          console.log('선택된 음식:', {
-            name: dish.name,
-            dish_id: dishId,
-            course_type: course.type,
-            schedule_id: scheduleId,
+        const dishId = dish.id.toString()
+        // 이미 처리된 음식은 건너뜁니다
+        if (selectedDishes[dishId] && !processedDishIds.has(dishId)) {
+          processedDishIds.add(dishId) // 처리된 음식으로 표시
+          selectedMeals.push({
+            schedule_id: course.schedule_id || getScheduleIdForCourse(course.type),
+            dish_id: parseInt(dish.id),
           })
-
-          if (!isNaN(dishId)) {
-            selectedMeals.push({
-              schedule_id: scheduleId,
-              dish_id: dishId,
-            })
-          }
         }
       })
     })
 
-    console.log('최종 선택된 음식:', selectedMeals)
-
     if (selectedMeals.length === 0) {
       alert('최소 하나 이상의 음식을 선택해주세요.')
+      isSavingManually.value = false
       return
     }
 
-    // 식단 저장 전에 먼저 정리 API 호출 (옵션)
-    // await cleanupRecords()
+    console.log('신규 저장 API 호출 (/api/meal-records)')
+    console.log('저장할 음식 개수:', selectedMeals.length, '(중복 제거 후)')
+    const response = await axios.post('/api/meal-records', {
+      courseType: selectedCourse.value,
+      meals: selectedMeals,
+    })
 
-    // 백엔드 API 호출 - 수정 모드일 때는 update API를 호출
-    try {
-      let response
-      if (isEditMode.value) {
-        // 수정 모드일 때 update API 사용
-        console.log('수정 모드로 API 호출')
-        response = await axios.post('/api/meal-records/update', {
-          courseType: selectedCourse.value,
-          meals: selectedMeals,
-        })
-      } else {
-        // 신규 저장 모드일 때
-        console.log('신규 저장 모드로 API 호출')
-        response = await axios.post('/api/meal-records', {
-          courseType: selectedCourse.value,
-          meals: selectedMeals,
-        })
-      }
+    if (response.data.success) {
+      alert(response.data.message || '식단이 성공적으로 저장되었습니다.')
+      showModal.value = false
+      isEditMode.value = true
+      fetchTodayCourses() // 데이터 갱신
 
-      if (response.data.success) {
-        alert(
-          response.data.message ||
-            (isEditMode.value
-              ? '식단이 성공적으로 수정되었습니다.'
-              : '식단이 성공적으로 저장되었습니다.'),
-        )
-        showModal.value = false
-
-        // 수정 후 모달이 다시 열릴 때 최신 데이터 표시를 위해 상태 업데이트
-        isEditMode.value = true
-
-        // 데이터 갱신
-        fetchTodayCourses()
-      }
-    } catch (saveError) {
-      // 오류 처리
-      console.error('식단 저장/수정 실패:', saveError)
-      console.error('오류 상세 정보:', saveError.response?.data)
-      alert(saveError.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
+      // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
+      setTimeout(() => {
+        console.log('식단 데이터 업데이트 이벤트 발생')
+        eventBus.emit('meal-data-updated')
+      }, 500)
+    } else {
+      alert(response.data.message || '식단 저장에 실패했습니다.')
     }
   } catch (error) {
-    console.error('식단 저장/수정 실패:', error)
-    console.error('오류 상세 정보:', error.response?.data)
-    alert(error.response?.data?.message || '식단 저장/수정 중 오류가 발생했습니다.')
+    console.error('식단 저장 실패:', error)
+    alert(error.response?.data?.message || '식단 저장 중 오류가 발생했습니다.')
+  } finally {
+    isSavingManually.value = false
+  }
+}
+
+// 수정 핸들러
+const handleUpdate = async () => {
+  console.log('handleUpdate 호출됨')
+  isSavingManually.value = true
+  try {
+    const selectedMeals = []
+    const processedDishIds = new Set() // 중복 제거를 위한 Set
+
+    courses.value.forEach((course) => {
+      course.dishes.forEach((dish) => {
+        const dishId = dish.id.toString()
+        // 이미 처리된 음식은 건너뜁니다
+        if (selectedDishes[dishId] && !processedDishIds.has(dishId)) {
+          processedDishIds.add(dishId) // 처리된 음식으로 표시
+          selectedMeals.push({
+            schedule_id: course.schedule_id || getScheduleIdForCourse(course.type),
+            dish_id: parseInt(dish.id),
+          })
+        }
+      })
+    })
+
+    console.log('수정 API 호출 (/api/meal-records/update)')
+    console.log('저장할 음식 개수:', selectedMeals.length, '(중복 제거 후)')
+    const response = await axios.post('/api/meal-records/update', {
+      courseType: selectedCourse.value,
+      meals: selectedMeals,
+    })
+
+    if (response.data.success) {
+      alert(response.data.message || '식단이 성공적으로 수정되었습니다.')
+      showModal.value = false
+      fetchTodayCourses() // 데이터 갱신
+
+      // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
+      setTimeout(() => {
+        console.log('식단 데이터 업데이트 이벤트 발생')
+        eventBus.emit('meal-data-updated')
+      }, 500)
+    } else {
+      alert(response.data.message || '식단 수정에 실패했습니다.')
+    }
+  } catch (error) {
+    console.error('식단 수정 실패:', error)
+    alert(error.response?.data?.message || '식단 수정 중 오류가 발생했습니다.')
+  } finally {
+    isSavingManually.value = false
   }
 }
 
 // 모달 타이틀 버튼 텍스트
 const modalButtonText = computed(() => {
-  return hasRecords.value ? '상세보기/수정' : '상세/코스 선택'
+  return userRecords.value.length > 0 ? '식단 수정하기' : '식단 기록하기'
 })
 
 // 다른 코스에서 음식이 선택되었는지 확인하는 함수
 const isOtherCourseSelected = (courseType) => {
-  // 현재 보고 있는 코스가 아닌 다른 코스의 체크박스가 선택되어 있는지 확인
-  if (courseType !== selectedCourse.value) {
-    return false // 현재 보고 있는 코스에서는 선택 가능
-  }
-
-  // 다른 코스의 음식 중 하나라도 선택되어 있는지 확인
-  let otherCourseSelected = false
-  courses.value.forEach((course) => {
-    if (course.type !== courseType) {
-      course.dishes.forEach((dish) => {
-        if (selectedDishes[dish.id]) {
-          otherCourseSelected = true
-        }
-      })
-    }
-  })
-
-  return otherCourseSelected
+  // 모든 코스의 음식 선택을 허용하도록 항상 false 반환
+  return false
 }
 
-// 코스 변경 시 다른 코스의 선택 항목 초기화
-const changeSelectedCourse = (newCourse) => {
-  // 현재 코스의 음식 중 하나라도 선택되어 있는지 확인
-  let hasCurrentCourseSelection = false
+// 체크박스 토글 함수 - v-model 대신 직접 토글 처리
+const toggleDishSelection = (dishId) => {
+  const id = dishId.toString()
+  selectedDishes[id] = !selectedDishes[id]
+
+  // 실제로 체크된 음식들의 영양소 정보 콘솔에 출력
+  const selectedDishes_list = []
 
   courses.value.forEach((course) => {
-    if (course.type === selectedCourse.value) {
-      course.dishes.forEach((dish) => {
-        if (selectedDishes[dish.id]) {
-          hasCurrentCourseSelection = true
-        }
-      })
-    }
+    if (!course.dishes) return
+
+    course.dishes.forEach((dish) => {
+      if (!dish || !dish.id) return
+
+      if (selectedDishes[dish.id.toString()]) {
+        selectedDishes_list.push({
+          id: dish.id,
+          name: dish.name,
+          calorie: dish.calorie,
+          protein: dish.protein,
+          carbohydrate: dish.carbohydrate,
+          fat: dish.fat,
+          sugar: dish.sugar,
+        })
+      }
+    })
   })
 
-  // 현재 코스에 선택된 항목이 있고, 다른 코스로 변경하려고 할 때 확인
-  if (hasCurrentCourseSelection && selectedCourse.value !== newCourse) {
-    if (
-      confirm(
-        `코스를 ${selectedCourse.value} → ${newCourse} 변경하면 선택한 음식이 초기화됩니다. 계속하시겠습니까?`,
-      )
-    ) {
-      // 모든 선택 초기화
-      Object.keys(selectedDishes).forEach((key) => {
-        selectedDishes[key] = false
-      })
-      selectedCourse.value = newCourse
-    }
-  } else {
-    selectedCourse.value = newCourse
+  console.log('현재 선택된 음식들:', selectedDishes_list)
+
+  // 바 차트 즉시 갱신
+  _chartRenderKey.value++
+}
+
+// 코스 변경 시 기존 선택을 초기화하고 코스 변경
+const changeSelectedCourse = (newCourse) => {
+  // 기존 선택을 완전히 초기화
+  Object.keys(selectedDishes).forEach((key) => {
+    selectedDishes[key] = false
+  })
+
+  selectedCourse.value = newCourse
+  _chartRenderKey.value++ // 차트 갱신
+
+  // 현재 선택된 코스의 기존 기록만 체크
+  if (userRecords.value && userRecords.value.length > 0) {
+    userRecords.value.forEach((record) => {
+      if (record.courseType === newCourse) {
+        const dishId = record.dishId || record.dish_id
+        if (dishId) {
+          selectedDishes[dishId.toString()] = true
+        }
+      }
+    })
   }
+
+  // 콘솔에 현재 상태 출력
+  console.log(`코스 변경됨: ${newCourse}`)
+  console.log('선택된 음식:', selectedDishes)
 }
 
 // 초기 코스 설정 (사용자의 기존 기록 기반)
@@ -634,58 +765,79 @@ onMounted(() => {
     // 초기 코스 설정
     setInitialCourse()
   })
+
+  // DinnerRecommendation에서 보내는 이벤트 수신
+  eventBus.on('open-today-diet-modal', () => {
+    showModal.value = true
+  })
+
+  // DinnerRecommendation 컴포넌트에서 영양소 정보 요청 시 처리
+  eventBus.on('request-today-diet-nutrients', () => {
+    console.log('영양소 정보 요청 이벤트 수신됨')
+    // 현재 계산된 영양소 정보 전송
+    eventBus.emit('today-diet-nutrients', {
+      calories: totalNutrientValues.value.calories || 0,
+      protein: totalNutrientValues.value.protein || 0,
+      carbohydrate: totalNutrientValues.value.carbohydrate || 0,
+      fat: totalNutrientValues.value.fat || 0,
+      sugar: totalNutrientValues.value.sugar || 0,
+    })
+    console.log('영양소 정보 전송됨:', totalNutrientValues.value)
+  })
+
+  // 정리 함수 반환
+  return cleanup
 })
 
-watch(
-  () => showModal.value,
-  (val) => {
-    if (val) {
-      // 모달이 열릴 때마다 항상 최신 데이터 로드
-      fetchTodayCourses().then(() => {
-        console.log('모달 오픈 시 데이터 로드 완료')
-        // 초기 코스 설정
-        setInitialCourse()
-        // 차트 갱신
-        _chartRenderKey.value++
-      })
-    }
-  },
-)
+// 컴포넌트 언마운트 시 이벤트 리스너 정리
+const cleanup = () => {
+  eventBus.off('open-today-diet-modal')
+  eventBus.off('request-today-diet-nutrients')
+}
 
 // 선택된 코스가 변경되었을 때
 watch(
   () => selectedCourse.value,
-  (newValue, oldValue) => {
-    // 차트만 갱신
+  (newValue) => {
+    console.log(`코스 변경 감지: ${newValue}`)
+    // 차트 갱신
     _chartRenderKey.value++
   },
 )
 
-// 선택된 음식들이 변경되었을 때
+// 선택된 음식들이 변경되었을 때 (깊은 감시 필요)
 watch(
   selectedDishes,
   () => {
+    // 코스 선택 상태 업데이트
     courses.value.forEach((course) => {
-      const all = course.dishes.every((dish) => selectedDishes[dish.id])
-      const none = course.dishes.every((dish) => !selectedDishes[dish.id])
-      selectedCourses[course.type] = all ? true : none ? false : selectedCourses[course.type]
+      if (course.dishes) {
+        const all = course.dishes.every(
+          (dish) => dish && dish.id && selectedDishes[dish.id.toString()],
+        )
+        const none = course.dishes.every(
+          (dish) => dish && dish.id && !selectedDishes[dish.id.toString()],
+        )
+        selectedCourses[course.type] = all ? true : none ? false : selectedCourses[course.type]
+      }
     })
+
     selectAllMeals.value = courses.value.every((c) => selectedCourses[c.type])
+
+    // 차트 갱신
     _chartRenderKey.value++
   },
   { deep: true },
 )
 
-// 전체 선택 체크박스가 변경되었을 때
+// 모달 열릴 때 데이터 새로 로드
 watch(
-  () => selectAllMeals.value,
-  (newValue) => {
-    courses.value.forEach((course) => {
-      selectedCourses[course.type] = newValue
-      course.dishes.forEach((dish) => {
-        selectedDishes[dish.id] = newValue
-      })
-    })
+  () => showModal.value,
+  (val) => {
+    if (val) {
+      // 모달이 열릴 때마다 항상 최신 데이터 로드
+      fetchTodayCourses()
+    }
   },
 )
 
@@ -697,6 +849,21 @@ const hasRecords = computed(() => {
   // userRecords가 있으면 true
   return userRecords.value && userRecords.value.length > 0
 })
+
+// 수동으로 schedule_id 할당 (만약 course 객체에 schedule_id가 없다면)
+const getScheduleIdForCourse = (courseType) => {
+  const today = new Date()
+  const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const baseId = (Number(formattedDate.replace(/-/g, '')) % 10) + 1 // 예시 로직
+  // 실제로는 백엔드에서 올바른 schedule_id를 받아와야 합니다.
+  // 이 로직은 프론트엔드에서 임시로 ID를 생성하는 것이므로,
+  // 백엔드의 course_schedule 테이블의 ID 생성 방식과 일치하거나,
+  // API 응답에 schedule_id가 포함되어야 합니다.
+  console.warn(
+    `Frontend generated schedule_id for courseType ${courseType}. This should ideally come from the backend.`,
+  )
+  return courseType === 'A' ? baseId : baseId + 1 // 예시: A코스는 홀수, B코스는 짝수
+}
 </script>
 
 <style scoped>

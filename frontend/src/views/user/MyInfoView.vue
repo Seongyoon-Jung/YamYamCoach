@@ -4,7 +4,7 @@
       <!-- 뒤로가기 + 제목 -->
       <h2 class="fw-bold mb-4">개인정보 수정</h2>
 
-      <form>
+      <form @submit.prevent="handleUpdate">
         <!-- 기본 정보 섹션 -->
         <h6 class="mb-3">기본 정보</h6>
         <div class="card mb-4 p-3">
@@ -58,7 +58,7 @@
                   중복 확인
                 </button>
               </div>
-              <span class="text-info warning">※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
+              <span class="text-info warning">※ 2~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
             </div>
 
             <div class="col-md-12 mb-3">
@@ -163,8 +163,8 @@
 
         <!-- 저장/취소 버튼 -->
         <div class="d-flex justify-content-center gap-3">
-          <button type="button" class="btn btn-primary px-5" @click="handleUpdate">저장</button>
           <button type="button" class="btn btn-outline-secondary px-5" @click="goBack">취소</button>
+          <button class="btn btn-primary px-5">저장</button>
         </div>
       </form>
 
@@ -228,7 +228,7 @@ onMounted(() => {
 })
 
 const checkUsernameRule = () => {
-  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/
+  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{2,10}$/
   if (pattern.test(result.username)) {
     result.checkedUsernameRule = true
     return true

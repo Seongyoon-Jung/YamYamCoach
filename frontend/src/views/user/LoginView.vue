@@ -4,7 +4,7 @@
       <h3 class="text-center fw-bold text-dark">로그인</h3>
       <hr />
 
-      <form>
+      <form @submit.prevent="login">
         <div class="row g-3">
           <span class="text-danger" v-show="click" v-text="warning"></span>
           <!-- 이메일 -->
@@ -43,7 +43,7 @@
 
           <!-- 로그인 버튼 -->
           <div class="col-md-12 text-center mt-4">
-            <button type="button" class="btn btn-success w-100 mb-3" @click="login">로그인</button>
+            <button class="btn btn-success w-100 mb-3">로그인</button>
             <router-link class="btn btn-outline-primary w-100 mb-3" to="/signup">
               회원가입
             </router-link>
@@ -108,10 +108,19 @@ const login = async () => {
     accountStore.setAccount({
       userId: res.data.userId,
       username: res.data.username,
-      isSurveyed: res.data.surveyed,
+      personaId: res.data.personaId,
+      role: res.data.role,
+      profileUrl: res.data.profileUrl,
     })
 
-    router.push({ name: 'HomeView' })
+    if (res.data.role === 'ROLE_ADMIN') {
+      router.push('/admin')
+    } else if (res.data.personaId) {
+      router.push('/')
+    } else {
+      router.push('/survey')
+    }
+    // goBack()
   } catch (e) {
     warning.value = '이메일 또는 비밀번호가 일치하지 않습니다'
   }

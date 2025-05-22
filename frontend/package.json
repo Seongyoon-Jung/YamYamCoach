@@ -11,11 +11,17 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
+    "chart.js": "^4.4.9",
+    "dotenv": "^16.5.0",
     "pinia": "^3.0.2",
+    "tesseract.js": "^6.0.1",
     "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.2",
+    "vue-cropperjs": "^5.0.0",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {

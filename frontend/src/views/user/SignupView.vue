@@ -12,7 +12,7 @@
       </div>
       <hr />
 
-      <form>
+      <form @submit.prevent="handleSubmit">
         <div class="row g-3 text-start" v-if="isbasic">
           <!-- 이메일 -->
           <div class="col-md-12">
@@ -37,7 +37,6 @@
                 id="email"
                 class="form-control"
                 placeholder="example@domain.com"
-                required
                 name="email"
                 v-model="result.email"
               />
@@ -62,7 +61,6 @@
               id="password"
               class="form-control"
               placeholder="비밀번호를 입력하세요"
-              required
               name="password"
               v-model="result.password"
             />
@@ -85,7 +83,6 @@
               id="checkPassword"
               class="form-control"
               placeholder="비밀번호를 재입력해주세요"
-              required
               v-model="result.checkPassword"
             />
           </div>
@@ -111,7 +108,6 @@
                 id="username"
                 class="form-control"
                 placeholder="사용할 닉네임"
-                required
                 name="username"
                 v-model="result.username"
               />
@@ -119,7 +115,7 @@
                 중복 확인
               </button>
             </div>
-            <span class="text-info warning">※ 4~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
+            <span class="text-info warning">※ 2~10자의 한글, 영문, 숫자를 사용해 주세요.</span>
           </div>
 
           <div class="col-md-12">
@@ -171,7 +167,6 @@
               type="text"
               id="birthdate"
               class="form-control"
-              required
               name="birthDate"
               placeholder="예) 20000101"
               v-model="result.birthDate"
@@ -181,7 +176,7 @@
           <!-- 추가 정보 버튼 -->
           <div class="d-flex justify-content-between mt-4">
             <router-link class="btn btn-secondary" to="/login">이전</router-link>
-            <button type="button" class="btn btn-primary" @click="nextBasic">다음</button>
+            <button class="btn btn-primary">다음</button>
           </div>
         </div>
 
@@ -191,25 +186,13 @@
               <!-- 키 -->
               <div class="mb-3">
                 <label class="form-label">키 (cm)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  v-model="optionResult.height"
-                  min="0"
-                  required
-                />
+                <input type="number" class="form-control" v-model="optionResult.height" min="0" />
               </div>
 
               <!-- 현재 체중 -->
               <div class="mb-3">
                 <label class="form-label">현재 체중 (kg)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  v-model="optionResult.weight"
-                  min="0"
-                  required
-                />
+                <input type="number" class="form-control" v-model="optionResult.weight" min="0" />
               </div>
 
               <!-- 목표 체중 -->
@@ -220,15 +203,14 @@
                   class="form-control"
                   v-model="optionResult.targetWeight"
                   min="0"
-                  required
                 />
               </div>
             </div>
           </div>
 
           <div class="d-flex justify-content-between">
-            <button class="btn btn-secondary" @click="prevBasic">이전</button>
-            <button type="button" class="btn btn-primary" @click="handleSignup">회원가입</button>
+            <button type="button" class="btn btn-secondary" @click="prevBasic">이전</button>
+            <button class="btn btn-primary">회원가입</button>
           </div>
         </div>
       </form>
@@ -520,7 +502,15 @@ function checkPasswordRule() {
 }
 
 function checkUsernameRule() {
-  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{4,10}$/
+  const pattern = /^[A-Za-z0-9\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]{2,10}$/
   return pattern.test(result.username)
+}
+
+function handleSubmit() {
+  if (isbasic.value) {
+    nextBasic()
+  } else {
+    handleSignup()
+  }
 }
 </script>

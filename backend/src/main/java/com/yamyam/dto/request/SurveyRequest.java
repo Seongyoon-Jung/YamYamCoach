@@ -2,16 +2,16 @@ package com.yamyam.dto.request;
 
 public class SurveyRequest {
 	private int userId;
-	private String dietType;
+	private int personaId;
 	private int stepLevel;
 	private String answerValues;
 	
 	public SurveyRequest() {
 	}
 
-	public SurveyRequest(int userId, String dietType, int stepLevel, String answerValues) {
+	public SurveyRequest(int userId, int personaId, int stepLevel, String answerValues) {
 		this.userId = userId;
-		this.dietType = dietType;
+		this.personaId = personaId;
 		this.stepLevel = stepLevel;
 		this.answerValues = answerValues;
 	}
@@ -24,12 +24,12 @@ public class SurveyRequest {
 		this.userId = userId;
 	}
 
-	public String getDietType() {
-		return dietType;
+	public int getPersonaId() {
+		return personaId;
 	}
 
-	public void setDietType(String dietType) {
-		this.dietType = dietType;
+	public void setPersonaId(int personaId) {
+		this.personaId = personaId;
 	}
 
 	public int getStepLevel() {

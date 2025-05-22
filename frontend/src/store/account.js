@@ -5,18 +5,24 @@ export const userAccountStore = defineStore('account', {
   state: () => ({
     userId: null,
     username: '',
-    isSurveyed: false,
+    personaId: false,
+    role: '',
+    profileUrl: '',
   }),
   actions: {
-    setAccount({ userId, username, isSurveyed }) {
+    setAccount({ userId, username, personaId, role, profileUrl }) {
       this.userId = userId
       this.username = username
-      this.isSurveyed = isSurveyed
+      this.personaId = personaId
+      this.role = role
+      this.profileUrl = profileUrl
     },
     clearAccount() {
       this.userId = null
       this.username = ''
-      this.isSurveyed = false
+      this.personaId = false
+      this.role = ''
+      this.profileUrl = ''
     },
   },
 })

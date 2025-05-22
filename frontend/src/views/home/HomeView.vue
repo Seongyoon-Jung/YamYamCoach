@@ -60,22 +60,27 @@
         <hr />
 
         <!-- 차트 + 사이드 정보 -->
-        <div class="row gx-4 mb-4">
-          <MainChart ref="MainChart" />
-
-          <!-- 사이드 정보 카드들 -->
-          <div class="col-lg-4">
-            <div class="row gy-4">
-              <Calendar ref="Calendar" />
+        <div class="row mb-4 align-items-stretch">
+          <div class="col-md-4 d-flex">
+            <div class="w-100 h-100">
+              <TodayDiet ref="TodayDiet" />
+            </div>
+          </div>
+          <div class="col-md-4 d-flex">
+            <div class="w-100 h-100">
+              <DinnerRecommendation ref="DinnerRecommendation" />
+            </div>
+          </div>
+          <div class="col-md-4 d-flex">
+            <div class="w-100 h-100">
               <Information ref="Information" />
             </div>
           </div>
         </div>
 
-        <!-- 오늘의 칼럼 & 오늘의 식단 -->
-        <div class="row gx-4">
-          <TodayColumn ref="TodayColumn" />
-          <TodayDiet ref="TodayDiet" />
+        <!-- 오늘의 식단 & 저녁 메뉴 추천 -->
+        <div>
+          <MainChart ref="MainChart" />
         </div>
       </main>
     </div>
@@ -88,6 +93,7 @@ import Calendar from '@/components/mainpage/Calendar.vue'
 import Information from '@/components/mainpage/Information.vue'
 import TodayColumn from '@/components/mainpage/TodayColumn.vue'
 import TodayDiet from '@/components/mainpage/TodayDiet.vue'
+import DinnerRecommendation from '@/components/mainpage/DinnerRecommendation.vue'
 
 import { computed } from 'vue'
 import { userAccountStore } from '@/store/account'

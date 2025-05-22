@@ -128,12 +128,6 @@ CREATE TABLE `course_schedule` (
     UNIQUE(schedule_date, course_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `course_schedule` (schedule_date, course_type, course_name) VALUES
-  ('2025-05-10','A','A코스: 우동 & 볶음밥'),
-  ('2025-05-10','B','B코스: 만두 & 샐러드'),
-  ('2025-05-11','A','A코스: 샐러드 백반'),
-  ('2025-05-11','B','B코스: 스테이크 정식');
-
 /* ====================================================================== */
 /* 6. SCHEDULE_DISH – 코스별 세부 메뉴 매핑                               */
 /* ====================================================================== */
@@ -151,18 +145,6 @@ CREATE TABLE `schedule_dish` (
     FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
-  (1,1,1,'메인: 우동'),
-  (1,6,2,'사이드: 볶음밥'),
-  (1,2,3,'반찬: 김치'),
-  (1,7,4,'반찬: 채소볶음'),
-  (1,5,5,'반찬: 야채튀김'),
-  (2,4,1,'메인: 만두'),
-  (2,3,2,'사이드: 샐러드'),
-  (2,8,3,'사이드: 스테이크'),
-  (2,2,4,'반찬: 김치'),
-  (2,1,5,'토핑: 우동');
-
 /* ====================================================================== */
 /* 7. DISH_RECORD – 사용자 섭취 기록                                     */
 /* ====================================================================== */
@@ -179,6 +161,7 @@ CREATE TABLE `dish_record` (
     FOREIGN KEY (dish_id)     REFERENCES `dish`(dish_id)             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+<<<<<<< Updated upstream
 INSERT INTO `dish_record` (user_id, schedule_id, dish_id) VALUES
   (1,1,1),(1,1,6);
 
@@ -260,6 +243,8 @@ INSERT INTO `schedule_dish` (schedule_id, dish_id, serving_order, note) VALUES
  from course_schedule s
  where schedule_date = date(now());
 
+=======
+>>>>>>> Stashed changes
 /* ====================================================================== */
 /* 게시판 및 댓글 작성 테이블                                              */
 /* ====================================================================== */
@@ -329,3 +314,19 @@ INSERT INTO comment (
     '두 번째 게시글에 달린 첫번째 댓글이에요!',
     NOW(), NOW()
 );
+
+
+DROP TABLE IF EXISTS `daily_health_log`;
+CREATE TABLE `daily_health_log` (
+    log_id              INT PRIMARY KEY AUTO_INCREMENT,
+    user_id             INT NOT NULL,
+    log_date            DATE NOT NULL DEFAULT (CURDATE()),  -- 괄호 추가 및 CURDATE() 함수 사용
+    exercise_minutes    INT DEFAULT 0,                      -- 운동시간 (분)
+    water_intake_ml     INT DEFAULT 0,                      -- 물 섭취량 (ml)
+    sleep_minutes       INT DEFAULT 0,                      -- 수면시간 (분)
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    UNIQUE (user_id, log_date),                             -- 사용자별 날짜당 하나의 기록만 허용
+    FOREIGN KEY (user_id) REFERENCES `user`(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
