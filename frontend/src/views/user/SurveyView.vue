@@ -12,7 +12,6 @@
               질문에 솔직하게 답하면 나만의 맞춤 리포트를 드려요.<br /><br />
               ※주의 ) <u>건너뛰기</u> 시엔 나이·성별 평균값 기반 분석이 제공되어<br />
               정확도가 떨어질 수 있으니 주의하세요!<br /><br />
-              🎉 특별 이벤트: 참여만 해도 <strong>냠냠코인 10,000개</strong>를 드립니다!
             </p>
             <div class="mt-4">
               <button class="btn btn-success me-2" @click="startSurvey">설문 시작하기</button>

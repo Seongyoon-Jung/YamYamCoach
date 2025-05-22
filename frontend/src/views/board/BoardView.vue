@@ -12,22 +12,16 @@
     <div class="d-flex justify-content-center mb-3">
       <div class="input-group w-75">
         <input
-          v-model="searchQuery"
+          :value="searchQuery"
+          @input="onInputChange"
           type="text"
           class="form-control rounded-pill border-0 shadow-sm"
-          placeholder="요리나 재료를 검색해보세요!"
+          placeholder="작성자, 제목, 내용을 검색해보세요!"
         />
         <span class="input-group-text bg-white border-0 shadow-sm rounded-pill ms-n5">
           <i class="bi bi-search"></i>
         </span>
       </div>
-    </div>
-
-    <!-- 카테고리 버튼 -->
-    <div class="d-flex justify-content-center mb-4">
-      <button class="btn btn-outline-secondary shadow-sm">
-        <i class="bi bi-box me-1"></i>전체
-      </button>
     </div>
 
     <!-- 필터 바 -->
@@ -38,8 +32,9 @@
         <input v-model="onlyMine" type="checkbox" id="onlyMine" class="form-check-input me-2" />
         <label for="onlyMine" class="form-check-label">내 글만 보기</label>
       </div>
-      <button class="btn btn-link text-decoration-none">
-        <i class="bi bi-sorta-down-alt me-1"></i>인기순
+      <button class="btn btn-link text-decoration-none" @click="toggleSort">
+        <i class="bi bi-sort-down-alt me-1"></i>
+        {{ sortBy === 'latest' ? '최신순' : '조회순' }}
       </button>
     </div>
 
@@ -56,6 +51,9 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from '@/plugins/axios'
 import BoardCard from '@/components/board/BoardCard.vue'
+import { userAccountStore } from '@/store/account'
+
+const accountStore = userAccountStore()
 
 // 검색어
 const searchQuery = ref('')
@@ -63,6 +61,16 @@ const searchQuery = ref('')
 const onlyMine = ref(false)
 // 전체 게시글 배열
 const boards = ref([])
+
+const sortBy = ref('latest')
+
+const toggleSort = () => {
+  sortBy.value = sortBy.value === 'latest' ? 'views' : 'latest'
+}
+
+const onInputChange = (e) => {
+  searchQuery.value = e.target.value
+}
 
 // 백엔드에서 전체 게시글을 가져와 posts 에 할당
 onMounted(async () => {
@@ -74,23 +82,29 @@ onMounted(async () => {
   }
 })
 
-// 검색어 / 필터 반영된 최종 게시글
 const filteredPosts = computed(() => {
-  return boards.value.filter((board) => {
-    // 내 글만 보기
-    if (onlyMine.value && board.isMine !== true) {
-      return false
+  const q = searchQuery.value.trim().toLowerCase()
+
+  let result = boards.value.filter((board) => {
+    if (onlyMine.value && board.username !== accountStore.username) return false
+
+    if (!q) return true
+
+    const title = board.title?.toLowerCase() || ''
+    const content = board.excerpt?.toLowerCase() || ''
+    const username = board.username?.toLowerCase() || ''
+
+    return title.includes(q) || content.includes(q) || username.includes(q)
+  })
+
+  console.log('정렬실행')
+  // 정렬 처리 (sortBy.value 대신 sortBy.value를 바로 사용하도록 주의)
+  return result.sort((a, b) => {
+    if (sortBy.value === 'latest') {
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    } else {
+      return (b.viewCount ?? 0) - (a.viewCount ?? 0)
     }
-    // 검색어 필터 (제목, 본문, 태그 등 필요한 필드에 적용)
-    const q = searchQuery.value.trim().toLowerCase()
-    if (q) {
-      return (
-        board.author.toLowerCase().includes(q) ||
-        board.excerpt.toLowerCase().includes(q) ||
-        (board.tags && board.tags.some((t) => t.toLowerCase().includes(q)))
-      )
-    }
-    return true
   })
 })
 </script>
