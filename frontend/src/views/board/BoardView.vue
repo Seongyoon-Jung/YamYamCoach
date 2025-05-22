@@ -91,13 +91,12 @@ const filteredPosts = computed(() => {
     if (!q) return true
 
     const title = board.title?.toLowerCase() || ''
-    const content = board.excerpt?.toLowerCase() || ''
+    const content = board.content?.toLowerCase() || ''
     const username = board.username?.toLowerCase() || ''
 
     return title.includes(q) || content.includes(q) || username.includes(q)
   })
 
-  console.log('정렬실행')
   // 정렬 처리 (sortBy.value 대신 sortBy.value를 바로 사용하도록 주의)
   return result.sort((a, b) => {
     if (sortBy.value === 'latest') {
