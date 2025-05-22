@@ -39,4 +39,10 @@ public class S3UploadServiceImpl implements S3UploadService{
          amazonS3.putObject(bucket, savedName, multipartFile.getInputStream(), metadata);
         return amazonS3.getUrl(bucket, savedName).toString();
     }
+	
+	@Override
+	public void deleteImage(String filename)  {
+		System.out.println("delete"+filename);
+	    amazonS3.deleteObject(bucket, filename);
+	}
 }

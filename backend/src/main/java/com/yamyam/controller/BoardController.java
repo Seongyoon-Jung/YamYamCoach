@@ -74,6 +74,7 @@ public class BoardController {
 	@DeleteMapping("")
 	public void deleteBoard(@RequestBody BoardRequest boardRequest) {
 		boardService.deleteBoard(boardRequest.getBoardId());
+		s3UploadService.deleteImage(boardRequest.getImageUrl());
 	}
 	
 	// 게시판 글 상세 조회
