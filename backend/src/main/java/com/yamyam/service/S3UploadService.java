@@ -6,4 +6,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface S3UploadService {
 	public String saveFile(MultipartFile multipartFile, String where) throws IOException;
+	
+	public void deleteImage(String filename);
 }
