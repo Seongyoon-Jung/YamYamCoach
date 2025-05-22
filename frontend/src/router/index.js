@@ -140,7 +140,7 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach((to) => {
-  document.title = `${to.meta.title} - 냠냠코치`
+  document.title = `${to.meta.title} - 싸피밥피`
 })
 
 export default router

@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom border-3">
     <div class="container position-relative">
       <!-- 브랜드 + 주요 네비게이션 -->
-      <RouterLink class="navbar-brand fw-bold me-4" to="/">냠냠코치</RouterLink>
+      <RouterLink class="navbar-brand fw-bold me-4" to="/">SSAFYBAPY</RouterLink>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-bold">
         <li class="nav-item">
           <RouterLink class="nav-link" to="/">홈</RouterLink>
