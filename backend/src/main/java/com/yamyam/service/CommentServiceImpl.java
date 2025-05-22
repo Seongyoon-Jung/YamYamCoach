@@ -36,6 +36,7 @@ public class CommentServiceImpl implements CommentService{
 			data.add(new CommentResponse(
 					comment.getCommentId(),
 					comment.getUser().getUsername(),
+					comment.getUser().getProfileUrl(),
 					comment.getContent(),
 					comment.getCreatedAt(),
 					comment.getUpdatedAt()
@@ -54,7 +55,7 @@ public class CommentServiceImpl implements CommentService{
 		
 		
 		CommentEntity commentEntity = commentRepository.save(data);
-		CommentResponse commentResponse = new CommentResponse(commentEntity.getCommentId() ,request.getUsername(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
+		CommentResponse commentResponse = new CommentResponse(commentEntity.getCommentId() ,request.getUsername(),userEntity.getProfileUrl(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
 		
 		
 		return commentResponse;
@@ -62,13 +63,14 @@ public class CommentServiceImpl implements CommentService{
 
 	@Override
 	public CommentResponse modify(CommentRequest request) {
+		UserEntity userEntity = userRepository.findByUsername(request.getUsername());
 		CommentEntity commentEntity = commentRepository.findByCommentId(request.getCommentId());
 		
 		commentEntity.setContent(request.getContent());
 		
 		CommentEntity data = commentRepository.save(commentEntity);
 		
-		CommentResponse commentResponse = new CommentResponse(data.getCommentId() ,request.getUsername(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
+		CommentResponse commentResponse = new CommentResponse(data.getCommentId() ,request.getUsername(), userEntity.getProfileUrl(), request.getContent(), commentEntity.getCreatedAt(), commentEntity.getUpdatedAt());
 		
 		return commentResponse;
 	}

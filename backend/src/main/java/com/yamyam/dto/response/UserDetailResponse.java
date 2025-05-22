@@ -14,6 +14,7 @@ public class UserDetailResponse {
 	private Integer height;
 	private Integer weight;
 	private Integer targetWeight;
+	private String profileUrl;
 
 	
 	public UserDetailResponse() {
@@ -21,7 +22,8 @@ public class UserDetailResponse {
 	}
 	
 	public UserDetailResponse(int userId, String email, String username, boolean gender, LocalDate birthDate,
-			Integer height, Integer weight, Integer targetWeight) {
+			Integer height, Integer weight, Integer targetWeight, String profileUrl) {
+		super();
 		this.userId = userId;
 		this.email = email;
 		this.username = username;
@@ -30,8 +32,9 @@ public class UserDetailResponse {
 		this.height = height;
 		this.weight = weight;
 		this.targetWeight = targetWeight;
+		this.profileUrl = profileUrl;
 	}
-
+	
 	public static UserDetailResponse currentUser(UserEntity userEntity) {
 		return new UserDetailResponse(
 				userEntity.getUserId(),
@@ -41,7 +44,8 @@ public class UserDetailResponse {
 				userEntity.getBirthDate(),
 				userEntity.getHeight(),
 				userEntity.getWeight(),
-				userEntity.getTargetWeight()
+				userEntity.getTargetWeight(),
+				userEntity.getProfileUrl()
 				);
 	}
 
@@ -108,9 +112,14 @@ public class UserDetailResponse {
 	public void setTargetWeight(Integer targetWeight) {
 		this.targetWeight = targetWeight;
 	}
-	
 
+	public String getProfileUrl() {
+		return profileUrl;
+	}
 
-	
+	public void setProfileUrl(String profileUrl) {
+		this.profileUrl = profileUrl;
+	}
+
 	
 }

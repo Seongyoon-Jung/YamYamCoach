@@ -53,7 +53,7 @@ public class AuthServiceImpl implements AuthService{
         }
         
         
-        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), personaId, userEntity.getRole());
+        CurrentUserResponse currentUserResponse = new CurrentUserResponse(userEntity.getUserId(), userEntity.getUsername(), personaId, userEntity.getRole(), userEntity.getProfileUrl());
 
         return currentUserResponse;
         

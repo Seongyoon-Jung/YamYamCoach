@@ -80,7 +80,7 @@
 
             <!-- 이미지: 캐릭터 일러스트 -->
             <img
-              :src="`/survey/${dietType}.png`"
+              :src="`https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/${dietType}.png`"
               alt="결과 캐릭터"
               class="result-img mb-3 mx-auto d-block"
               width="50%;"
@@ -201,6 +201,7 @@ async function submitSurvey() {
     username: me.data.username,
     personaId: me.data.personaId,
     role: me.data.role,
+    profileUrl: me.data.profileUrl,
   })
 }
 

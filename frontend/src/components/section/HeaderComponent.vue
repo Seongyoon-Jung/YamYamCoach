@@ -69,7 +69,7 @@
               role="button"
               data-bs-toggle="dropdown"
             >
-              <img src="/default-avatar.png" class="rounded-circle" width="32" height="32" />
+              <img :src="user.profileUrl" class="rounded-circle" width="32" height="32" />
               <span class="mx-2">{{ user.username }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -123,7 +123,6 @@ onMounted(async () => {
   try {
     const res = await axios.get(`/api/news/${personaId}`)
     newsList.value = res.data
-    console.log(res.data)
   } catch (err) {
     console.error(err)
   }
