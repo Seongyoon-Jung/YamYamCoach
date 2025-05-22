@@ -23,7 +23,10 @@
             class="nav-item d-flex align-items-center ms-3"
             style="height: 1.5rem; overflow: hidden; width: 500px"
           >
-            <router-link to="/news" class="text-decoration-none badge bg-light text-primary me-2"
+            <router-link
+              v-if="isLoggedIn"
+              to="/news"
+              class="text-decoration-none badge bg-light text-primary me-2"
               >나의 맞춤 뉴스</router-link
             >
             <div style="height: 1.5rem; overflow: hidden; position: relative">
@@ -66,7 +69,7 @@
               role="button"
               data-bs-toggle="dropdown"
             >
-              <img src="/default-avatar.png" class="rounded-circle" width="32" height="32" />
+              <img :src="user.profileUrl" class="rounded-circle" width="32" height="32" />
               <span class="mx-2">{{ user.username }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -120,7 +123,6 @@ onMounted(async () => {
   try {
     const res = await axios.get(`/api/news/${personaId}`)
     newsList.value = res.data
-    console.log(res.data)
   } catch (err) {
     console.error(err)
   }

@@ -10,4 +10,6 @@ public interface NewsRepository extends JpaRepository<NewsEntity, Integer> {
 	List<NewsEntity> findAllByOrderByDateDesc();
 	
 	List<NewsEntity> findAllByTagsOrderByDateDesc(String tags);
+	
+	boolean existsByNewsUrl(String newsUrl);
 }

@@ -41,9 +41,12 @@ public class UserEntity {
     @JoinColumn(name = "persona_id")
     private PersonaEntity persona;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ROLE_USER'")
     private String role = "ROLE_USER";
 
+    @Column(nullable = false, length = 255, columnDefinition = "VARCHAR(255) DEFAULT 'https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png'")
+    private String profileUrl = "https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png";
+    
 
     public UserEntity() {}
 
@@ -58,6 +61,7 @@ public class UserEntity {
         this.weight = weight;
         this.targetWeight = targetWeight;
         this.role = "ROLE_USER";
+        this.profileUrl = "https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png";
     }
 
     // Static Factory Method for Signup
@@ -174,7 +178,16 @@ public class UserEntity {
         this.persona = persona;
     }
 
-    @Override
+
+	public String getProfileUrl() {
+		return profileUrl;
+	}
+
+	public void setProfileUrl(String profileUrl) {
+		this.profileUrl = profileUrl;
+	}
+
+	@Override
     public String toString() {
         return "UserEntity{" +
             "userId=" + userId +

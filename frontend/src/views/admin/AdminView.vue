@@ -9,10 +9,12 @@
           <router-link to="/admin" class="nav-link text-white">Dashboard</router-link>
         </li>
         <li class="nav-item mb-2">
-          <router-link to="/admin/users" class="nav-link text-white">사용자 관리</router-link>
+          <router-link to="/admin/diet" class="nav-link text-white">점심 메뉴 관리</router-link>
         </li>
         <li class="nav-item mb-2">
-          <router-link to="/admin/diet-upload" class="nav-link text-white">식단 입력</router-link>
+          <router-link to="/admin/diet-upload" class="nav-link text-white"
+            >점심 메뉴 자동 입력</router-link
+          >
         </li>
         <!-- 더 추가 가능 -->
       </ul>

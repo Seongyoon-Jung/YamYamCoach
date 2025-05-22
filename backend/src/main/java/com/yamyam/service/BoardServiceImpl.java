@@ -36,6 +36,7 @@ public class BoardServiceImpl implements BoardService{
 			data.add(new BoardResponse(
 					board.getBoardId(),
 					board.getUser().getUsername(),
+					board.getUser().getProfileUrl(),
 					board.getTitle(),
 					board.getContent(),
 					board.getCreatedAt(),
@@ -65,6 +66,7 @@ public class BoardServiceImpl implements BoardService{
 		BoardResponse data = new BoardResponse(
 								board.getBoardId(),
 								board.getUser().getUsername(),
+								board.getUser().getProfileUrl(),
 								board.getTitle(),
 								board.getContent(),
 								board.getCreatedAt(),

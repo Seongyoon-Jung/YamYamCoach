@@ -80,7 +80,7 @@
 
             <!-- 이미지: 캐릭터 일러스트 -->
             <img
-              :src="`/survey/${dietType}.png`"
+              :src="`https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/${dietType}.png`"
               alt="결과 캐릭터"
               class="result-img mb-3 mx-auto d-block"
               width="50%;"
@@ -201,79 +201,45 @@ async function submitSurvey() {
     username: me.data.username,
     personaId: me.data.personaId,
     role: me.data.role,
+    profileUrl: me.data.profileUrl,
   })
 }
 
 //설문 결과를 바탕으로 타입을 특정하기 위한 함수
 function result() {
-  const modifyAnswer = [0, 2, 5, 8, 10]
+  // 1) 응답 인덱스(0~4) → 실제 점수(1~5) 매핑
+  const scores = answers.value.map((idx) => idx + 1)
 
-  // 질병 초기 점수
-  const diseaseScore = {
-    obesity: 0,
-    diabetes: 0,
-    hypertension: 0,
-    hyperlipidemia: 0,
+  // 2) 각 질병 태그별 문항 매핑 (1-based index)
+  const tagQuestions = {
+    obesity: [2, 4, 5, 12, 13],
+    diabetes: [5, 9, 12, 13],
+    hypertension: [12, 17, 19, 13],
+    hyperlipidemia: [8, 9, 17, 19],
   }
 
-  // 각 질문이 어떤 질병에 영향을 주는지 정의
-  const weightMap = {
-    1: ['obesity'],
-    2: ['obesity'], // *감점 질문*
-    3: ['obesity'],
-    4: ['obesity'],
-    5: ['obesity', 'diabetes'],
-    6: ['hyperlipidemia'], // *감점 질문*
-    7: [],
-    8: ['obesity', 'hyperlipidemia'],
-    9: ['obesity', 'diabetes'],
-    10: ['diabetes'], // *감점 질문*
-    11: [],
-    12: ['obesity', 'hypertension'],
-    13: ['obesity'],
-    14: ['obesity'], // *감점 질문*
-    15: ['hypertension', 'diabetes'], // *감점 질문*
-    16: ['obesity', 'diabetes', 'hypertension', 'hyperlipidemia'],
-    17: ['hypertension'],
-    18: ['hypertension', 'hyperlipidemia'],
-    19: ['hypertension', 'hyperlipidemia'],
-    20: [], // *감점 질문*
+  // 3) 태그별 평균 점수 계산
+  const tagScores = {}
+  for (const [tag, qs] of Object.entries(tagQuestions)) {
+    const sum = qs.reduce((acc, q) => acc + scores[q - 1], 0)
+    tagScores[tag] = sum / qs.length
   }
 
-  // 감점 기준 질문 번호
-  const negativeQuestions = [2, 6, 10, 14, 15, 20]
+  // 4) 각 페르소나 점수 계산: 페르소나가 가진 태그들의 평균 점수 합
+  let best = { personaId: null, score: -Infinity }
+  results.value.forEach((p) => {
+    const tags = p.diseaseTags ? p.diseaseTags.split(',').filter((t) => t.trim()) : []
+    // 태그가 없으면(헬시 히어로) score = 0
+    const personaScore = tags.length ? tags.reduce((acc, t) => acc + (tagScores[t] || 0), 0) : 0
 
-  // 점수 계산
-  for (let i = 0; i < 20; i++) {
-    const questionIdx = i + 1
-    const score = modifyAnswer[answers.value[i]]
-    const related = weightMap[questionIdx]
-
-    for (const disease of related) {
-      if (negativeQuestions.includes(questionIdx)) {
-        diseaseScore[disease] -= score
-      } else {
-        diseaseScore[disease] += score
-      }
+    if (personaScore > best.score) {
+      best = { personaId: p.personaId, score: personaScore }
     }
-  }
+  })
 
-  // 위험군 추출
-  const riskDiseases = Object.entries(diseaseScore)
-    .filter(([_, score]) => score >= 20)
-    .map(([d]) => d)
-    .sort()
-    .join(',')
-
-  // 결과 페르소나 매핑 (results.value에서 동적으로 구성)
-  const personaMap = {}
-  for (const p of results.value) {
-    personaMap[p.diseaseTags || ''] = p.personaId
-  }
-
-  return personaMap[riskDiseases] || 1 // 기본형: 헬시 히어로
+  // 5) 최고 점수 페르소나 반환 (없으면 기본 1번)
+  return best.personaId || results.value[0].personaId
 }
-
 function handleEnterKey(e) {
   if (e.key !== 'Enter') return
 

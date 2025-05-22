@@ -510,8 +510,6 @@ def recommend_dinner_api():
         logger.info(f"요청 수신 시간: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info(f"요청 데이터: {pprint.pformat(request_data)}")
 
-        save_request_log(request_data) # 요청 로그 파일에 저장
-
         user_info = request_data.get('user', {})
         # API 요청에서는 'nutrients'로 오고, recSys_demo는 'lunch_nutrients'를 기대
         lunch_nutrients = request_data.get('nutrients', {}) 
@@ -611,17 +609,6 @@ def recommend_dinner_api():
     except Exception as e:
         logger.exception("추천 API 처리 중 알 수 없는 오류 발생")
         return jsonify({"error": "추천 처리 중 서버 내부 오류 발생", "message": "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}), 500
-
-def save_request_log(request_data):
-    try:
-        with open(LOG_FILE, 'a', encoding='utf-8') as f: # encoding 명시
-            log_entry = {
-                "timestamp": datetime.datetime.now().isoformat(),
-                "data": request_data
-            }
-            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n") # ensure_ascii=False for Korean
-    except Exception as e:
-        logger.error(f"로그 저장 중 오류: {str(e)}", exc_info=True)
 
 if __name__ == '__main__':
     # 1. 데이터베이스 초기화 및 CSV 데이터 적재 (서버 시작 시 1회)

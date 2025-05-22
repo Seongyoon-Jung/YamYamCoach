@@ -9,7 +9,7 @@
       <!-- 사용자 정보 -->
       <div class="d-flex align-items-center mb-2">
         <img
-          src="/default-avatar.png"
+          :src="board.profileUrl"
           alt="프로필"
           class="rounded-circle me-2"
           width="40"
@@ -72,7 +72,7 @@
             <!-- 왼쪽: 프로필 + 본문 -->
             <div class="d-flex align-items-center">
               <img
-                :src="comment.avatarUrl || '/default-avatar.png'"
+                :src="comment.profileUrl"
                 alt="프로필"
                 class="rounded-circle me-3"
                 width="40"
