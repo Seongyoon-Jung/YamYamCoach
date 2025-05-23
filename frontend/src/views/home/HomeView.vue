@@ -60,29 +60,37 @@
         <hr />
 
         <!-- 차트 + 사이드 정보 -->
-        <div class="row mb-4 align-items-stretch">
-          <div class="col-md-4 d-flex">
-            <div class="w-100 h-100">
-              <TodayDiet ref="TodayDiet" />
+        <div class="row">
+          <!-- 1행 1열: TodayDiet + DinnerRecommendation -->
+          <div class="col-md-8 mb-4">
+            <div class="row h-466">
+              <div class="col-md-6">
+                <div class="h-100">
+                  <TodayDiet ref="TodayDiet" />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="h-100">
+                  <DinnerRecommendation ref="DinnerRecommendation" />
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-4 d-flex">
-            <div class="w-100 h-100">
-              <DinnerRecommendation ref="DinnerRecommendation" />
-            </div>
-          </div>
-          <div class="col-md-4 d-flex">
-            <div class="w-100 h-100">
+          <!-- 1행 2열: Information -->
+          <div class="col-md-4 mb-0">
+            <div class="h-300">
               <Information ref="Information" />
             </div>
           </div>
         </div>
 
         <div class="row">
-          <div class="col-md-8">
+          <!-- 2행 1열: MainChart -->
+          <div class="col-md-8 mb-4">
             <MainChart ref="MainChart" />
           </div>
-          <div class="col-md-4 d-flex justify-content-center align-items-start">
+          <!-- 2행 2열: Calendar -->
+          <div class="col-md-4">
             <Calendar ref="Calendar" />
           </div>
         </div>
@@ -131,5 +139,17 @@ const isLoggedIn = computed(() => !!username.value)
 .section-title {
   font-size: 2rem;
   font-weight: 600;
+}
+
+.h-466 {
+  height: 466px;
+}
+
+.h-300 {
+  height: 300px;
+}
+
+.h-100 {
+  height: 100%;
 }
 </style>
