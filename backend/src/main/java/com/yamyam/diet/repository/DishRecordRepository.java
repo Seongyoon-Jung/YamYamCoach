@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DishRecordRepository extends JpaRepository<DishRecord, Integer> {
@@ -40,4 +41,11 @@ public interface DishRecordRepository extends JpaRepository<DishRecord, Integer>
     // 특정 스케줄의 모든 기록 삭제
     @Modifying
     void deleteByUserIdAndScheduleId(Integer userId, Integer scheduleId);
+
+    // 사용자의 가장 최근 recordedAt 시간 조회
+    @Query("SELECT MAX(dr.recordedAt) FROM DishRecord dr WHERE dr.userId = :userId")
+    Optional<LocalDateTime> findLatestRecordedAtByUserId(@Param("userId") Integer userId);
+
+    // 특정 사용자의 특정 recordedAt 시간에 해당하는 모든 DishRecord 조회
+    List<DishRecord> findByUserIdAndRecordedAt(Integer userId, LocalDateTime recordedAt);
 }

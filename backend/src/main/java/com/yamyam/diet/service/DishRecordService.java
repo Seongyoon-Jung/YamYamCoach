@@ -484,4 +484,92 @@ public class DishRecordService {
         
         return nutrientsMap;
     }
+
+    /**
+     * 특정 날짜의 식사 기록을 조회합니다.
+     * @param userId 사용자 ID
+     * @param startOfDay 조회 시작 시간 (해당 날짜의 00:00:00)
+     * @param endOfDay 조회 종료 시간 (해당 날짜의 23:59:59)
+     * @return 해당 날짜의 식사 기록 목록
+     */
+    public List<Map<String, Object>> getRecordsByDateRange(Integer userId, LocalDateTime startOfDay, LocalDateTime endOfDay) {
+        logger.info("사용자 ID [{}]의 날짜 범위 [{}] ~ [{}] 식사 기록 조회", userId, startOfDay, endOfDay);
+        
+        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, startOfDay, endOfDay);
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        for (DishRecord record : records) {
+            Map<String, Object> mealInfo = new HashMap<>();
+            mealInfo.put("recordId", record.getRecordId());
+            mealInfo.put("courseType", record.getCourseType().toLowerCase());
+            mealInfo.put("recordedAt", record.getRecordedAt());
+            
+            // 음식 정보 조회
+            Optional<Dish> dish = dishRepository.findById(record.getDishId());
+            if (dish.isPresent()) {
+                mealInfo.put("dishName", dish.get().getDishName());
+            } else {
+                mealInfo.put("dishName", "알 수 없는 음식");
+            }
+            
+            result.add(mealInfo);
+        }
+        
+        logger.info("사용자 ID [{}]의 날짜 범위 [{}] ~ [{}] 식사 기록 {}건 조회 완료", 
+                userId, startOfDay, endOfDay, result.size());
+        return result;
+    }
+
+    /**
+     * 사용자의 가장 최근에 저장된 시간의 모든 식단을 조회합니다.
+     * @param userId 사용자 ID
+     * @return 가장 최근 식단 세션의 기록 목록 (Dish 정보 포함)
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getLatestMealSessionRecords(Integer userId) {
+        logger.info("사용자 ID [{}]의 가장 최근 식단 세션 기록 조회 시도", userId);
+
+        Optional<LocalDateTime> latestRecordedAtOpt = dishRecordRepository.findLatestRecordedAtByUserId(userId);
+
+        if (latestRecordedAtOpt.isEmpty()) {
+            logger.info("사용자 ID [{}]에 대한 식단 기록이 없어 최근 세션을 조회할 수 없음", userId);
+            return new ArrayList<>(); // 기록이 없으면 빈 리스트 반환
+        }
+
+        LocalDateTime latestRecordedAt = latestRecordedAtOpt.get();
+        logger.info("사용자 ID [{}]의 가장 최근 기록 시간: {}", userId, latestRecordedAt);
+
+        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAt(userId, latestRecordedAt);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (records.isEmpty()) {
+            logger.warn("사용자 ID [{}]의 가장 최근 시간 [{}]에 해당하는 기록이 실제로 존재하지 않음. 데이터 불일치 가능성.", userId, latestRecordedAt);
+            return result; // 이론적으로는 발생하기 어렵지만, 방어 코드
+        }
+        
+        String courseTypeForSession = records.get(0).getCourseType(); // 세션의 코스 타입은 동일하다고 가정
+
+        for (DishRecord record : records) {
+            Map<String, Object> mealInfo = new HashMap<>();
+            mealInfo.put("recordId", record.getRecordId());
+            mealInfo.put("scheduleId", record.getScheduleId()); 
+            mealInfo.put("dishId", record.getDishId());
+            mealInfo.put("courseType", record.getCourseType().toLowerCase()); 
+            mealInfo.put("recordedAt", record.getRecordedAt());
+
+            Optional<Dish> dishOpt = dishRepository.findById(record.getDishId());
+            if (dishOpt.isPresent()) {
+                Dish dish = dishOpt.get();
+                mealInfo.put("dishName", dish.getDishName());
+                // 필요하다면 다른 Dish 정보(영양소 등)도 추가 가능
+            } else {
+                mealInfo.put("dishName", "알 수 없는 음식");
+            }
+            result.add(mealInfo);
+        }
+
+        logger.info("사용자 ID [{}]의 가장 최근 식단 세션 ({} 코스, 시간: {}) 기록 {}건 조회 완료", 
+                userId, courseTypeForSession, latestRecordedAt, result.size());
+        return result;
+    }
 }

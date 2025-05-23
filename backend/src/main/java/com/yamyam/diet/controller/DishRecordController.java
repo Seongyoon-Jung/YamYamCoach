@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -227,6 +228,78 @@ public class DishRecordController {
             logger.error("5일간 식단 기록 조회 중 오류 발생 (사용자 ID: {})", principal.getUserId(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "기록 조회 중 오류 발생: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 특정 날짜의 식사 기록을 조회합니다.
+     * @param principal 인증된 사용자 정보
+     * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+     * @return 해당 날짜의 식사 기록 목록
+     */
+    @GetMapping("/date/{date}")
+    public ResponseEntity<?> getRecordsByDate(
+            @AuthenticationPrincipal SecurityAccount principal,
+            @PathVariable String date) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "인증되지 않은 사용자입니다."));
+        }
+
+        try {
+            int userId = principal.getUserId();
+            logger.info("사용자 ID [{}]의 날짜 [{}] 식사 기록 조회 요청", userId, date);
+            
+            // 날짜 파싱
+            LocalDate targetDate = LocalDate.parse(date);
+            LocalDateTime startOfDay = targetDate.atStartOfDay();
+            LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
+
+            // 서비스 메서드 호출
+            List<Map<String, Object>> records = dishRecordService.getRecordsByDateRange(userId, startOfDay, endOfDay);
+            
+            // 시간순으로 정렬
+            records.sort((r1, r2) -> {
+                LocalDateTime time1 = (LocalDateTime) r1.get("recordedAt");
+                LocalDateTime time2 = (LocalDateTime) r2.get("recordedAt");
+                return time1.compareTo(time2);
+            });
+            
+            logger.info("사용자 ID [{}]의 날짜 [{}] 식사 기록 {}건 조회 완료", userId, date, records.size());
+            return ResponseEntity.ok(records);
+        } catch (Exception e) {
+            logger.error("날짜별 식사 기록 조회 중 오류 발생 (사용자 ID: {}, 날짜: {})", principal.getUserId(), date, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "식사 기록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 사용자의 가장 최근에 저장된 시간의 모든 식단을 조회합니다.
+     * @param principal 인증된 사용자 정보
+     * @return 가장 최근 식단 세션의 기록 목록
+     */
+    @GetMapping("/latest-session")
+    public ResponseEntity<?> getLatestMealSessionRecords(@AuthenticationPrincipal SecurityAccount principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "인증되지 않은 사용자입니다."));
+        }
+        try {
+            int userId = principal.getUserId();
+            logger.info("사용자 ID [{}]의 가장 최근 식단 세션 기록 조회 요청", userId);
+            List<Map<String, Object>> records = dishRecordService.getLatestMealSessionRecords(userId);
+            
+            if (records.isEmpty()) {
+                // 데이터가 없는 경우 빈 배열 또는 적절한 메시지와 함께 200 OK 반환
+                return ResponseEntity.ok(new ArrayList<>()); 
+            }
+            
+            return ResponseEntity.ok(records);
+        } catch (Exception e) {
+            logger.error("가장 최근 식단 세션 기록 조회 중 오류 발생 (사용자 ID: {})", principal.getUserId(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "최근 식단 세션 조회 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 
