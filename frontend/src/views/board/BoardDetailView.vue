@@ -2,19 +2,13 @@
   <div class="container py-5">
     <div v-if="board">
       <h2 class="mb-4">{{ board.title }}</h2>
-      <img :src="board.imageUrl" class="img-fluid mb-3" />
+      <img :src="imageUrl" class="img-fluid mb-3" />
       <!-- 날짜 -->
       <h4 class="mb-3 text-start">{{ formatDate(board.createdAt) }}</h4>
       <hr />
       <!-- 사용자 정보 -->
       <div class="d-flex align-items-center mb-2">
-        <img
-          :src="board.profileUrl"
-          alt="프로필"
-          class="rounded-circle me-2"
-          width="40"
-          height="40"
-        />
+        <img :src="profileUrl" alt="프로필" class="rounded-circle me-2" width="40" height="40" />
         <div class="flex-grow-1 text-start">
           <strong>{{ board.username }}</strong>
         </div>
@@ -72,7 +66,7 @@
             <!-- 왼쪽: 프로필 + 본문 -->
             <div class="d-flex align-items-center">
               <img
-                :src="comment.profileUrl"
+                :src="commentProfileUrls"
                 alt="프로필"
                 class="rounded-circle me-3"
                 width="40"
@@ -145,6 +139,10 @@ const comments = ref([])
 const newComment = ref('')
 const modify = ref([])
 
+const imageUrl = ref('')
+const profileUrl = ref('')
+const commentProfileUrls = ref([])
+
 onMounted(async () => {
   const id = route.params.id
 
@@ -152,6 +150,23 @@ onMounted(async () => {
     const res = await axios.get(`/api/board/${id}?hit=true`)
     board.value = res.data
     document.title = `${board.value.title} - 냠냠코치`
+
+    // 게시글 이미지 presigned URL
+    if (board.value.imageUrl) {
+      const res = await axios.get('/api/s3/get-url', {
+        params: { filename: board.value.imageUrl },
+      })
+      imageUrl.value = res.data
+    }
+
+    // 작성자 프로필 presigned URL
+    if (board.value.profileUrl) {
+      const res = await axios.get('/api/s3/get-url', {
+        params: { filename: board.value.profileUrl },
+      })
+      profileUrl.value = res.data
+    }
+
     modify.value = new Array(board.value.length).fill(false)
   } catch (err) {
     router.push('/error')
@@ -160,8 +175,26 @@ onMounted(async () => {
   try {
     const res = await axios.get(`/api/comment/${id}`)
     comments.value = res.data
-  } catch (err) {
-    console.log('실패')
+
+    // 각 댓글의 프로필 이미지 presigned URL 받아오기
+    const urls = await Promise.all(
+      comments.value.map(async (comment) => {
+        if (comment.profileUrl) {
+          try {
+            const res = await axios.get('/api/s3/get-url', {
+              params: { filename: comment.profileUrl },
+            })
+            return res.data
+          } catch {
+            return null
+          }
+        }
+        return null
+      }),
+    )
+    commentProfileUrls.value = urls
+  } catch {
+    console.log('댓글 로딩 실패')
   }
 })
 

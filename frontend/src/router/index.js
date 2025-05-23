@@ -24,6 +24,10 @@ const routes = [
       },
       {
         path: 'diet-upload',
+        component: () => import('../components/admin/AdminDiet.vue'),
+      },
+      {
+        path: 'diet-upload',
         component: () => import('../components/admin/AdminDietUpload.vue'),
       },
     ],

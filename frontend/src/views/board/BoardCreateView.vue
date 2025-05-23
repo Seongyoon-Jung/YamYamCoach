@@ -77,24 +77,41 @@ const handleImageUpload = (e) => {
 
 const submitPost = async () => {
   try {
-    const formData = new FormData()
+    let imageKey = null
 
+    if (imageFile.value) {
+      const file = imageFile.value
+      const uuid = crypto.randomUUID()
+      const fileName = `uploads/board/${uuid}-${file.name}`
+
+      // 1. presigned PUT URL 요청
+      const putUrlRes = await axios.get('/api/s3/put-url', {
+        params: { fileName },
+      })
+      const putUrl = putUrlRes.data
+      console.log(putUrl)
+      // 2. S3에 직접 업로드
+      await fetch(putUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      })
+
+      // 3. 업로드 성공 후 fileName 저장
+      imageKey = fileName
+    }
+
+    // 4. 게시글 데이터 전송
     const dto = {
       username: accountStore.username,
       title: title.value,
       content: content.value,
-    }
-    formData.append('board', new Blob([JSON.stringify(dto)], { type: 'application/json' }))
-
-    if (imageFile.value) {
-      formData.append('file', imageFile.value)
+      imageUrl: imageKey, // 이미지 없으면 null
     }
 
-    await axios.post('/api/board', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    await axios.post('/api/board', dto)
 
     router.push('/board')
   } catch (err) {

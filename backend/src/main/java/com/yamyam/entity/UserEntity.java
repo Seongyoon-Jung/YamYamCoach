@@ -44,8 +44,8 @@ public class UserEntity {
     @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ROLE_USER'")
     private String role = "ROLE_USER";
 
-    @Column(nullable = false, length = 255, columnDefinition = "VARCHAR(255) DEFAULT 'https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png'")
-    private String profileUrl = "https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png";
+    @Column(nullable = false, length = 255, columnDefinition = "VARCHAR(255) DEFAULT 'uploads/user/default-avatar.png'")
+    private String profileUrl = "uploads/user/default-avatar.png";
     
 
     public UserEntity() {}

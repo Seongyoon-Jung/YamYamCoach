@@ -37,12 +37,25 @@ async function bootstrap() {
         profileUrl: '',
       })
     } else {
+      let profileUrl = res.data.profileUrl
+
+      // presigned URL 요청
+      if (profileUrl) {
+        try {
+          const presigned = await axios.get('/api/s3/get-url', {
+            params: { filename: profileUrl },
+          })
+          profileUrl = presigned.data
+        } catch (err) {
+          console.warn('Presigned URL 요청 실패:', err)
+        }
+      }
       accountStore.setAccount({
         userId: res.data.userId,
         username: res.data.username,
         personaId: res.data.personaId,
         role: res.data.role,
-        profileUrl: res.data.profileUrl,
+        profileUrl: profileUrl,
       })
     }
   } catch (e) {}
