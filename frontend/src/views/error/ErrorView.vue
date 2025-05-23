@@ -1,12 +1,12 @@
 <template>
   <div class="cli-error d-flex justify-content-center align-items-center min-vh-100">
     <pre class="cli-text text-start">
-$ remember --crew "SSAFY 12기 12반"
-✅ 메모리에 저장되었습니다. SSAFY_12기_12반.기억
+$ remember --crew "SSAFY 13기 12반"
+✅ 메모리에 저장되었습니다. SSAFY_13기_12반.기억
 
-$ run ./forever-12기-12반
+$ run ./forever-13기-12반
 
-<span class="text-danger">❗ Error 404:</span>  SSAFY 12기 12반의 흔적은 이 경로에 없지만...
+<span class="text-danger">❗ Error 404:</span>  SSAFY 13기 12반의 흔적은 이 경로에 없지만...
 💡 우리는 영원히 메모리에 남아있습니다.
 
 [ Tip ] 홈으로 가려면 아래 명령어를 입력하세요:
