@@ -49,7 +49,7 @@
       <!-- ─── 사이드바 ───────────────────────────────────────────────────────────── -->
 
       <!-- ─── 메인 컨텐츠 ───────────────────────────────────────────────────────── -->
-      <main class="flex-grow-1 overflow-auto p-4">
+      <main class="flex-grow-1 p-4">
         <!-- 인사+날짜/시간 -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2 class="mb-0">
@@ -62,8 +62,8 @@
         <!-- 차트 + 사이드 정보 -->
         <div class="row">
           <!-- 1행 1열: TodayDiet + DinnerRecommendation -->
-          <div class="col-md-8 mb-4">
-            <div class="row h-466">
+          <div class="col-md-8 mb-4" style="min-height: 500px">
+            <div class="row">
               <div class="col-md-6">
                 <div class="h-100">
                   <TodayDiet ref="TodayDiet" />
@@ -74,24 +74,21 @@
                   <DinnerRecommendation ref="DinnerRecommendation" />
                 </div>
               </div>
+              <div class="pt-4">
+                <MainChart ref="MainChart" />
+              </div>
             </div>
           </div>
           <!-- 1행 2열: Information -->
           <div class="col-md-4 mb-0">
-            <div class="h-320">
-              <Information ref="Information" />
+            <div class="d-flex flex-column gap-3 h-100">
+              <div>
+                <Information ref="Information" />
+              </div>
+              <div>
+                <Calendar ref="Calendar" />
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <!-- 2행 1열: MainChart -->
-          <div class="col-md-8 mb-4">
-            <MainChart ref="MainChart" />
-          </div>
-          <!-- 2행 2열: Calendar -->
-          <div class="col-md-4">
-            <Calendar ref="Calendar" />
           </div>
         </div>
       </main>
