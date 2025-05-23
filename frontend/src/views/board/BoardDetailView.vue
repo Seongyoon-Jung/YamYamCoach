@@ -66,7 +66,7 @@
             <!-- 왼쪽: 프로필 + 본문 -->
             <div class="d-flex align-items-center">
               <img
-                :src="commentProfileUrls"
+                :src="commentProfileUrls[index]"
                 alt="프로필"
                 class="rounded-circle me-3"
                 width="40"
@@ -207,6 +207,7 @@ const submitComment = async function () {
   if (newComment.value === '') {
     return
   }
+
   const post = {
     boardId: route.params.id,
     username: accountStore.username,
@@ -217,6 +218,21 @@ const submitComment = async function () {
     const res = await axios.post('/api/comment', post)
     comments.value.unshift(res.data)
     modify.value.unshift(false)
+
+    // 새로 작성한 댓글의 프로필 이미지 presigned URL도 추가
+    if (res.data.profileUrl) {
+      try {
+        const urlRes = await axios.get('/api/s3/get-url', {
+          params: { filename: res.data.profileUrl },
+        })
+        commentProfileUrls.value.unshift(urlRes.data)
+      } catch {
+        commentProfileUrls.value.unshift(null)
+      }
+    } else {
+      commentProfileUrls.value.unshift(null)
+    }
+
     newComment.value = ''
   } catch (err) {
     router.push('/error')
