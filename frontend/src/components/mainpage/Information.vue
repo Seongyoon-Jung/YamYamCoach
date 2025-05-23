@@ -1,6 +1,6 @@
 <template>
-  <div class="col-12">
-    <div class="card shadow-sm">
+  <div class="col-12 info-section-low mb-5">
+    <div class="card shadow-sm info-card-low">
       <!-- 헤더 -->
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h6 class="mb-0">건강 정보</h6>
@@ -12,11 +12,11 @@
       </div>
 
       <!-- 본문 -->
-      <div class="card-body p-3">
-        <div class="row gx-3 gy-4">
+      <div class="card-body info-card-body-low p-3">
+        <div class="row gx-3 gy-2">
           <!-- 운동시간 -->
           <div class="col-6 text-center">
-            <div class="d-flex align-items-center justify-content-center mb-2">
+            <div class="d-flex align-items-center justify-content-center mb-1">
               <button
                 class="btn btn-sm btn-outline-danger me-2 control-btn"
                 @click="updateExerciseMinutes(-10)"
@@ -31,7 +31,7 @@
                 +
               </button>
             </div>
-            <div class="d-inline-block position-relative" style="width: 100px; height: 100px">
+            <div class="d-inline-block position-relative" style="width: 90px; height: 90px">
               <DonutChart
                 :value="healthData.exerciseMinutes"
                 :max="targetExerciseMinutes"
@@ -43,7 +43,7 @@
 
           <!-- 물 섭취 -->
           <div class="col-6 text-center">
-            <div class="d-flex align-items-center justify-content-center mb-2">
+            <div class="d-flex align-items-center justify-content-center mb-1">
               <button
                 class="btn btn-sm btn-outline-danger me-2 control-btn"
                 @click="updateWaterIntake(-100)"
@@ -58,7 +58,7 @@
                 +
               </button>
             </div>
-            <div class="d-inline-block position-relative" style="width: 100px; height: 100px">
+            <div class="d-inline-block position-relative" style="width: 90px; height: 90px">
               <DonutChart
                 :value="waterIntakeLiters"
                 :max="targetWaterLiters"
@@ -70,8 +70,8 @@
           </div>
 
           <!-- 오늘 수면 시간 -->
-          <div class="col-12">
-            <div class="d-flex align-items-center justify-content-center mb-2">
+          <div class="col-12 mt-3">
+            <div class="d-flex align-items-center justify-content-center mb-1">
               <button
                 class="btn btn-sm btn-outline-danger me-2 control-btn"
                 @click="updateSleepMinutes(-30)"
@@ -88,8 +88,8 @@
                 +
               </button>
             </div>
-            <div class="sleep-bar-chart mt-2">
-              <div class="progress" style="height: 20px">
+            <div class="sleep-bar-chart mt-1">
+              <div class="progress" style="height: 18px">
                 <div
                   class="progress-bar bg-info"
                   role="progressbar"
@@ -535,10 +535,28 @@ onUnmounted(() => {})
 </script>
 
 <style scoped>
-.sleep-bar-chart {
-  height: 30px;
+.info-section-low {
+  max-height: 340px;
+  min-height: 0;
+  height: 340px;
+  padding-bottom: 0;
 }
-
+.info-card-low {
+  max-height: 320px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.info-card-body-low {
+  max-height: 240px;
+  min-height: 0;
+  height: 240px;
+  overflow: hidden;
+  padding-bottom: 0 !important;
+}
+.sleep-bar-chart {
+  height: 18px;
+}
 .chart-placeholder {
   background-color: #f8f9fa;
   border-radius: 50%;
@@ -550,15 +568,13 @@ onUnmounted(() => {})
   color: #6c757d;
   font-size: 0.8rem;
 }
-
 .info-title {
   font-weight: 700;
   font-size: 0.95rem;
 }
-
 .control-btn {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -566,12 +582,10 @@ onUnmounted(() => {})
   font-weight: bold;
   font-size: 1rem;
 }
-
 .nav-link {
   cursor: pointer;
   color: #495057;
 }
-
 .nav-link.active {
   color: #007bff;
   font-weight: 500;
