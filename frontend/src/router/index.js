@@ -102,7 +102,7 @@ const routes = [
   },
   {
     path: '/error',
-    name: 'notFound',
+    name: 'Error',
     component: () => import('../views/error/ErrorView.vue'),
     meta: { title: '에러' },
   },
