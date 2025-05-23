@@ -60,34 +60,33 @@
         <hr />
 
         <!-- 차트 + 사이드 정보 -->
-        <div class="row">
-          <!-- 1행 1열: TodayDiet + DinnerRecommendation -->
-          <div class="col-md-8 mb-4" style="min-height: 500px">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="h-100">
-                  <TodayDiet ref="TodayDiet" />
-                </div>
+        <!-- 전체를 화면 높이만큼 채움 -->
+        <div class="row gx-3">
+          <!-- 왼쪽 (8칸) -->
+          <div class="col-md-8 d-flex flex-column" style="gap: 1rem">
+            <!-- TodayDiet + DinnerRecommendation (가로 1:1) -->
+            <div class="d-flex" style="flex: 2; gap: 1rem">
+              <div class="flex-fill">
+                <TodayDiet ref="TodayDiet" class="h-100" />
               </div>
-              <div class="col-md-6">
-                <div class="h-100">
-                  <DinnerRecommendation ref="DinnerRecommendation" />
-                </div>
-              </div>
-              <div class="pt-4">
-                <MainChart ref="MainChart" />
+              <div class="flex-fill">
+                <DinnerRecommendation ref="DinnerRecommendation" class="h-100" />
               </div>
             </div>
+
+            <!-- MainChart -->
+            <div style="flex: 3">
+              <MainChart ref="MainChart" class="h-100" />
+            </div>
           </div>
-          <!-- 1행 2열: Information -->
-          <div class="col-md-4 mb-0">
-            <div class="d-flex flex-column gap-3 h-100">
-              <div>
-                <Information ref="Information" />
-              </div>
-              <div>
-                <Calendar ref="Calendar" />
-              </div>
+
+          <!-- 오른쪽 (4칸) -->
+          <div class="col-md-4 d-flex flex-column" style="gap: 1rem">
+            <div style="flex: 1">
+              <Information ref="Information" class="h-100" />
+            </div>
+            <div style="flex: 3">
+              <Calendar ref="Calendar" class="h-100" />
             </div>
           </div>
         </div>
