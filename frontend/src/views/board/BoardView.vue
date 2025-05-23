@@ -76,7 +76,27 @@ const onInputChange = (e) => {
 onMounted(async () => {
   try {
     const res = await axios.get('/api/board')
-    boards.value = res.data
+    const data = res.data
+
+    const withUrls = await Promise.all(
+      data.map(async (board) => {
+        const imageRes = board.imageUrl
+          ? await axios.get('/api/s3/get-url', { params: { filename: board.imageUrl } })
+          : { data: null }
+
+        const profileRes = board.profileUrl
+          ? await axios.get('/api/s3/get-url', { params: { filename: board.profileUrl } })
+          : { data: null }
+
+        return {
+          ...board,
+          imageUrl: imageRes.data,
+          profileUrl: profileRes.data,
+        }
+      }),
+    )
+
+    boards.value = withUrls
   } catch (err) {
     console.error('게시글 로딩 실패', err)
   }

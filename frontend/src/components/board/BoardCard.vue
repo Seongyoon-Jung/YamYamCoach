@@ -2,12 +2,18 @@
 <template>
   <div class="card h-100 shadow-sm border-0" @click="goToDetail" style="cursor: pointer">
     <!-- 대표 이미지 -->
-    <img :src="imageUrl" class="card-img-top" alt="post image" />
+    <img :src="board.imageUrl" class="card-img-top" alt="post image" />
 
     <!-- 카드 본문 -->
     <div class="card-body">
       <div class="d-flex align-items-center mb-2">
-        <img :src="profileUrl" alt="프로필" class="rounded-circle me-2" width="40" height="40" />
+        <img
+          :src="board.profileUrl"
+          alt="프로필"
+          class="rounded-circle me-2"
+          width="40"
+          height="40"
+        />
         <div class="flex-grow-1 text-start">
           <strong>{{ board.username }}</strong>
           <div class="text-muted small text-start">
@@ -54,31 +60,29 @@ const formatDate = (date) => {
   return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-onMounted(async () => {
-  if (props.board.imageUrl) {
-    try {
-      const res = await axios.get('/api/s3/get-url', {
-        params: { filename: props.board.imageUrl },
-      })
-      console.log(res.data)
-      imageUrl.value = res.data
-    } catch (err) {
-      console.error('이미지 presigned URL 가져오기 실패:', err)
-    }
-  }
+// onMounted(async () => {
+//   if (props.board.imageUrl) {
+//     try {
+//       const res = await axios.get('/api/s3/get-url', {
+//         params: { filename: props.board.imageUrl },
+//       })
+//       imageUrl.value = res.data
+//     } catch (err) {
+//       console.error('이미지 presigned URL 가져오기 실패:', err)
+//     }
+//   }
 
-  if (props.board.profileUrl) {
-    try {
-      const res = await axios.get('/api/s3/get-url', {
-        params: { filename: props.board.profileUrl },
-      })
-      console.log(res.data)
-      profileUrl.value = res.data
-    } catch (err) {
-      console.error('프로필 presigned URL 가져오기 실패:', err)
-    }
-  }
-})
+//   if (props.board.profileUrl) {
+//     try {
+//       const res = await axios.get('/api/s3/get-url', {
+//         params: { filename: props.board.profileUrl },
+//       })
+//       profileUrl.value = res.data
+//     } catch (err) {
+//       console.error('프로필 presigned URL 가져오기 실패:', err)
+//     }
+//   }
+// })
 </script>
 
 <style scoped>
