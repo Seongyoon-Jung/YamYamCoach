@@ -2,9 +2,17 @@
   <div class="today-diet-component h-100">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>오늘의 식단</span>
+        <span style="display: flex; align-items: center; gap: 16px">
+          <span style="cursor: pointer; font-size: 1.7rem" @click="moveDate(-1)">
+            <i class="bi bi-arrow-left-circle"></i>
+          </span>
+          <span>{{ todayString }}</span>
+          <span style="cursor: pointer; font-size: 1.7rem" @click="moveDate(1)">
+            <i class="bi bi-arrow-right-circle"></i>
+          </span>
+        </span>
         <div>
-          <button class="btn btn-sm btn-outline-primary" @click="showModal = true">
+          <button class="btn btn-sm btn-outline-primary" @click="openTodayDietModal">
             {{ modalButtonText }}
           </button>
         </div>
@@ -28,6 +36,15 @@
         </div>
         <div v-if="courses && courses.length === 0" class="text-muted mt-3">
           오늘의 식단 정보가 없습니다.
+        </div>
+        <!-- 메인 차트와 캘린더를 같은 행에 배치 -->
+        <div class="row mt-4">
+          <div class="col-md-8">
+            <MainChart />
+          </div>
+          <div class="col-md-4 d-flex justify-content-center align-items-start">
+            <Calendar @dateSelected="fetchCourses" />
+          </div>
         </div>
       </div>
     </div>
@@ -352,9 +369,9 @@ import eventBus from '@/utils/eventBus'
 const isDebugMode = ref(false) // 디버깅 모드 설정 (개발 중에만 true로 변경)
 const showModal = ref(false)
 const selectedCourse = ref('A')
-const courses = ref([]) // 메인 카드(오늘 날짜)
-const modalCourses = ref([]) // 모달에서만 사용하는 식단 데이터
-const selectedDate = ref(new Date()) // 모달에서만 사용하는 날짜
+const courses = ref([])
+const modalCourses = ref([])
+const selectedDate = ref(new Date())
 const selectedDishes = reactive({})
 const selectedCourses = reactive({})
 const selectAllMeals = ref(false)
@@ -475,20 +492,10 @@ const moveDate = (diff) => {
   const newDate = new Date(selectedDate.value)
   newDate.setDate(newDate.getDate() + diff)
   selectedDate.value = newDate
-  fetchModalCourses(newDate)
+  fetchCourses(newDate)
 }
 
-const fetchTodayCourses = async () => {
-  try {
-    const url = '/api/courses/today'
-    const response = await axios.get(url)
-    courses.value = response.data.courses
-  } catch (error) {
-    console.error('오늘의 코스 조회 실패:', error)
-  }
-}
-
-const fetchModalCourses = async (dateObj) => {
+const fetchCourses = async (dateObj) => {
   try {
     let dateParam = ''
     if (dateObj) {
@@ -499,9 +506,10 @@ const fetchModalCourses = async (dateObj) => {
     }
     const url = dateParam === getTodayYMD() ? '/api/courses/today' : `/api/courses/${dateParam}`
     const response = await axios.get(url)
-    modalCourses.value = response.data.courses
+    courses.value = response.data.courses
+    modalCourses.value = response.data.courses // 모달에서 사용할 코스 데이터도 업데이트
   } catch (error) {
-    console.error('모달 코스 조회 실패:', error)
+    console.error('코스 조회 실패:', error)
   }
 }
 
@@ -577,7 +585,7 @@ const handleSave = async () => {
       alert(response.data.message || '식단이 성공적으로 저장되었습니다.')
       showModal.value = false
       isEditMode.value = true
-      fetchTodayCourses() // 데이터 갱신
+      fetchCourses(selectedDate.value) // 데이터 갱신
 
       // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
       setTimeout(() => {
@@ -627,7 +635,7 @@ const handleUpdate = async () => {
     if (response.data.success) {
       alert(response.data.message || '식단이 성공적으로 수정되었습니다.')
       showModal.value = false
-      fetchTodayCourses() // 데이터 갱신
+      fetchCourses(selectedDate.value) // 데이터 갱신
 
       // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
       setTimeout(() => {
@@ -647,7 +655,7 @@ const handleUpdate = async () => {
 
 // 모달 타이틀 버튼 텍스트
 const modalButtonText = computed(() => {
-  return userRecords.value.length > 0 ? '식단 수정하기' : '식단 기록하기'
+  return userRecords.value.length > 0 ? '식단 수정하기' : '상세/기록'
 })
 
 // 다른 코스에서 음식이 선택되었는지 확인하는 함수
@@ -733,7 +741,7 @@ const setInitialCourse = () => {
 }
 
 onMounted(() => {
-  fetchTodayCourses() // 메인 카드용 오늘 식단만 불러옴
+  fetchCourses(selectedDate.value)
   setInitialCourse()
 
   // DinnerRecommendation에서 보내는 이벤트 수신
@@ -806,7 +814,7 @@ watch(
   (val) => {
     if (val) {
       selectedDate.value = new Date() // 오늘 날짜로 초기화
-      fetchModalCourses(selectedDate.value)
+      fetchCourses(selectedDate.value)
     }
   },
 )
@@ -850,6 +858,13 @@ const isToday = computed(() => {
     selectedDate.value.getDate() === today.getDate()
   )
 })
+
+// 모달 열기 핸들러 함수 추가
+const openTodayDietModal = () => {
+  selectedDate.value = new Date()
+  fetchCourses(selectedDate.value)
+  showModal.value = true
+}
 </script>
 
 <style scoped>
@@ -1053,5 +1068,12 @@ const isToday = computed(() => {
 /* 바 차트 애니메이션 */
 .svg-chart .progress-bar {
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-header {
+  min-height: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 </style>
