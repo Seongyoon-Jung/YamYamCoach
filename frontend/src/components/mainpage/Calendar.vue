@@ -1,5 +1,5 @@
 <template>
-  <div class="calendar-modern-outer calendar-rect">
+  <div class="card calendar-modern-outer calendar-rect">
     <div class="calendar-modern-container calendar-rect-container">
       <div class="calendar-modern-header">
         <button class="calendar-nav-btn" @click="prevMonth">&#60;</button>
