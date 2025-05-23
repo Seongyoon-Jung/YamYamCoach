@@ -16,7 +16,7 @@ public interface BoardService {
 	public BoardResponse getBoard(int boardId);
 	
 	//게시글작성
-	public void writeBoard(BoardRequest boardRequest, String imageUrl); 
+	public void writeBoard(BoardRequest boardRequest); 
 
 	// 게시글 수정
 	public void modifyBoard(BoardRequest boardRequest, String imageUrl); 

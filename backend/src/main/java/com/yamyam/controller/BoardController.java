@@ -40,28 +40,9 @@ public class BoardController {
 	}
 
 	@PostMapping("")
-	public void writeBoard(@RequestPart("board") BoardRequest boardRequest,  @RequestPart(value = "file", required = false) MultipartFile file) {
-	    String imageUrl = null;
-
-	    if (file != null && !file.isEmpty()) {
-	        System.out.println("===== 업로드된 파일 정보 =====");
-	        System.out.println("파일명: " + file.getOriginalFilename());
-	        System.out.println("파일 크기: " + file.getSize() + " bytes");
-	        System.out.println("파일 타입: " + file.getContentType());
-
-	        try {
-	            imageUrl = s3UploadService.saveFile(file, "board");
-	        } catch (IOException e) {
-	            System.err.println("파일 업로드 실패: " + e.getMessage());
-	            // 필요한 경우 사용자 정의 예외로 변환하여 던질 수도 있음
-	            throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.");
-	        }
-	    } else {
-	        System.out.println("파일이 업로드되지 않았습니다.");
-	    }
-
+	public void writeBoard(@RequestBody BoardRequest boardRequest) {
 	    // imageUrl을 boardRequest에 담거나, 따로 저장 처리
-	    boardService.writeBoard(boardRequest, imageUrl);
+	    boardService.writeBoard(boardRequest);
 	}
 	
 	// 게시판 글 수정

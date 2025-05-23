@@ -104,13 +104,16 @@ const login = async () => {
 
   try {
     const res = await axios.post('/api/auth/login', result.value)
+    const presigned = await axios.get('/api/s3/get-url', {
+      params: { filename: res.data.profileUrl },
+    })
 
     accountStore.setAccount({
       userId: res.data.userId,
       username: res.data.username,
       personaId: res.data.personaId,
       role: res.data.role,
-      profileUrl: res.data.profileUrl,
+      profileUrl: presigned.data,
     })
 
     if (res.data.role === 'ROLE_ADMIN') {
