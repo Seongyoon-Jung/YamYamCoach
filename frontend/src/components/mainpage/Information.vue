@@ -1,5 +1,5 @@
 <template>
-  <div class="col-12 info-section-low mb-5">
+  <div class="info-section-low">
     <div class="card shadow-sm info-card-low">
       <!-- 헤더 -->
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
