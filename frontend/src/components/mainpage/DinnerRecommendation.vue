@@ -1,5 +1,9 @@
 <template>
-  <div class="dinner-recommendation-component h-100" :key="componentKey">
+  <div
+    class="dinner-recommendation-component h-100"
+    :key="componentKey"
+    style="height: 100%; overflow-y: auto"
+  >
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>저녁 메뉴 추천</span>
@@ -49,31 +53,24 @@
         </div>
       </div>
 
-      <!-- 추천 이후에는 레시피 링크, 그 전에는 영양소 정보 표시 -->
-      <div
-        v-if="
-          recommendation &&
-          recommendation.recommended_dishes &&
-          recommendation.recommended_dishes.length > 0
-        "
-        class="card-footer"
-      >
+      <!-- 추천 이후에는 rank=1 음식의 레시피 링크만 표시 -->
+      <div v-if="recommendation && rank1Recommendations.length > 0" class="card-footer">
         <div class="recipe-links">
           <h6 class="mb-2 text-primary">추천 메뉴 레시피</h6>
           <div class="d-flex flex-wrap">
-            <div v-for="(foodName, index) in parsedFoodItems" :key="index" class="me-3 mb-2">
+            <div v-for="(food, index) in rank1Recommendations" :key="food.id" class="me-3 mb-2">
               <a
-                :href="getRecipeLink(foodName)"
+                :href="getRecipeLink(food.name)"
                 target="_blank"
                 class="btn btn-sm btn-outline-success"
               >
-                <i class="bi bi-book me-1"></i>{{ foodName }} 레시피
+                <i class="bi bi-book me-1"></i>{{ food.name }} 레시피
               </a>
             </div>
           </div>
         </div>
       </div>
-      <div v-else-if="hasRecords && totalNutrients" class="card-footer">
+      <div v-else-if="hasRecords && totalNutrients && !recommendation" class="card-footer">
         <div class="nutrition-summary">
           <h6 class="mb-2 text-muted">오늘의 영양소 섭취 요약</h6>
           <div class="d-flex flex-wrap small">
@@ -120,16 +117,6 @@ const totalNutrients = reactive({
 })
 const componentKey = ref(0) // 컴포넌트 강제 리렌더링용 키
 const todayDietNutrients = ref(null) // TodayDiet 컴포넌트로부터 받은 영양소 정보
-
-// 추천된 음식을 개별 항목으로 파싱 (레시피 링크용)
-const parsedFoodItems = computed(() => {
-  if (!recommendation.value || !recommendation.value.recommended_dishes) return []
-  // 서버에서 받은 recommended_dishes 배열의 각 항목에서 name을 추출
-  return recommendation.value.recommended_dishes
-    .map((item) => item.name)
-    .filter((name) => name && name.length > 0)
-    .slice(0, 3) // 최대 3개 항목으로 제한
-})
 
 // 음식 이름에 따른 레시피 검색 링크 생성
 const getRecipeLink = (foodName) => {
@@ -318,9 +305,10 @@ const getDinnerRecommendation = async () => {
     console.log('Python 서버 응답:', pythonResponse.data)
 
     // 응답 처리
-    if (pythonResponse.data && pythonResponse.data.recommendations) {
-      // API 응답 recommendations를 그대로 저장
+    if (pythonResponse.data) {
+      // API 응답을 recommendation 상태에 저장
       recommendation.value = pythonResponse.data
+      console.log('추천 데이터:', recommendation.value)
     } else {
       recommendationError.value = '추천 메뉴를 받아오지 못했습니다. 서버 응답을 확인해주세요.'
     }
@@ -426,5 +414,12 @@ onMounted(async () => {
   padding: 0.5rem;
   background-color: #f8f9fa;
   border-radius: 0.25rem;
+}
+
+.card-header {
+  min-height: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 </style>
