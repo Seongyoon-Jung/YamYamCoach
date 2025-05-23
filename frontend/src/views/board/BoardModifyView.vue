@@ -15,12 +15,25 @@
         <textarea v-model="content" class="form-control" id="content" rows="8" required></textarea>
       </div>
 
-      <!-- 이미지 -->
-      <div class="mb-4">
-        <label class="form-label">이미지 업로드 (선택)</label>
+      <!-- 기존 이미지 미리보기 -->
+      <div v-if="imageUrl && !imageFile" class="mb-3">
+        <label class="form-label">현재 이미지</label><br />
+        <img :src="imageUrl" alt="기존 이미지" style="max-width: 200px" />
+      </div>
+
+      <!-- 새 이미지 업로드 -->
+      <div class="mb-3">
+        <label class="form-label">새 이미지 업로드 (선택)</label>
         <input type="file" class="form-control" @change="handleImageUpload" />
       </div>
 
+      <!-- 새 이미지 미리보기 -->
+      <div v-if="imagePreviewUrl" class="mb-3">
+        <label class="form-label">새 이미지 미리보기</label><br />
+        <img :src="imagePreviewUrl" style="max-width: 200px" />
+      </div>
+
+      <!-- 버튼 -->
       <div class="text-end">
         <button type="submit" class="btn btn-primary">수정 완료</button>
       </div>
@@ -39,10 +52,18 @@ const router = useRouter()
 const title = ref('')
 const content = ref('')
 const imageFile = ref(null)
-const imageUrl = ref('')
+const imageUrl = ref('') // 기존 이미지 URL
+const imagePreviewUrl = ref('')
 
+// 이미지 파일 선택 처리
 const handleImageUpload = (e) => {
-  imageFile.value = e.target.files[0]
+  const file = e.target.files[0]
+  imageFile.value = file
+  if (file) {
+    imagePreviewUrl.value = URL.createObjectURL(file)
+  } else {
+    imagePreviewUrl.value = ''
+  }
 }
 
 // 게시글 정보 불러오기
@@ -60,17 +81,34 @@ onMounted(async () => {
 
 // 게시글 수정 요청
 const submitUpdate = async () => {
-  const post = {
+  const formData = new FormData()
+
+  // ✅ JSON 형태로 board 데이터를 FormData에 Blob으로 추가
+  const boardData = {
     boardId: route.params.id,
     title: title.value,
     content: content.value,
-    imageUrl: imageUrl.value,
+    imageUrl: imageUrl.value, // 기존 이미지 URL
   }
+
+  console.log(imageFile.value)
+
+  formData.append('board', new Blob([JSON.stringify(boardData)], { type: 'application/json' }))
+
+  // ✅ 이미지가 있다면 추가
+  if (imageFile.value) {
+    formData.append('file', imageFile.value)
+  }
+
+  // ✅ multipart/form-data로 전송
   try {
-    await axios.put('/api/board', post)
+    await axios.put('/api/board', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     router.push(`/board/${route.params.id}`)
   } catch (err) {
-    //console.log(err)
     router.push('/error')
   }
 }

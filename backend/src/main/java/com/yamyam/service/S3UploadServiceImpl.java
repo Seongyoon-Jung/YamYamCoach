@@ -41,8 +41,15 @@ public class S3UploadServiceImpl implements S3UploadService{
     }
 	
 	@Override
-	public void deleteImage(String filename)  {
-		System.out.println("delete"+filename);
-	    amazonS3.deleteObject(bucket, filename);
+	public void deleteImage(String imageUrl)  {
+		if (imageUrl == null || imageUrl.isBlank()) return;
+
+	    // 이미지 URL에서 S3 key 추출
+	    // 예: https://your-bucket.s3.amazonaws.com/uploads/board/abc123.png
+	    String key = imageUrl.substring(imageUrl.indexOf("uploads/"));
+
+	    System.out.println("삭제할 S3 키: " + key);
+
+	    amazonS3.deleteObject(bucket, key);
 	}
 }

@@ -1,4 +1,3 @@
-<!-- src/views/BoardCreatePage.vue -->
 <template>
   <div class="container py-5" style="max-width: 800px">
     <h2 class="mb-4 text-center">게시글 작성</h2>
@@ -31,9 +30,15 @@
       </div>
 
       <!-- 이미지 업로드 -->
-      <div class="mb-4">
+      <div class="mb-3">
         <label class="form-label">이미지 업로드 (선택)</label>
         <input class="form-control" type="file" @change="handleImageUpload" />
+      </div>
+
+      <!-- 이미지 미리보기 -->
+      <div v-if="imagePreviewUrl" class="mb-4">
+        <label class="form-label">이미지 미리보기</label><br />
+        <img :src="imagePreviewUrl" alt="미리보기 이미지" style="max-width: 200px" />
       </div>
 
       <!-- 버튼 -->
@@ -55,17 +60,25 @@ const router = useRouter()
 const title = ref('')
 const content = ref('')
 const imageFile = ref(null)
+const imagePreviewUrl = ref('') // 미리보기용 ref
 const accountStore = userAccountStore()
 
 const handleImageUpload = (e) => {
-  imageFile.value = e.target.files[0]
+  const file = e.target.files[0]
+  imageFile.value = file
+
+  // 파일 존재하면 미리보기 설정
+  if (file) {
+    imagePreviewUrl.value = URL.createObjectURL(file)
+  } else {
+    imagePreviewUrl.value = ''
+  }
 }
 
 const submitPost = async () => {
   try {
     const formData = new FormData()
 
-    // DTO 데이터 → Blob(JSON)으로 감싸기
     const dto = {
       username: accountStore.username,
       title: title.value,
@@ -73,7 +86,6 @@ const submitPost = async () => {
     }
     formData.append('board', new Blob([JSON.stringify(dto)], { type: 'application/json' }))
 
-    // 파일이 있을 때만 첨부
     if (imageFile.value) {
       formData.append('file', imageFile.value)
     }
@@ -89,7 +101,6 @@ const submitPost = async () => {
     console.error('게시글 등록 실패', err)
   }
 }
-
 </script>
 
 <style scoped>

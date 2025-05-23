@@ -90,12 +90,18 @@ public class BoardServiceImpl implements BoardService{
 	}
 
 	@Override
-	public void modifyBoard(BoardRequest boardRequest) {
+	public void modifyBoard(BoardRequest boardRequest, String imageUrl) {
 		BoardEntity boardEntity = boardRepository.findByBoardId(boardRequest.getBoardId());
 		
 		boardEntity.setTitle(boardRequest.getTitle());
 		boardEntity.setContent(boardRequest.getContent());
-		boardEntity.setImageUrl(boardRequest.getImageUrl());
+		
+		if(imageUrl != null) {
+			boardEntity.setImageUrl(imageUrl);
+		}
+		else {
+			boardEntity.setImageUrl(boardRequest.getImageUrl());
+		}
 		
 		boardRepository.save(boardEntity);
 	}

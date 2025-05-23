@@ -242,6 +242,7 @@ async function handleBoardDelete(index) {
 
   const post = {
     boardId: board.value.boardId,
+    imageUrl: board.value.imageUrl,
   }
 
   try {

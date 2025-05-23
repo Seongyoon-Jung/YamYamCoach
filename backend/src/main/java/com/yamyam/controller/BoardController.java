@@ -66,9 +66,27 @@ public class BoardController {
 	
 	// 게시판 글 수정
 	@PutMapping("")
-	public void modifyBoard(@RequestBody BoardRequest boardRequest) {
-		boardService.modifyBoard(boardRequest);
+	public void modifyBoard(@RequestPart("board") BoardRequest boardRequest, @RequestPart(value = "file", required = false) MultipartFile file) {
+	    String imageUrl = boardRequest.getImageUrl(); // 기본은 기존 이미지 URL 유지
+	    
+	    if (file != null && !file.isEmpty()) {
+	        try {
+	            // 기존 이미지 삭제
+	            if (imageUrl != null && !imageUrl.isEmpty()) {
+	            	System.out.println("delete============================");
+	                s3UploadService.deleteImage(imageUrl);
+	            }
+
+	            // 새 이미지 업로드
+	            imageUrl = s3UploadService.saveFile(file, "board");
+	        } catch (IOException e) {
+	            throw new RuntimeException("파일 수정 업로드 중 오류 발생: " + e.getMessage());
+	        }
+	    }
+
+	    boardService.modifyBoard(boardRequest,imageUrl);
 	}
+
 	
 	// 게시판 글 삭제
 	@DeleteMapping("")

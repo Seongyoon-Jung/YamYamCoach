@@ -19,7 +19,7 @@ public interface BoardService {
 	public void writeBoard(BoardRequest boardRequest, String imageUrl); 
 
 	// 게시글 수정
-	public void modifyBoard(BoardRequest boardRequest); 
+	public void modifyBoard(BoardRequest boardRequest, String imageUrl); 
 	
 	//게시글 삭제
 	public void deleteBoard(int boardId);
