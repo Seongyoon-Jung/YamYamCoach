@@ -85,7 +85,7 @@
 
                   <div class="tab-content mt-3">
                     <div
-                      v-for="course in courses"
+                      v-for="course in modalCourses"
                       :key="course.type"
                       class="tab-pane fade"
                       :class="{ 'show active': selectedCourse === course.type }"
@@ -222,7 +222,6 @@
 
                   <!-- 영양소 합계 정보 -->
                   <div class="nutrition-summary mt-4 p-3">
-                    <h6 class="mb-3 text-center">총 영양소 합계</h6>
                     <div class="row">
                       <div class="col-6 col-md-4 mb-2">
                         <div class="nutrient-total">
@@ -353,7 +352,9 @@ import eventBus from '@/utils/eventBus'
 const isDebugMode = ref(false) // 디버깅 모드 설정 (개발 중에만 true로 변경)
 const showModal = ref(false)
 const selectedCourse = ref('A')
-const courses = ref([])
+const courses = ref([]) // 메인 카드(오늘 날짜)
+const modalCourses = ref([]) // 모달에서만 사용하는 식단 데이터
+const selectedDate = ref(new Date()) // 모달에서만 사용하는 날짜
 const selectedDishes = reactive({})
 const selectedCourses = reactive({})
 const selectAllMeals = ref(false)
@@ -363,9 +364,6 @@ const userRecords = ref([])
 const isEditMode = ref(false)
 const isSavingManually = ref(false)
 const autoSaveTimeout = ref(null)
-
-// 날짜 상태 추가
-const selectedDate = ref(new Date())
 
 const colors = [
   'rgba(255, 99, 132, 0.7)',
@@ -477,30 +475,33 @@ const moveDate = (diff) => {
   const newDate = new Date(selectedDate.value)
   newDate.setDate(newDate.getDate() + diff)
   selectedDate.value = newDate
-  fetchTodayCourses(newDate)
+  fetchModalCourses(newDate)
 }
 
-const fetchTodayCourses = async (dateObj) => {
+const fetchTodayCourses = async () => {
+  try {
+    const url = '/api/courses/today'
+    const response = await axios.get(url)
+    courses.value = response.data.courses
+  } catch (error) {
+    console.error('오늘의 코스 조회 실패:', error)
+  }
+}
+
+const fetchModalCourses = async (dateObj) => {
   try {
     let dateParam = ''
     if (dateObj) {
-      // yyyy-mm-dd 포맷
       const yyyy = dateObj.getFullYear()
       const mm = String(dateObj.getMonth() + 1).padStart(2, '0')
       const dd = String(dateObj.getDate()).padStart(2, '0')
       dateParam = `${yyyy}-${mm}-${dd}`
     }
-    // 오늘이면 /today, 아니면 /{date}
     const url = dateParam === getTodayYMD() ? '/api/courses/today' : `/api/courses/${dateParam}`
     const response = await axios.get(url)
-    courses.value = response.data.courses
-    // ... 이하 기존 코드 동일 ...
-    // (중복 음식 처리, 선택 상태 초기화, 기록 불러오기 등)
-    // ... 기존 fetchTodayCourses 내부 코드가 이미 있으므로, 기존 코드와 병합 필요)
-    // ...
+    modalCourses.value = response.data.courses
   } catch (error) {
-    console.error('오늘의 코스 조회 실패:', error)
-    isEditMode.value = false
+    console.error('모달 코스 조회 실패:', error)
   }
 }
 
@@ -576,7 +577,7 @@ const handleSave = async () => {
       alert(response.data.message || '식단이 성공적으로 저장되었습니다.')
       showModal.value = false
       isEditMode.value = true
-      fetchTodayCourses(selectedDate.value) // 데이터 갱신
+      fetchTodayCourses() // 데이터 갱신
 
       // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
       setTimeout(() => {
@@ -626,7 +627,7 @@ const handleUpdate = async () => {
     if (response.data.success) {
       alert(response.data.message || '식단이 성공적으로 수정되었습니다.')
       showModal.value = false
-      fetchTodayCourses(selectedDate.value) // 데이터 갱신
+      fetchTodayCourses() // 데이터 갱신
 
       // 이벤트 발생 - 영양 데이터 업데이트 알림 (setTimeout으로 지연 적용)
       setTimeout(() => {
@@ -732,9 +733,8 @@ const setInitialCourse = () => {
 }
 
 onMounted(() => {
-  fetchTodayCourses(selectedDate.value).then(() => {
-    setInitialCourse()
-  })
+  fetchTodayCourses() // 메인 카드용 오늘 식단만 불러옴
+  setInitialCourse()
 
   // DinnerRecommendation에서 보내는 이벤트 수신
   eventBus.on('open-today-diet-modal', () => {
@@ -800,13 +800,13 @@ watch(
   { deep: true },
 )
 
-// 모달 열릴 때 데이터 새로 로드
+// 모달 열릴 때 오늘 날짜로 초기화 및 데이터 로드
 watch(
   () => showModal.value,
   (val) => {
     if (val) {
-      // 모달이 열릴 때마다 항상 최신 데이터 로드
-      fetchTodayCourses(selectedDate.value)
+      selectedDate.value = new Date() // 오늘 날짜로 초기화
+      fetchModalCourses(selectedDate.value)
     }
   },
 )
