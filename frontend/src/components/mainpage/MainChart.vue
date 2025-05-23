@@ -1,5 +1,5 @@
 <template>
-  <div class="col-lg-8 mb-4">
+  <div class="main-chart-container mb-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex flex-column align-items-start">
         <span>최근 5일 영양소 섭취 추이</span>
@@ -270,5 +270,11 @@ onUnmounted(() => {
 .nav-link.active {
   color: #007bff;
   font-weight: 500;
+}
+
+.main-chart-container {
+  width: 100%;
+  min-height: 400px;
+  height: 100%;
 }
 </style>
