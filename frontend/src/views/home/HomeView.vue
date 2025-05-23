@@ -78,9 +78,13 @@
           </div>
         </div>
 
-        <!-- 오늘의 식단 & 저녁 메뉴 추천 -->
-        <div>
-          <MainChart ref="MainChart" />
+        <div class="row">
+          <div class="col-md-8">
+            <MainChart ref="MainChart" />
+          </div>
+          <div class="col-md-4 d-flex justify-content-center align-items-start">
+            <Calendar ref="Calendar" />
+          </div>
         </div>
       </main>
     </div>
