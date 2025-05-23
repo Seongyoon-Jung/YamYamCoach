@@ -13,4 +13,6 @@ public interface ScheduleDishRepository extends JpaRepository<ScheduleDish, Sche
     List<ScheduleDish> findByIdScheduleId(Integer scheduleId);
     
     boolean existsByDish_DishIdAndCourseSchedule_ScheduleId(Integer DishId, Integer ScheduleId);
+    
+    List<ScheduleDish> findByIdScheduleIdOrderByServingOrder(Integer scheduleId);
 } 

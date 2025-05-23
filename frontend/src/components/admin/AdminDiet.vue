@@ -9,26 +9,32 @@
       <button class="btn btn-outline-secondary" @click="changeDate(1)">▶️</button>
     </div>
 
-    <!-- 중식 A코스 입력 -->
-    <div class="mb-3">
-      <label class="form-label">A코스</label>
-      <textarea
-        v-model="menuData.aCourse"
-        class="form-control"
-        rows="2"
-        placeholder="메뉴를 입력해주세요"
-      ></textarea>
-    </div>
+    <div class="row mb-3">
+      <!-- A코스 -->
+      <div class="col-md-6">
+        <label class="form-label">A코스</label>
+        <div v-for="(item, index) in menuData.aCourse" :key="'a-' + index" class="mb-2">
+          <input
+            v-model="menuData.aCourse[index]"
+            type="text"
+            class="form-control"
+            :placeholder="`A코스 메뉴 ${index + 1}`"
+          />
+        </div>
+      </div>
 
-    <!-- 중식 B코스 입력 -->
-    <div class="mb-3">
-      <label class="form-label">B코스</label>
-      <textarea
-        v-model="menuData.bCourse"
-        class="form-control"
-        rows="2"
-        placeholder="메뉴를 입력해주세요"
-      ></textarea>
+      <!-- B코스 -->
+      <div class="col-md-6">
+        <label class="form-label">B코스</label>
+        <div v-for="(item, index) in menuData.bCourse" :key="'b-' + index" class="mb-2">
+          <input
+            v-model="menuData.bCourse[index]"
+            type="text"
+            class="form-control"
+            :placeholder="`B코스 메뉴 ${index + 1}`"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- 저장 버튼 -->
@@ -37,19 +43,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import axios from '@/plugins/axios'
 
-// 오늘 날짜 기본값
+// 오늘 날짜를 YYYY-MM-DD 형식으로 반환
 const getToday = () => new Date().toISOString().slice(0, 10)
 const selectedDate = ref(getToday())
 
-// 메뉴 데이터 (중식 A코스, B코스)
+// 기본 7칸 메뉴 필드
+const defaultMenu = () => Array(7).fill('')
+
+// 메뉴 데이터 (A코스, B코스는 각각 7칸으로 초기화)
 const menuData = ref({
-  aCourse: '',
-  bCourse: '',
+  aCourse: defaultMenu(),
+  bCourse: defaultMenu(),
 })
 
-// 날짜를 하루 단위로 변경하는 함수
+// 날짜 하루 단위 변경
 function changeDate(days) {
   const date = new Date(selectedDate.value)
   date.setDate(date.getDate() + days)
@@ -58,9 +68,58 @@ function changeDate(days) {
 
 // 저장 처리
 function saveMenu() {
+  const cleanedA = menuData.value.aCourse.filter((item) => item.trim() !== '')
+  const cleanedB = menuData.value.bCourse.filter((item) => item.trim() !== '')
+
   console.log('선택된 날짜:', selectedDate.value)
-  console.log('A코스:', menuData.value.aCourse)
-  console.log('B코스:', menuData.value.bCourse)
+  console.log('A코스:', cleanedA)
+  console.log('B코스:', cleanedB)
   alert('메뉴가 저장되었습니다.')
 }
+
+// 날짜별 메뉴 불러오기
+async function fetchMenuByDate(date) {
+  try {
+    const res = await axios.get('/api/foods', {
+      params: { date },
+    })
+
+    const result = {
+      aCourse: [],
+      bCourse: [],
+    }
+
+    res.data.forEach((entry) => {
+      if (entry.course === 'A') result.aCourse = entry.food
+      if (entry.course === 'B') result.bCourse = entry.food
+    })
+
+    // 부족한 경우 7칸 채우기
+    if (result.aCourse.length < 7) {
+      result.aCourse = [...result.aCourse, ...Array(7 - result.aCourse.length).fill('')]
+    }
+
+    if (result.bCourse.length < 7) {
+      result.bCourse = [...result.bCourse, ...Array(7 - result.bCourse.length).fill('')]
+    }
+
+    menuData.value = result
+  } catch (err) {
+    console.error('메뉴 로딩 실패:', err)
+    menuData.value = {
+      aCourse: defaultMenu(),
+      bCourse: defaultMenu(),
+    }
+  }
+}
+
+// 날짜 변경 시 메뉴 불러오기
+watch(selectedDate, (newDate) => {
+  fetchMenuByDate(newDate)
+})
+
+// 최초 진입 시 오늘 날짜 기준 메뉴 불러오기
+onMounted(() => {
+  fetchMenuByDate(selectedDate.value)
+})
 </script>
