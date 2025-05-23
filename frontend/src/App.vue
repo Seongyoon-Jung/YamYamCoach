@@ -1,6 +1,11 @@
 <template>
+  <!-- 에러 페이지 전용 전체 화면 -->
+  <div v-if="route.name === 'Error'" class="error-layout min-vh-100">
+    <router-view />
+  </div>
+
   <!-- 일반 사용자 화면: ROLE_ADMIN이 아니거나, 현재 경로가 /admin으로 시작하지 않는 경우 -->
-  <div v-if="!isAdmin || !isAdminRoute" id="app" class="d-flex flex-column min-vh-100">
+  <div v-else-if="!isAdmin || !isAdminRoute" id="app" class="d-flex flex-column min-vh-100">
     <HeaderComponent />
     <main class="container bg-light flex-grow-1 px-0">
       <router-view />
@@ -21,7 +26,7 @@
 import HeaderComponent from '@/components/section/HeaderComponent.vue'
 import AdminHeaderComponent from '@/components/section/AdminHeaderComponent.vue'
 import FooterComponent from '@/components/section/FooterComponent.vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { userAccountStore } from '@/store/account'
 import { computed } from 'vue'
 
@@ -36,6 +41,7 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 </script>
 
 <style>
+#error-layout,
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -56,18 +62,4 @@ nav a {
 nav a.router-link-exact-active {
   color: #42b983 !important;
 }
-
-/* dark-mode 전역 스타일 */
-/* body.dark-mode {
-  background-color: #121212;
-  color: #eee;
-}
-body.dark-mode .navbar {
-  background-color: #1f1f1f !important;
-}
-body.dark-mode .card {
-  background-color: #1e1e1e;
-  color: #ddd;
-} */
-/* 원하는 다른 컴포넌트 스타일도 추가 */
 </style>

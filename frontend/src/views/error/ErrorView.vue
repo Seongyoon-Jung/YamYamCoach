@@ -1,62 +1,79 @@
-<!-- src/components/CuteErrorPage.vue -->
 <template>
-  <div class="error-page d-flex flex-column justify-content-center align-items-center text-center">
-    <!-- 귀여운 고양이 이모지 (또는 SVG) -->
-    <div class="emoji mb-4">😿</div>
-    <h1 class="display-1 fw-bold mb-3">404</h1>
-    <h2 class="mb-3">앗! 길을 잃었어요…</h2>
-    <p class="mb-4 text-muted">
-      요청하신 페이지를 찾을 수 없어요.<br />
-      다른 곳으로 돌아가 보실래요?
-    </p>
-    <router-link to="/" class="btn btn-primary btn-lg">
-      <i class="bi bi-house-door-fill me-2"></i>홈으로 가기
-    </router-link>
+  <div class="cli-error d-flex justify-content-center align-items-center min-vh-100">
+    <pre class="cli-text text-start">
+$ remember --crew "SSAFY 12기 12반"
+✅ 메모리에 저장되었습니다. SSAFY_12기_12반.기억
+
+$ run ./forever-12기-12반
+
+<span class="text-danger">❗ Error 404:</span>  SSAFY 12기 12반의 흔적은 이 경로에 없지만...
+💡 우리는 영원히 메모리에 남아있습니다.
+
+[ Tip ] 홈으로 가려면 아래 명령어를 입력하세요:
+$ <router-link to="/" class="go-home">go-home 🚀</router-link><span class="cursor">▊</span>
+    </pre>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// keydown 이벤트 핸들러
+const handleKeyDown = (event) => {
+  if (event.key === 'Enter') {
+    router.push('/')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
+</script>
 
 <style scoped>
-.error-page {
-  height: 80vh;
+.cli-error {
+  background-color: #111;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
   padding: 2rem;
-  background: #f8f9fa;
 }
 
-/* 이모지 흔들리는 애니메이션 */
-@keyframes shake {
+.cli-text {
+  white-space: pre-wrap;
+  font-size: 1.2rem;
+  line-height: 1.7;
+  max-width: 90vw;
+}
+
+.go-home {
+  color: #00ffff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.go-home:hover {
+  color: #00ccff;
+  text-decoration: underline;
+}
+
+.cursor {
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
   0%,
   100% {
-    transform: translateX(0);
+    opacity: 1;
   }
-  20%,
-  60% {
-    transform: translateX(-10px);
+  50% {
+    opacity: 0;
   }
-  40%,
-  80% {
-    transform: translateX(10px);
-  }
-}
-.emoji {
-  font-size: 5rem;
-  animation: shake 2s infinite;
-}
-
-/* 404 숫자 컬러 강조 */
-h1.display-1 {
-  color: #ff6b81;
-}
-
-/* 버튼 호버 효과 */
-.btn-primary {
-  transition:
-    background-color 0.3s,
-    transform 0.3s;
-}
-.btn-primary:hover {
-  background-color: #ff6b81;
-  transform: translateY(-2px);
 }
 </style>
