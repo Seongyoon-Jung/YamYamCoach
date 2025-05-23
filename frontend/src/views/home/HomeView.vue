@@ -78,7 +78,7 @@
           </div>
           <!-- 1행 2열: Information -->
           <div class="col-md-4 mb-0">
-            <div class="h-300">
+            <div class="h-320">
               <Information ref="Information" />
             </div>
           </div>
@@ -145,8 +145,8 @@ const isLoggedIn = computed(() => !!username.value)
   height: 466px;
 }
 
-.h-300 {
-  height: 300px;
+.h-320 {
+  height: 320px;
 }
 
 .h-100 {

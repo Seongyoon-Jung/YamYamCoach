@@ -23,13 +23,23 @@
         </div>
       </div>
       <div class="calendar-modern-schedule-list">
-        <div
-          v-for="item in filteredSchedule"
-          :key="item.time"
-          class="calendar-modern-schedule-item"
-        >
-          <span class="calendar-modern-schedule-time">{{ item.time }}</span>
-          <span class="calendar-modern-schedule-title">{{ item.title }}</span>
+        <div v-if="loading" class="text-center">
+          <span class="loading-text">불러오는 중...</span>
+        </div>
+        <div v-else-if="error" class="text-center text-danger">
+          {{ error }}
+        </div>
+        <div v-else>
+          <div v-if="meals.length === 0" class="text-center text-muted">
+            기록된 식사가 없습니다.
+          </div>
+          <div v-else class="meal-list">
+            <div v-for="meal in meals" :key="meal.recordId" class="meal-item">
+              <span class="meal-time">{{ formatTime(meal.recordedAt) }}</span>
+              <span class="meal-type">{{ formatCourseType(meal.courseType) }}</span>
+              <span class="meal-name">{{ meal.dishName }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -37,7 +47,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import axios from '@/plugins/axios'
+import eventBus from '@/utils/eventBus'
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -171,6 +183,79 @@ const filteredSchedule = computed(() => {
   const y = year.value
   const dateStr = `${y}-${m}-${d}`
   return schedule.filter((item) => item.date === dateStr)
+})
+
+const loading = ref(false)
+const error = ref(null)
+const meals = ref([])
+
+// 오늘 날짜로 캘린더를 초기화하고 식사 기록을 다시 불러오는 함수
+const resetToTodayAndFetchMeals = () => {
+  const newToday = new Date()
+  year.value = newToday.getFullYear()
+  month.value = newToday.getMonth()
+  selectedDate.value = newToday.getDate()
+  // fetchMeals는 selectedDate, month, year의 watch에 의해 자동으로 호출됩니다.
+  // 만약 watch가 selectedDate만 감지한다면 month, year 변경 후 fetchMeals를 명시적으로 호출해야 할 수 있습니다.
+  // 현재 watch는 [selectedDate, month, year]를 모두 감지하므로 추가 호출은 필요 없어 보입니다.
+  // 다만, watch 콜백이 즉시 실행되지 않을 수 있으므로, 안전하게 직접 호출하는 것도 고려할 수 있습니다.
+  fetchMeals(selectedDate.value)
+}
+
+// 날짜 선택 시 해당 날짜의 식사 기록 조회
+const fetchMeals = async (selectedDate) => {
+  if (!selectedDate) return
+
+  loading.value = true
+  error.value = null
+
+  try {
+    const formattedDate = `${year.value}-${String(month.value + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
+    const response = await axios.get(`/api/meal-records/date/${formattedDate}`)
+    meals.value = response.data
+  } catch (err) {
+    console.error('식사 기록 조회 실패:', err)
+    error.value = '식사 기록을 불러오는데 실패했습니다.'
+    meals.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// 시간 포맷 함수
+const formatTime = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
+
+// 식사 종류 포맷 함수
+const formatCourseType = (type) => {
+  const types = {
+    breakfast: '아침',
+    lunch: '점심',
+    dinner: '저녁',
+    snack: '간식',
+  }
+  return types[type] || type
+}
+
+// 날짜가 변경될 때마다 식사 기록 조회
+watch([selectedDate, month, year], () => {
+  if (selectedDate.value) {
+    fetchMeals(selectedDate.value)
+  }
+})
+
+// 컴포넌트 마운트 시 이벤트 리스너 등록
+onMounted(() => {
+  eventBus.on('meal-data-updated', resetToTodayAndFetchMeals)
+  // 초기 로드 시 오늘 날짜의 식단을 불러옵니다.
+  fetchMeals(selectedDate.value)
+})
+
+// 컴포넌트 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+  eventBus.off('meal-data-updated', resetToTodayAndFetchMeals)
 })
 </script>
 
@@ -318,5 +403,56 @@ const filteredSchedule = computed(() => {
 .calendar-modern-month-label {
   font-size: 1.4rem;
   font-weight: 700;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.meal-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.meal-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.meal-item:last-child {
+  border-bottom: none;
+}
+
+.meal-time {
+  color: #666;
+  margin-right: 8px;
+  min-width: 60px;
+}
+
+.meal-type {
+  color: #4a90e2;
+  margin-right: 8px;
+  min-width: 40px;
+}
+
+.meal-name {
+  color: #333;
+  flex: 1;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #666;
+}
+
+.text-danger {
+  color: #dc3545;
 }
 </style>

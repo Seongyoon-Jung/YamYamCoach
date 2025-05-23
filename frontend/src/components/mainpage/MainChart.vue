@@ -198,6 +198,9 @@ const updateChart = async () => {
             display: true,
             position: 'top',
             align: 'end',
+            labels: {
+              padding: 2, // 범례와 그래프 사이의 간격을 2px로 설정
+            },
           },
           tooltip: {
             callbacks: {
