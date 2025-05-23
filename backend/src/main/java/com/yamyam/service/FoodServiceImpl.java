@@ -15,6 +15,7 @@ import com.yamyam.diet.repository.CourseScheduleRepository;
 import com.yamyam.diet.repository.DishRepository;
 import com.yamyam.diet.repository.ScheduleDishRepository;
 import com.yamyam.dto.request.FoodData;
+import com.yamyam.dto.response.FoodsResponse;
 
 @Service
 public class FoodServiceImpl implements FoodService {
@@ -28,7 +29,36 @@ public class FoodServiceImpl implements FoodService {
 		this.scheduleDishRepository = scheduleDishRepository;
 	}
 
-
+	@Override
+	public List<FoodsResponse> getFoodsDate(LocalDate date) {
+		// course_schedule 에서 date에 해당하는 컬럼중 코스 타입에 따른 schedule_id 받기
+		List<CourseSchedule> list = courseScheduleRepository.findByScheduleDate(date);
+		
+		List<FoodsResponse> data = new ArrayList<>();
+		
+		
+		//schedule_dish에서 couresSchedule.schedule_id 에 해당하는 dish_id 찾기
+		for (CourseSchedule courseSchedule : list) {
+			FoodsResponse foodsResponse = new FoodsResponse();
+			foodsResponse.setDate(date);
+			foodsResponse.setCourse(courseSchedule.getCourseType());
+			
+			List<ScheduleDish> dishs = scheduleDishRepository.findByIdScheduleIdOrderByServingOrder(courseSchedule.getScheduleId());
+			List<String> foods = new ArrayList<>();
+			for (ScheduleDish scheduleDish : dishs) {
+				foods.add(dishRepository.findById(scheduleDish.getId().getDishId()).get().getDishName());
+			}
+			
+			foodsResponse.setFood(foods);
+			
+			data.add(foodsResponse);
+		}
+		return data;
+	}
+	
+	
+	
+	
 	@Override
 	public void saveAllCourseSchedule(List<FoodData> list) {
 		List<CourseSchedule> data = new ArrayList<>();
@@ -96,5 +126,6 @@ public class FoodServiceImpl implements FoodService {
 		
 		scheduleDishRepository.saveAll(data);
 	}
+
 
 }
