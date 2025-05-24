@@ -1,7 +1,7 @@
 <template>
   <div class="container py-5">
-    <!-- 헤더 + 버튼을 한 줄로 정렬 -->
     <form @submit.prevent="handleSave">
+      <!-- 헤더 -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">급식 메뉴 수정 및 입력</h3>
         <button class="btn btn-primary" type="submit">
@@ -18,11 +18,11 @@
         <button class="btn btn-outline-secondary" type="button" @click="changeDate(1)">▶️</button>
       </div>
 
-      <!-- A코스 & B코스 입력 필드 -->
+      <!-- A코스 & B코스 -->
       <div class="row mb-3">
+        <!-- A코스 -->
         <div class="card col-md-6">
           <h6 class="m-3">A코스 대표 이미지</h6>
-          <!-- 이미지 영역 (항상 존재, 이미지가 없어도 고정된 높이 유지) -->
           <div
             class="w-100 mb-2 border rounded d-flex align-items-center justify-content-center"
             style="height: 120px; background-color: #f8f9fa"
@@ -35,6 +35,7 @@
             />
             <span v-else class="text-muted">이미지가 없습니다</span>
           </div>
+
           <label class="form-label">A코스</label>
           <div v-for="(item, index) in menuData.aCourse" :key="'a-' + index" class="mb-2">
             <input
@@ -45,11 +46,16 @@
               class="form-control"
             />
           </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="addACourse">
+              A코스 메뉴 추가
+            </button>
+          </div>
         </div>
 
+        <!-- B코스 -->
         <div class="card col-md-6">
           <h6 class="m-3">B코스 대표 이미지</h6>
-          <!-- 이미지 영역 (항상 존재, 이미지가 없어도 고정된 높이 유지) -->
           <div
             class="w-100 mb-2 border rounded d-flex align-items-center justify-content-center"
             style="height: 120px; background-color: #f8f9fa"
@@ -73,9 +79,15 @@
               class="form-control"
             />
           </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="addBCourse">
+              B코스 메뉴 추가
+            </button>
+          </div>
         </div>
       </div>
 
+      <!-- 이미지 크롭퍼 -->
       <ImageCropper ref="cropperRef" @cropped="handleCropped" />
 
       <div v-if="latestCroppedImage" class="mb-4 d-flex justify-content-center gap-2">
@@ -118,6 +130,14 @@ function changeDate(days) {
   selectedDate.value = date.toISOString().slice(0, 10)
 }
 
+function addACourse() {
+  menuData.value.aCourse.push('')
+}
+
+function addBCourse() {
+  menuData.value.bCourse.push('')
+}
+
 function handleCropped({ dataUrl, file }) {
   latestCroppedImage.value = dataUrl
   latestCroppedFile.value = file
@@ -149,15 +169,15 @@ const handleSave = async () => {
 }
 
 const saveMenu = async (method = 'put') => {
-  const cleanedA = menuData.value.aCourse.filter((item) => item.trim() !== '')
-  const cleanedB = menuData.value.bCourse.filter((item) => item.trim() !== '')
+  // 빈칸도 포함
+  const rawA = [...menuData.value.aCourse]
+  const rawB = [...menuData.value.bCourse]
 
   const post = { diet: [] }
 
   try {
     let imageKeyA = aCourseImageFile.value
-    console.log(aOriginImage.value, aCourseImageFile.value)
-    if (aCourseImageFile.value != aOriginImage.value && aCourseImageFile.value) {
+    if (aCourseImageFile.value !== aOriginImage.value && aCourseImageFile.value) {
       const uuid = crypto.randomUUID()
       const fileName = `uploads/diet/${uuid}.png`
       const putUrlRes = await axios.get('/api/s3/put-url', { params: { fileName } })
@@ -170,8 +190,7 @@ const saveMenu = async (method = 'put') => {
     }
 
     let imageKeyB = bCourseImageFile.value
-    console.log(bOriginImage.value, bCourseImageFile.value)
-    if (bCourseImageFile.value != bOriginImage.value && bCourseImageFile.value) {
+    if (bCourseImageFile.value !== bOriginImage.value && bCourseImageFile.value) {
       const uuid = crypto.randomUUID()
       const fileName = `uploads/diet/${uuid}.png`
       const putUrlRes = await axios.get('/api/s3/put-url', { params: { fileName } })
@@ -183,26 +202,13 @@ const saveMenu = async (method = 'put') => {
       imageKeyB = fileName
     }
 
-    post.diet.push({
-      date: selectedDate.value,
-      course: 'A',
-      food: cleanedA,
-      imgUrl: imageKeyA,
-    })
-
-    post.diet.push({
-      date: selectedDate.value,
-      course: 'B',
-      food: cleanedB,
-      imgUrl: imageKeyB,
-    })
-
+    post.diet.push({ date: selectedDate.value, course: 'A', food: rawA, imgUrl: imageKeyA })
+    post.diet.push({ date: selectedDate.value, course: 'B', food: rawB, imgUrl: imageKeyB })
+    console.log(post)
     await axios[method]('/api/foods', post)
     aOriginImage.value = aCourseImageFile.value
     bOriginImage.value = bCourseImageFile.value
-    if (method === 'post') {
-      hasData.value = true
-    }
+    if (method === 'post') hasData.value = true
     cropperRef.value?.resetCropper()
     alert('메뉴가 저장되었습니다.')
   } catch (err) {
