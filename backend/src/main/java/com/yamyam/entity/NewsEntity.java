@@ -20,7 +20,7 @@ public class NewsEntity {
     @Column(name = "news_id")
     private Integer newsId;
 
-    @Column(name="title", nullable = false, length = 50)
+    @Column(name="title", nullable = false, length = 255)
     private String title;
 
     @Column(name="description", nullable = false)

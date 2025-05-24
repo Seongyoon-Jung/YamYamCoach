@@ -370,68 +370,57 @@ public class DishRecordService {
 
     // 5일간의 기록을 가져오는 메소드 추가
     public List<Map<String, Object>> getLast5DaysRecords(Integer userId) {
-        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-        LocalDateTime startOf5DaysAgo = endOfToday.minusDays(4).withHour(0).withMinute(0).withSecond(0);
-        
-        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAtBetween(userId, startOf5DaysAgo, endOfToday);
-        
+        // 오늘 날짜를 명확히 LocalDate로 지정
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusDays(4);
+        LocalDate endDate = today;
+
+        // 5일치 전체 DishRecord를 가져옴 (recorded_at의 날짜만 비교)
+        // 경계값 문제를 해결하기 위해 시작 시간을 1시간 앞당김
+        List<DishRecord> records = dishRecordRepository.findByUserIdAndRecordedAtBetween(
+            userId,
+            startDate.atStartOfDay().minusHours(1), // 시작일 00:00 보다 1시간 이른 시간부터 조회
+            endDate.atTime(23, 59, 59)
+        );
+
         // 날짜별로 그룹화하여 결과 생성
-        Map<String, Map<String, Double>> dailyNutrients = new HashMap<>();
-        
-        // 일자별, 영양소별 합계 데이터 구성
+        Map<LocalDate, Map<String, Double>> dailyNutrients = new HashMap<>();
+
         for (DishRecord record : records) {
-            // 날짜만 추출 (yyyy-MM-dd 형식)
-            String dateKey = record.getRecordedAt().toLocalDate().toString();
-            
-            // 해당 날짜의 영양소 맵을 가져오거나 새로 생성
-            Map<String, Double> dayNutrients = dailyNutrients.getOrDefault(dateKey, new HashMap<>());
-            
-            // 음식 정보 조회
+            LocalDate dateKey = record.getRecordedAt().toLocalDate();
+            // computeIfAbsent를 사용하여 해당 날짜의 맵을 가져오거나 새로 생성합니다.
+            Map<String, Double> dayNutrients = dailyNutrients.computeIfAbsent(dateKey, k -> new HashMap<>());
+
             Optional<Dish> dishOpt = dishRepository.findById(record.getDishId());
-            
             if (dishOpt.isPresent()) {
                 Dish dish = dishOpt.get();
-                
-                // 영양소 값 누적
                 dayNutrients.put("calories", dayNutrients.getOrDefault("calories", 0.0) + (dish.getCalorieKcal() != null ? dish.getCalorieKcal() : 0.0));
                 dayNutrients.put("protein", dayNutrients.getOrDefault("protein", 0.0) + (dish.getProteinG() != null ? dish.getProteinG() : 0.0));
                 dayNutrients.put("carbohydrate", dayNutrients.getOrDefault("carbohydrate", 0.0) + (dish.getCarbohydrateG() != null ? dish.getCarbohydrateG() : 0.0));
                 dayNutrients.put("fat", dayNutrients.getOrDefault("fat", 0.0) + (dish.getFatG() != null ? dish.getFatG() : 0.0));
                 dayNutrients.put("sugar", dayNutrients.getOrDefault("sugar", 0.0) + (dish.getSugarG() != null ? dish.getSugarG() : 0.0));
+                // computeIfAbsent를 사용했으므로, dayNutrients는 이미 dailyNutrients 내부의 맵을 참조하고 있어 별도의 put이 필요 없습니다.
             }
-            
-            dailyNutrients.put(dateKey, dayNutrients);
         }
-        
+
         // 최근 5일 데이터 준비 (오늘부터 5일 전까지)
         List<Map<String, Object>> result = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        
-        // 최근 5일치 날짜를 먼저 생성
         for (int i = 4; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
-            String dateKey = date.toString();
-            
             Map<String, Object> dayData = new HashMap<>();
-            dayData.put("date", dateKey);
-            
-            // 해당 날짜의 데이터가 있으면 사용, 없으면 빈 값 (0) 설정
-            Map<String, Double> nutrients = dailyNutrients.getOrDefault(dateKey, new HashMap<>());
-            
-            // 모든 필요한 영양소 키가 있는지 확인하고, 없으면 0으로 설정
+            dayData.put("date", date.toString());
+            // dailyNutrients에서 해당 날짜의 영양소 맵을 가져옵니다. 없으면 빈 맵을 사용합니다.
+            Map<String, Double> nutrients = dailyNutrients.getOrDefault(date, new HashMap<>());
+            // 기본값으로 0.0을 설정합니다.
             if (!nutrients.containsKey("calories")) nutrients.put("calories", 0.0);
             if (!nutrients.containsKey("protein")) nutrients.put("protein", 0.0);
             if (!nutrients.containsKey("carbohydrate")) nutrients.put("carbohydrate", 0.0);
             if (!nutrients.containsKey("fat")) nutrients.put("fat", 0.0);
             if (!nutrients.containsKey("sugar")) nutrients.put("sugar", 0.0);
-            
             dayData.put("nutrients", nutrients);
             result.add(dayData);
         }
-        
-        // 날짜순 정렬
         result.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
-        
         return result;
     }
 
