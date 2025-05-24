@@ -12,6 +12,7 @@ public class FoodData {
 	
     private String course;
     private List<String> food;
+    private String imgUrl;
     
 	public LocalDate getDate() {
 		return date;
@@ -30,6 +31,12 @@ public class FoodData {
 	}
 	public void setFood(List<String> food) {
 		this.food = food;
+	}
+	public String getImgUrl() {
+		return imgUrl;
+	}
+	public void setImgUrl(String imgUrl) {
+		this.imgUrl = imgUrl;
 	}
 
     

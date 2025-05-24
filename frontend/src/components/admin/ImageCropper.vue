@@ -10,22 +10,23 @@
     />
     <!-- 사진 선택 + 크롭 버튼을 나란히 정렬 -->
     <div v-if="imageUrl" class="mb-4 d-flex justify-content-center gap-2">
-      <button class="btn btn-outline-primary" @click="triggerFileSelect">
+      <button type="button" class="btn btn-outline-primary" @click="triggerFileSelect">
         사진 선택 또는 드래그&드롭
       </button>
-      <button class="btn btn-primary" @click="cropImage">크롭</button>
+      <button type="button" class="btn btn-primary" @click="cropImage">크롭</button>
     </div>
 
     <!-- 사진 선택만 있을 경우 (초기 화면) -->
     <div v-else class="mb-4 text-center">
-      <button class="btn btn-outline-primary" @click="triggerFileSelect">
+      <button type="button" class="btn btn-outline-primary" @click="triggerFileSelect">
         사진 선택 또는 드래그&드롭
       </button>
     </div>
 
-    <!-- Cropper 표시 영역 -->
-    <div v-if="imageUrl" class="row mb-3 justify-content-center">
-      <div class="col-auto p-0 border rounded overflow-hidden">
+    <!-- Cropper + 크롭된 이미지 나란히 -->
+    <div v-if="imageUrl" class="row mb-3 justify-content-center align-items-start">
+      <!-- 왼쪽: Cropper -->
+      <div class="col-md-6 p-2 border rounded overflow-hidden text-center">
         <Cropper
           ref="cropper"
           :src="imageUrl"
@@ -36,15 +37,20 @@
           :background="false"
           :zoomable="true"
           :scalable="true"
-          style="max-height: 400px; display: block"
+          style="max-height: 400px; width: 100%; display: block"
         />
       </div>
-    </div>
 
-    <!-- 크롭된 이미지 미리보기 -->
-    <div v-if="croppedImageUrl" class="text-center">
-      <h5>크롭된 이미지</h5>
-      <img :src="croppedImageUrl" class="img-fluid rounded" alt="Cropped Image" />
+      <!-- 오른쪽: 크롭된 이미지 미리보기 -->
+      <div v-if="croppedImageUrl" class="col-md-5 text-center p-2">
+        <h5 class="mb-3">크롭된 이미지</h5>
+        <img
+          :src="croppedImageUrl"
+          class="img-fluid rounded border"
+          alt="Cropped Image"
+          style="max-height: 300px; object-fit: contain"
+        />
+      </div>
     </div>
   </div>
 </template>

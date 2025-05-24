@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,4 +49,22 @@ public class FoodsController {
 	    
 	    return ResponseEntity.ok("OK");
 	}
+	
+	@PutMapping("")
+	public ResponseEntity<String> modfiyFoods(@RequestBody FoodRequest request) {
+	    for (FoodData item : request.getDiet()) {
+	        System.out.println("날짜: " + item.getDate());
+	        System.out.println("코스: " + item.getCourse());
+	        System.out.println("음식: " + item.getFood());
+	        System.out.println();
+	    }
+	    
+	    foodService.modifyAllCourseSchedule(request.getDiet());
+	    foodService.saveAllDish(request.getDiet());
+	    foodService.modifyAllScheduleDish(request.getDiet());
+	    
+	    
+	    return ResponseEntity.ok("OK");
+	}
+	
 }

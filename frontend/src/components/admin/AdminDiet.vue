@@ -1,62 +1,92 @@
 <template>
   <div class="container py-5">
-    <h3 class="mb-4">급식 메뉴 수정 및 입력</h3>
+    <!-- 헤더 + 버튼을 한 줄로 정렬 -->
+    <form @submit.prevent="handleSave">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">급식 메뉴 수정 및 입력</h3>
+        <button class="btn btn-primary" type="submit">
+          {{ hasData ? '수정' : '입력' }}
+        </button>
+      </div>
 
-    <!-- 날짜 선택 -->
-    <div class="mb-3 d-flex align-items-center">
-      <button class="btn btn-outline-secondary me-2" @click="changeDate(-1)">◀️</button>
-      <input type="date" class="form-control me-2" v-model="selectedDate" />
-      <button class="btn btn-outline-secondary" @click="changeDate(1)">▶️</button>
-    </div>
-    <!-- A코스 & B코스 입력 필드 -->
-    <div class="row mb-3">
-      <!-- A코스 -->
-      <div class="card col-md-6">
-        <h6 class="m-3">A코스 대표 이미지</h6>
-        <img v-if="aCourseImage" :src="aCourseImage" class="img-fluid rounded border h-50" />
-        <br />
-        <label class="form-label">A코스</label>
-        <div v-for="(item, index) in menuData.aCourse" :key="'a-' + index" class="mb-2">
-          <input
-            v-model="menuData.aCourse[index]"
-            type="text"
-            class="form-control"
-            :placeholder="`A코스 메뉴 ${index + 1}`"
-          />
+      <!-- 날짜 선택 -->
+      <div class="mb-3 d-flex align-items-center">
+        <button class="btn btn-outline-secondary me-2" type="button" @click="changeDate(-1)">
+          ◀️
+        </button>
+        <input type="date" class="form-control me-2" v-model="selectedDate" />
+        <button class="btn btn-outline-secondary" type="button" @click="changeDate(1)">▶️</button>
+      </div>
+
+      <!-- A코스 & B코스 입력 필드 -->
+      <div class="row mb-3">
+        <div class="card col-md-6">
+          <h6 class="m-3">A코스 대표 이미지</h6>
+          <!-- 이미지 영역 (항상 존재, 이미지가 없어도 고정된 높이 유지) -->
+          <div
+            class="w-100 mb-2 border rounded d-flex align-items-center justify-content-center"
+            style="height: 120px; background-color: #f8f9fa"
+          >
+            <img
+              v-if="aCourseImageUrl"
+              :src="aCourseImageUrl"
+              class="img-fluid"
+              style="max-height: 100%; max-width: 100%"
+            />
+            <span v-else class="text-muted">이미지가 없습니다</span>
+          </div>
+          <label class="form-label">A코스</label>
+          <div v-for="(item, index) in menuData.aCourse" :key="'a-' + index" class="mb-2">
+            <input
+              v-model="menuData.aCourse[index]"
+              :placeholder="index === 0 ? '대표 메뉴 (필수)' : `메뉴 ${index + 1}`"
+              :required="index === 0"
+              type="text"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="card col-md-6">
+          <h6 class="m-3">B코스 대표 이미지</h6>
+          <!-- 이미지 영역 (항상 존재, 이미지가 없어도 고정된 높이 유지) -->
+          <div
+            class="w-100 mb-2 border rounded d-flex align-items-center justify-content-center"
+            style="height: 120px; background-color: #f8f9fa"
+          >
+            <img
+              v-if="bCourseImageUrl"
+              :src="bCourseImageUrl"
+              class="img-fluid"
+              style="max-height: 100%; max-width: 100%"
+            />
+            <span v-else class="text-muted">이미지가 없습니다</span>
+          </div>
+
+          <label class="form-label">B코스</label>
+          <div v-for="(item, index) in menuData.bCourse" :key="'b-' + index" class="mb-2">
+            <input
+              v-model="menuData.bCourse[index]"
+              :placeholder="index === 0 ? '대표 메뉴 (필수)' : `메뉴 ${index + 1}`"
+              :required="index === 0"
+              type="text"
+              class="form-control"
+            />
+          </div>
         </div>
       </div>
 
-      <!-- B코스 -->
-      <div class="card col-md-6">
-        <h6 class="m-3">B코스 대표 이미지</h6>
-        <img v-if="bCourseImage" :src="bCourseImage" class="img-fluid rounded border h-50" />
-        <br />
-        <label class="form-label">B코스</label>
-        <div v-for="(item, index) in menuData.bCourse" :key="'b-' + index" class="mb-2">
-          <input
-            v-model="menuData.bCourse[index]"
-            type="text"
-            class="form-control"
-            :placeholder="`B코스 메뉴 ${index + 1}`"
-          />
-        </div>
+      <ImageCropper ref="cropperRef" @cropped="handleCropped" />
+
+      <div v-if="latestCroppedImage" class="mb-4 d-flex justify-content-center gap-2">
+        <button class="btn btn-outline-primary" type="button" @click="setAsRepresentative('A')">
+          A코스 대표 이미지 선택
+        </button>
+        <button class="btn btn-outline-success" type="button" @click="setAsRepresentative('B')">
+          B코스 대표 이미지 선택
+        </button>
       </div>
-    </div>
-
-    <!-- 크롭 컴포넌트 -->
-    <ImageCropper ref="cropperRef" @cropped="handleCropped" />
-
-    <div v-if="latestCroppedImage" class="mb-4 d-flex justify-content-center gap-2">
-      <button class="btn btn-outline-primary" @click="setAsRepresentative('A')">
-        A코스 대표 이미지 선택
-      </button>
-      <button class="btn btn-outline-success" @click="setAsRepresentative('B')">
-        B코스 대표 이미지 선택
-      </button>
-    </div>
-
-    <!-- 저장 버튼 -->
-    <button class="btn btn-primary mt-4" @click="saveMenu">저장</button>
+    </form>
   </div>
 </template>
 
@@ -65,107 +95,169 @@ import { ref, watch, onMounted } from 'vue'
 import axios from '@/plugins/axios'
 import ImageCropper from '@/components/admin/ImageCropper.vue'
 
-// 날짜 관련
 const getToday = () => new Date().toISOString().slice(0, 10)
 const selectedDate = ref(getToday())
 
-// 메뉴 기본 구조
 const defaultMenu = () => Array(7).fill('')
-const menuData = ref({
-  aCourse: defaultMenu(),
-  bCourse: defaultMenu(),
-})
+const menuData = ref({ aCourse: defaultMenu(), bCourse: defaultMenu() })
 
-// 대표 이미지 상태
-const aCourseImage = ref('')
-const bCourseImage = ref('')
-const latestCroppedImage = ref('') // 최근 크롭된 이미지 저장
+const aCourseImageUrl = ref('')
+const bCourseImageUrl = ref('')
+const aCourseImageFile = ref(null)
+const bCourseImageFile = ref(null)
+const aOriginImage = ref('')
+const bOriginImage = ref('')
+const latestCroppedImage = ref('')
+const latestCroppedFile = ref(null)
 const cropperRef = ref(null)
+const hasData = ref(false)
 
-// 날짜 이동
 function changeDate(days) {
   const date = new Date(selectedDate.value)
   date.setDate(date.getDate() + days)
   selectedDate.value = date.toISOString().slice(0, 10)
 }
 
-// 크롭 후 이미지 받기
-function handleCropped({ dataUrl }) {
+function handleCropped({ dataUrl, file }) {
   latestCroppedImage.value = dataUrl
+  latestCroppedFile.value = file
   alert('이미지 크롭 완료! A/B 대표 이미지 버튼을 눌러 등록하세요.')
 }
 
-// A코스 또는 B코스 대표 이미지 설정
 function setAsRepresentative(course) {
-  if (!latestCroppedImage.value) {
+  if (!latestCroppedImage.value || !latestCroppedFile.value) {
     alert('먼저 이미지를 크롭해주세요.')
     return
   }
 
   if (course === 'A') {
-    aCourseImage.value = latestCroppedImage.value
+    aCourseImageUrl.value = latestCroppedImage.value
+    aCourseImageFile.value = latestCroppedFile.value
+    aOriginImage.value = latestCroppedImage.value
   } else if (course === 'B') {
-    bCourseImage.value = latestCroppedImage.value
+    bCourseImageUrl.value = latestCroppedImage.value
+    bCourseImageFile.value = latestCroppedFile.value
+    bOriginImage.value = latestCroppedImage.value
   }
+
   latestCroppedImage.value = ''
+  latestCroppedFile.value = null
 }
 
-// 저장 처리
-function saveMenu() {
+const handleSave = async () => {
+  await saveMenu(hasData.value ? 'put' : 'post')
+}
+
+const saveMenu = async (method = 'put') => {
   const cleanedA = menuData.value.aCourse.filter((item) => item.trim() !== '')
   const cleanedB = menuData.value.bCourse.filter((item) => item.trim() !== '')
 
-  console.log('날짜:', selectedDate.value)
-  console.log('A코스:', cleanedA)
-  console.log('B코스:', cleanedB)
-  console.log('A코스 대표 이미지:', aCourseImage.value)
-  console.log('B코스 대표 이미지:', bCourseImage.value)
+  const post = { diet: [] }
 
-  alert('메뉴가 저장되었습니다.')
-}
-
-// 날짜별 메뉴 불러오기
-async function fetchMenuByDate(date) {
   try {
-    const res = await axios.get('/api/foods', { params: { date } })
-
-    const result = {
-      aCourse: [],
-      bCourse: [],
+    let imageKeyA = aCourseImageFile.value
+    console.log(aOriginImage.value, aCourseImageFile.value)
+    if (aCourseImageFile.value != aOriginImage.value && aCourseImageFile.value) {
+      const uuid = crypto.randomUUID()
+      const fileName = `uploads/diet/${uuid}.png`
+      const putUrlRes = await axios.get('/api/s3/put-url', { params: { fileName } })
+      await fetch(putUrlRes.data, {
+        method: 'PUT',
+        body: aCourseImageFile.value,
+        headers: { 'Content-Type': aCourseImageFile.value.type },
+      })
+      imageKeyA = fileName
     }
 
-    res.data.forEach((entry) => {
-      if (entry.course === 'A') result.aCourse = entry.food
-      if (entry.course === 'B') result.bCourse = entry.food
+    let imageKeyB = bCourseImageFile.value
+    console.log(bOriginImage.value, bCourseImageFile.value)
+    if (bCourseImageFile.value != bOriginImage.value && bCourseImageFile.value) {
+      const uuid = crypto.randomUUID()
+      const fileName = `uploads/diet/${uuid}.png`
+      const putUrlRes = await axios.get('/api/s3/put-url', { params: { fileName } })
+      await fetch(putUrlRes.data, {
+        method: 'PUT',
+        body: bCourseImageFile.value,
+        headers: { 'Content-Type': bCourseImageFile.value.type },
+      })
+      imageKeyB = fileName
+    }
+
+    post.diet.push({
+      date: selectedDate.value,
+      course: 'A',
+      food: cleanedA,
+      imgUrl: imageKeyA,
     })
 
-    if (result.aCourse.length < 7) {
-      result.aCourse = [...result.aCourse, ...Array(7 - result.aCourse.length).fill('')]
-    }
-    if (result.bCourse.length < 7) {
-      result.bCourse = [...result.bCourse, ...Array(7 - result.bCourse.length).fill('')]
-    }
+    post.diet.push({
+      date: selectedDate.value,
+      course: 'B',
+      food: cleanedB,
+      imgUrl: imageKeyB,
+    })
 
-    menuData.value = result
-  } catch (err) {
-    console.error('메뉴 로딩 실패:', err)
-    menuData.value = {
-      aCourse: defaultMenu(),
-      bCourse: defaultMenu(),
+    await axios[method]('/api/foods', post)
+    aOriginImage.value = aCourseImageFile.value
+    bOriginImage.value = bCourseImageFile.value
+    if (method === 'post') {
+      hasData.value = true
     }
+    cropperRef.value?.resetCropper()
+    alert('메뉴가 저장되었습니다.')
+  } catch (err) {
+    console.error('식단 저장 실패:', err)
   }
 }
 
-// 날짜 변경 시 호출
+async function fetchMenuByDate(date) {
+  try {
+    const res = await axios.get('/api/foods', { params: { date } })
+    const result = { aCourse: [], bCourse: [] }
+    let hasAnyData = false
+
+    for (const entry of res.data) {
+      if (entry.course === 'A') {
+        hasAnyData = true
+        result.aCourse = entry.food
+        if (entry.imgUrl) {
+          const imgRes = await axios.get('/api/s3/get-url', { params: { filename: entry.imgUrl } })
+          aCourseImageUrl.value = imgRes.data
+          aCourseImageFile.value = entry.imgUrl
+          aOriginImage.value = entry.imgUrl
+        }
+      } else if (entry.course === 'B') {
+        hasAnyData = true
+        result.bCourse = entry.food
+        if (entry.imgUrl) {
+          const imgRes = await axios.get('/api/s3/get-url', { params: { filename: entry.imgUrl } })
+          bCourseImageUrl.value = imgRes.data
+          bCourseImageFile.value = entry.imgUrl
+          bOriginImage.value = entry.imgUrl
+        }
+      }
+    }
+
+    hasData.value = hasAnyData
+    result.aCourse = [...result.aCourse, ...Array(7 - result.aCourse.length).fill('')]
+    result.bCourse = [...result.bCourse, ...Array(7 - result.bCourse.length).fill('')]
+    menuData.value = result
+  } catch (err) {
+    console.error('메뉴 불러오기 실패:', err)
+    hasData.value = false
+    menuData.value = { aCourse: defaultMenu(), bCourse: defaultMenu() }
+  }
+}
+
 watch(selectedDate, (newDate) => {
-  aCourseImage.value = null
-  bCourseImage.value = null
-  latestCroppedImage.value = ''
+  aCourseImageUrl.value = ''
+  bCourseImageUrl.value = ''
+  aCourseImageFile.value = null
+  bCourseImageFile.value = null
   cropperRef.value?.resetCropper()
   fetchMenuByDate(newDate)
 })
 
-// 최초 로딩
 onMounted(() => {
   fetchMenuByDate(selectedDate.value)
 })

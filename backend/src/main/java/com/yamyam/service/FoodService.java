@@ -14,4 +14,8 @@ public interface FoodService {
 	public void saveAllScheduleDish(List<FoodData> list);
 	
 	public List<FoodsResponse> getFoodsDate(LocalDate date);
+	
+	public void modifyAllCourseSchedule(List<FoodData> list);
+	
+	public void modifyAllScheduleDish(List<FoodData> list);
 }
