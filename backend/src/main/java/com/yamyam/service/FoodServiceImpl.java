@@ -110,9 +110,9 @@ public class FoodServiceImpl implements FoodService {
 			for (String menu : foodData.getFood()) {
 				Optional<Dish> dish = dishRepository.findByDishName(menu);
 				System.out.println("menu : " + menu);
-				if(!scheduleDishRepository.existsByDish_DishIdAndCourseSchedule_ScheduleId(dish.get().getDishId(),courseSchedule.get().getScheduleId())) {
+				if(!scheduleDishRepository.existsByDish_DishIdAndCourseSchedule_ScheduleId(dish.get().getDishId(),courseSchedule.get().getScheduleId()) && !menu.equals("")) {
 					ScheduleDishId id = new ScheduleDishId(dish.get().getDishId(), courseSchedule.get().getScheduleId());
-
+					
 					ScheduleDish scheduleDish = new ScheduleDish();
 					scheduleDish.setId(id);
 					scheduleDish.setDish(dish.get());
@@ -164,8 +164,13 @@ public class FoodServiceImpl implements FoodService {
 				Optional<Dish> dish = dishRepository.findByDishName(menu);
 				ScheduleDish scheduleDish = scheduleDishRepository.findByCourseSchedule_ScheduleIdAndServingOrder(courseSchedule.get().getScheduleId(),order);
 				
+				//음식명이 "" 상태로 들어온다면
+				if(menu.equals("")) {
+					 scheduleDishRepository.delete(scheduleDish);
+				}
+				
 				// 음식명을 수정했다면
-				if (scheduleDish.getDish().getDishId() != dish.get().getDishId()) {
+				else if (scheduleDish != null && scheduleDish.getDish().getDishId() != dish.get().getDishId()) {
 				    scheduleDishRepository.delete(scheduleDish);
 					ScheduleDishId id = new ScheduleDishId(dish.get().getDishId(), courseSchedule.get().getScheduleId());
 				    ScheduleDish s = new ScheduleDish();
