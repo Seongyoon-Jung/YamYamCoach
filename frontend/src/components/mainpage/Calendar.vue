@@ -30,15 +30,48 @@
           {{ error }}
         </div>
         <div v-else>
-          <div class="meal-section">
-            <div class="meal-section-title">[점심]</div>
-            <div v-if="meals.length === 0" class="text-center text-muted">
-              기록된 식사가 없습니다.
-            </div>
-            <div v-else class="meal-list">
-              {{ meals.map(meal => meal.dishName).join(' · ') }}
-            </div>
+          <div v-if="!hasAnyMeals" class="text-center text-muted meal-section">
+            기록된 식사가 없습니다.
           </div>
+          <template v-else>
+            <!-- 아침 섹션 -->
+            <div v-if="extraMeals.BREAKFAST.length > 0" class="meal-section">
+              <div class="meal-section-title">[아침]</div>
+              <div class="meal-list">
+                {{ extraMeals.BREAKFAST.map(meal => meal.dishName).join(' · ') }}
+              </div>
+            </div>
+
+            <!-- 점심 섹션 (기본 식단) -->
+            <div v-if="meals.length > 0 || extraMeals.LUNCH.length > 0" class="meal-section">
+              <div class="meal-section-title">[점심]</div>
+              <div class="meal-list">
+                <template v-if="meals.length > 0">
+                  {{ meals.map(meal => meal.dishName).join(' · ') }}
+                </template>
+                <template v-if="extraMeals.LUNCH.length > 0">
+                  <template v-if="meals.length > 0"> · </template>
+                  {{ extraMeals.LUNCH.map(meal => meal.dishName).join(' · ') }}
+                </template>
+              </div>
+            </div>
+
+            <!-- 저녁 섹션 -->
+            <div v-if="extraMeals.DINNER.length > 0" class="meal-section">
+              <div class="meal-section-title">[저녁]</div>
+              <div class="meal-list">
+                {{ extraMeals.DINNER.map(meal => meal.dishName).join(' · ') }}
+              </div>
+            </div>
+
+            <!-- 간식 섹션 -->
+            <div v-if="extraMeals.SNACK.length > 0" class="meal-section">
+              <div class="meal-section-title">[간식]</div>
+              <div class="meal-list">
+                {{ extraMeals.SNACK.map(meal => meal.dishName).join(' · ') }}
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       <div class="add-record-button-container">
@@ -51,6 +84,8 @@
     <MealRecordModal
       v-if="showModal"
       :selectedDate="selectedDateFormatted"
+      :apiDate="apiDateFormatted"
+      :isWeekend="isWeekend"
       @close="closeModal"
     />
   </div>
@@ -66,6 +101,7 @@ const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth()) // 0-indexed
 const selectedDate = ref(today.getDate())
+const isInitialLoad = ref(true)
 
 const weekDays = ['월', '화', '수', '목', '금', '토', '일']
 
@@ -199,6 +235,12 @@ const filteredSchedule = computed(() => {
 const loading = ref(false)
 const error = ref(null)
 const meals = ref([])
+const extraMeals = ref({
+  BREAKFAST: [],
+  LUNCH: [],
+  DINNER: [],
+  SNACK: []
+})
 
 // 오늘 날짜로 캘린더를 초기화하고 식사 기록을 다시 불러오는 함수
 const resetToTodayAndFetchMeals = () => {
@@ -213,7 +255,7 @@ const resetToTodayAndFetchMeals = () => {
   fetchMeals(selectedDate.value)
 }
 
-// 날짜 선택 시 해당 날짜의 식사 기록 조회
+// 날짜별 식사 기록 조회
 const fetchMeals = async (selectedDate) => {
   if (!selectedDate) return
 
@@ -222,12 +264,38 @@ const fetchMeals = async (selectedDate) => {
 
   try {
     const formattedDate = `${year.value}-${String(month.value + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
-    const response = await axios.get(`/api/meal-records/date/${formattedDate}`)
-    meals.value = response.data
+    
+    // 기본 식단 조회 (점심)
+    const mealResponse = await axios.get(`/api/meal-records/date/${formattedDate}`)
+    meals.value = mealResponse.data
+
+    // 추가 식사 기록 조회 (아침, 저녁, 간식)
+    const extraResponse = await axios.get(`/api/extra-meal-records/by-date/${formattedDate}`)
+    
+    // 초기화
+    extraMeals.value = {
+      BREAKFAST: [],
+      LUNCH: [],
+      DINNER: [],
+      SNACK: []
+    }
+    
+    // 추가 식사 기록을 종류별로 분류
+    extraResponse.data.forEach(meal => {
+      if (extraMeals.value[meal.courseType]) {
+        extraMeals.value[meal.courseType].push(meal)
+      }
+    })
   } catch (err) {
     console.error('식사 기록 조회 실패:', err)
     error.value = '식사 기록을 불러오는데 실패했습니다.'
     meals.value = []
+    extraMeals.value = {
+      BREAKFAST: [],
+      LUNCH: [],
+      DINNER: [],
+      SNACK: []
+    }
   } finally {
     loading.value = false
   }
@@ -270,7 +338,15 @@ onUnmounted(() => {
 })
 
 const showModal = ref(false)
+const formatDateToKorean = (year, month, date) => {
+  return `${month + 1}월 ${date}일`
+}
+
 const selectedDateFormatted = computed(() => {
+  return formatDateToKorean(year.value, month.value, selectedDate.value)
+})
+
+const apiDateFormatted = computed(() => {
   return `${year.value}-${String(month.value + 1).padStart(2, '0')}-${String(selectedDate.value).padStart(2, '0')}`
 })
 
@@ -281,6 +357,21 @@ const openAddModal = () => {
 const closeModal = () => {
   showModal.value = false
 }
+
+const isWeekend = computed(() => {
+  const date = new Date(year.value, month.value, selectedDate.value)
+  const day = date.getDay()
+  return day === 0 || day === 6 // 0은 일요일, 6은 토요일
+})
+
+// 식사 기록 여부 확인
+const hasAnyMeals = computed(() => {
+  return meals.value.length > 0 || 
+         extraMeals.value.BREAKFAST.length > 0 || 
+         extraMeals.value.LUNCH.length > 0 || 
+         extraMeals.value.DINNER.length > 0 || 
+         extraMeals.value.SNACK.length > 0
+})
 </script>
 
 <style scoped>
@@ -362,7 +453,6 @@ const closeModal = () => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  border-radius: 50%;
   cursor: pointer;
   font-size: 1.08rem;
   transition: all 0.2s ease;
@@ -376,14 +466,29 @@ const closeModal = () => {
 }
 
 .calendar-modern-cell.today {
-  background: #4a90e2;
-  color: white;
-  border: none;
+  color: #ff5a5f;
+  font-weight: 700;
+  font-size: 1.15rem;
 }
 
-.calendar-modern-cell.selected:not(.today) {
+.calendar-modern-cell.selected {
+  position: relative;
+}
+
+.calendar-modern-cell.selected::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 42px;
+  height: 42px;
   border: 2px solid #ff5a5f;
-  color: #ff5a5f;
+  border-radius: 50%;
+}
+
+.calendar-modern-cell.other-month {
+  color: #ccc;
 }
 
 .calendar-modern-cell.blank {
@@ -396,21 +501,25 @@ const closeModal = () => {
 }
 
 .meal-section {
-  padding: 8px 12px;
+  padding: 12px;
   border-top: 1px solid #eee;
+}
+
+.meal-section:first-child {
+  border-top: none;
 }
 
 .meal-section-title {
   font-weight: 600;
   color: #333;
-  margin-bottom: 6px;
-  font-size: 0.9rem;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
 }
 
 .meal-list {
   color: #666;
   font-size: 0.9rem;
-  line-height: 1.3;
+  line-height: 1.4;
   white-space: normal;
   word-break: keep-all;
 }
@@ -445,18 +554,17 @@ const closeModal = () => {
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #4a90e2;
+  border: 1px solid #4a90e2;
   border-radius: 20px;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .add-record-button:hover {
-  background-color: #357abd;
+  background-color: #f0f7ff;
   transform: scale(1.05);
 }
 
