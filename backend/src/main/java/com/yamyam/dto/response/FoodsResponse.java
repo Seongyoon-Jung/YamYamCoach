@@ -7,15 +7,17 @@ public class FoodsResponse {
 	private LocalDate date;
 	private String course;
 	private List<String> food;
+	private String imgUrl;
 	
 	public FoodsResponse() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public FoodsResponse(LocalDate date, String course, List<String> food) {
+	public FoodsResponse(LocalDate date, String course, List<String> food, String imgUrl) {
 		this.date = date;
 		this.course = course;
 		this.food = food;
+		this.imgUrl = imgUrl;
 	}
 
 	public LocalDate getDate() {
@@ -41,6 +43,15 @@ public class FoodsResponse {
 	public void setFood(List<String> food) {
 		this.food = food;
 	}
+
+	public String getImgUrl() {
+		return imgUrl;
+	}
+
+	public void setImgUrl(String imgUrl) {
+		this.imgUrl = imgUrl;
+	}
+	
 	
 	
 }

@@ -33,11 +33,13 @@ public class CourseSchedule {
     public CourseSchedule() {
 		// TODO Auto-generated constructor stub
 	}
-    
-    public CourseSchedule(LocalDate scheduleDate, String courseType, String courseName) {
+
+	public CourseSchedule(LocalDate scheduleDate, String courseType, String courseName, String imgUrl) {
+		super();
 		this.scheduleDate = scheduleDate;
 		this.courseType = courseType;
 		this.courseName = courseName;
+		this.imgUrl = imgUrl;
 	}
 
 	// Getters

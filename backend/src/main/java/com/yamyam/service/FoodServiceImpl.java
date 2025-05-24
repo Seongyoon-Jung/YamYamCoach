@@ -22,11 +22,14 @@ public class FoodServiceImpl implements FoodService {
 	private final CourseScheduleRepository courseScheduleRepository;
 	private final DishRepository dishRepository;
 	private final ScheduleDishRepository scheduleDishRepository;
+	private final S3UploadService s3UploadService;
+	
 	public FoodServiceImpl(CourseScheduleRepository courseScheduleRepository, DishRepository dishRepository,
-			ScheduleDishRepository scheduleDishRepository) {
+			ScheduleDishRepository scheduleDishRepository, S3UploadService s3UploadService) {
 		this.courseScheduleRepository = courseScheduleRepository;
 		this.dishRepository = dishRepository;
 		this.scheduleDishRepository = scheduleDishRepository;
+		this.s3UploadService = s3UploadService;
 	}
 
 	@Override
@@ -42,7 +45,7 @@ public class FoodServiceImpl implements FoodService {
 			FoodsResponse foodsResponse = new FoodsResponse();
 			foodsResponse.setDate(date);
 			foodsResponse.setCourse(courseSchedule.getCourseType());
-			
+			foodsResponse.setImgUrl(courseSchedule.getImgUrl());
 			List<ScheduleDish> dishs = scheduleDishRepository.findByIdScheduleIdOrderByServingOrder(courseSchedule.getScheduleId());
 			List<String> foods = new ArrayList<>();
 			for (ScheduleDish scheduleDish : dishs) {
@@ -65,7 +68,7 @@ public class FoodServiceImpl implements FoodService {
 		
 		for (FoodData foodData : list) {
 			if(!courseScheduleRepository.existsByScheduleDateAndCourseType(foodData.getDate(), foodData.getCourse())) {
-				data.add(new CourseSchedule(foodData.getDate(), foodData.getCourse(), foodData.getFood().get(0)));
+				data.add(new CourseSchedule(foodData.getDate(), foodData.getCourse(), foodData.getFood().get(0), foodData.getImgUrl()));
 			}
 		}
 		
@@ -101,7 +104,6 @@ public class FoodServiceImpl implements FoodService {
 		//dish Entity, CourseSchedule Entity
 		List<ScheduleDish> data = new ArrayList<>();
 		
-		
 		for (FoodData foodData : list) {
 			Optional<CourseSchedule> courseSchedule = courseScheduleRepository.findByScheduleDateAndCourseType(foodData.getDate(), foodData.getCourse());
 			int order = 1;
@@ -125,6 +127,60 @@ public class FoodServiceImpl implements FoodService {
 		}
 		
 		scheduleDishRepository.saveAll(data);
+	}
+
+	@Override
+	public void modifyAllCourseSchedule(List<FoodData> list) {
+		List<CourseSchedule> data = new ArrayList<>();
+		
+		for (FoodData foodData : list) {
+			Optional<CourseSchedule> courseSchedule = courseScheduleRepository.findByScheduleDateAndCourseType(foodData.getDate(), foodData.getCourse());
+			courseSchedule.get().setCourseName(foodData.getFood().get(0));
+			
+			//사진이 수정됨 수정 전 이미지 삭제후 다시 url 주소 넣기
+			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println(courseSchedule.get().getImgUrl()+" "+foodData.getImgUrl());
+			if(courseSchedule.get().getImgUrl()!=null && !courseSchedule.get().getImgUrl().equals(foodData.getImgUrl())) {
+				s3UploadService.deleteImage(courseSchedule.get().getImgUrl());
+				courseSchedule.get().setImgUrl(foodData.getImgUrl());
+			}
+			
+			data.add(courseSchedule.get());
+		}
+		
+		courseScheduleRepository.saveAll(data);
+		
+	}
+
+	@Override
+	public void modifyAllScheduleDish(List<FoodData> list) {
+		List<ScheduleDish> data = new ArrayList<>();
+		
+		for (FoodData foodData : list) {
+			Optional<CourseSchedule> courseSchedule = courseScheduleRepository.findByScheduleDateAndCourseType(foodData.getDate(), foodData.getCourse());
+			
+			int order = 1;
+			for (String menu : foodData.getFood()) {
+				Optional<Dish> dish = dishRepository.findByDishName(menu);
+				ScheduleDish scheduleDish = scheduleDishRepository.findByCourseSchedule_ScheduleIdAndServingOrder(courseSchedule.get().getScheduleId(),order);
+				
+				// 음식명을 수정했다면
+				if (scheduleDish.getDish().getDishId() != dish.get().getDishId()) {
+				    scheduleDishRepository.delete(scheduleDish);
+					ScheduleDishId id = new ScheduleDishId(dish.get().getDishId(), courseSchedule.get().getScheduleId());
+				    ScheduleDish s = new ScheduleDish();
+				    s.setId(id);
+				    s.setDish(dish.get());
+				    s.setCourseSchedule(courseSchedule.get());
+				    s.setServingOrder(order);
+				    data.add(s); // ← 버그: 여기도 scheduleDish가 아닌 새로 만든 s를 넣어야 함
+				} 
+				order++;
+			}	
+		}	
+		
+		scheduleDishRepository.saveAll(data);
+		
 	}
 
 

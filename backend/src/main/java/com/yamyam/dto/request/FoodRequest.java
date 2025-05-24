@@ -4,7 +4,6 @@ import java.util.List;
 
 public class FoodRequest {
     private List<FoodData> diet;
-    private String imgUrl;
 
     public List<FoodData> getDiet() {
         return diet;
@@ -14,11 +13,4 @@ public class FoodRequest {
         this.diet = diet;
     }
 
-	public String getImgUrl() {
-		return imgUrl;
-	}
-
-	public void setImgUrl(String imgUrl) {
-		this.imgUrl = imgUrl;
-	}
 }
