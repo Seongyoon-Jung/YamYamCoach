@@ -13,9 +13,9 @@
           :key="day.date + (day.isPrevMonth ? 'prev' : day.isNextMonth ? 'next' : 'current')"
           class="calendar-modern-cell"
           :class="{
-            today: isToday(day.date, day.isCurrentMonth),
-            selected: day.date === selectedDate && day.isCurrentMonth,
-            'other-month': day.isPrevMonth || day.isNextMonth,
+            today: isToday(day.fullDate, day.isCurrentMonth),
+            selected: day.isLastClicked && lastClickedDate.visible,
+            'other-month': day.isPrevMonth || day.isNextMonth
           }"
           @click="selectDate(day)"
         >
@@ -99,102 +99,106 @@ import MealRecordModal from './MealRecordModal.vue'
 
 const today = new Date()
 const year = ref(today.getFullYear())
-const month = ref(today.getMonth()) // 0-indexed
+const month = ref(today.getMonth())
 const selectedDate = ref(today.getDate())
 const isInitialLoad = ref(true)
 
 const weekDays = ['월', '화', '수', '목', '금', '토', '일']
 
 const monthNames = [
-  '1월',
-  '2월',
-  '3월',
-  '4월',
-  '5월',
-  '6월',
-  '7월',
-  '8월',
-  '9월',
-  '10월',
-  '11월',
-  '12월',
+  '1월', '2월', '3월', '4월', '5월', '6월',
+  '7월', '8월', '9월', '10월', '11월', '12월'
 ]
 
-const displayMonth = computed(() => {
-  return `${monthNames[month.value]}`
+const lastClickedDate = ref({
+  year: today.getFullYear(),
+  month: today.getMonth(),
+  date: today.getDate(),
+  visible: true
 })
 
-// 이전 달의 마지막 날짜들을 계산
-const prevMonthDays = computed(() => {
-  const prevMonth = month.value === 0 ? 11 : month.value - 1
-  const prevYear = month.value === 0 ? year.value - 1 : year.value
-  const prevMonthLastDay = new Date(prevYear, month.value, 0).getDate()
-  const firstDayOfMonth = new Date(year.value, month.value, 1).getDay()
-  const prevDays = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
+// 날짜 계산 헬퍼 함수
+const getWeekStartDate = (date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  return new Date(d.setDate(diff))
+}
 
-  return Array.from({ length: prevDays }, (_, i) => ({
-    date: prevMonthLastDay - prevDays + i + 1,
-    isPrevMonth: true,
-  }))
-})
-
-// 현재 달의 날짜들을 계산
-const currentMonthDays = computed(() => {
-  const daysInCurrentMonth = new Date(year.value, month.value + 1, 0).getDate()
-  return Array.from({ length: daysInCurrentMonth }, (_, i) => ({
-    date: i + 1,
-    isCurrentMonth: true,
-  }))
-})
-
-// 다음 달의 첫 날짜들을 계산
-const nextMonthDays = computed(() => {
-  const totalDays = prevMonthDays.value.length + currentMonthDays.value.length
-  const remainingDays = 35 - totalDays // 5주 x 7일 = 35로 변경
-
-  return remainingDays > 0
-    ? Array.from({ length: remainingDays }, (_, i) => ({
-        date: i + 1,
-        isNextMonth: true,
-      }))
-    : []
-})
-
-// 전체 날짜 배열 생성 (5주로 제한)
+// 날짜 배열 생성
 const allDays = computed(() => {
-  const days = [...prevMonthDays.value, ...currentMonthDays.value, ...nextMonthDays.value]
-  return days.slice(0, 35) // 5주 x 7일 = 35일로 제한
+  // 오늘이 속한 주의 월요일 찾기
+  const baseDate = new Date(year.value, month.value, selectedDate.value)
+  const currentWeekMonday = getWeekStartDate(baseDate)
+  
+  // 2주 전 월요일로 이동
+  const startDate = new Date(currentWeekMonday)
+  startDate.setDate(startDate.getDate() - 14)
+  
+  const days = []
+  const currentDate = new Date(startDate)
+
+  // 21일(3주) 동안의 날짜 생성
+  for (let i = 0; i < 21; i++) {
+    const isLastClicked = currentDate.getDate() === lastClickedDate.value.date &&
+                         currentDate.getMonth() === lastClickedDate.value.month &&
+                         currentDate.getFullYear() === lastClickedDate.value.year
+    
+    days.push({
+      date: currentDate.getDate(),
+      isCurrentMonth: currentDate.getMonth() === month.value,
+      isPrevMonth: currentDate.getMonth() < month.value || 
+                  (currentDate.getMonth() === 11 && month.value === 0),
+      isNextMonth: currentDate.getMonth() > month.value || 
+                  (currentDate.getMonth() === 0 && month.value === 11),
+      fullDate: new Date(currentDate),
+      isLastClicked: isLastClicked
+    })
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+
+  // 마지막으로 클릭한 날짜가 현재 보이는 범위 안에 있는지 확인
+  const hasLastClickedDate = days.some(day => day.isLastClicked)
+  lastClickedDate.value.visible = hasLastClickedDate
+
+  return days
+})
+
+// 현재 표시되는 마지막 주의 달 계산
+const displayMonth = computed(() => {
+  const days = allDays.value
+  if (days.length > 0) {
+    const lastWeek = days.slice(-7)[0] // 마지막 주의 첫 날
+    return monthNames[lastWeek.fullDate.getMonth()]
+  }
+  return monthNames[month.value]
 })
 
 const isToday = (date, isCurrentMonth) => {
   return (
     isCurrentMonth &&
-    year.value === today.getFullYear() &&
-    month.value === today.getMonth() &&
-    date === today.getDate()
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
   )
 }
 
 const selectDate = (day) => {
-  if (day.isPrevMonth) {
-    if (month.value === 0) {
-      year.value--
-      month.value = 11
-    } else {
-      month.value--
-    }
-    selectedDate.value = day.date
-  } else if (day.isNextMonth) {
-    if (month.value === 11) {
-      year.value++
-      month.value = 0
-    } else {
-      month.value++
-    }
-    selectedDate.value = day.date
-  } else {
-    selectedDate.value = day.date
+  // 마지막으로 클릭한 날짜 업데이트
+  lastClickedDate.value = {
+    year: day.fullDate.getFullYear(),
+    month: day.fullDate.getMonth(),
+    date: day.fullDate.getDate(),
+    visible: true
   }
+  
+  // 현재 표시되는 날짜 업데이트
+  year.value = day.fullDate.getFullYear()
+  month.value = day.fullDate.getMonth()
+  selectedDate.value = day.date
+
+  // 식사 기록 조회
+  fetchMeals(day.date)
 }
 
 const prevMonth = () => {
@@ -325,15 +329,59 @@ watch([selectedDate, month, year], () => {
   }
 })
 
-// 컴포넌트 마운트 시 이벤트 리스너 등록
+// 스크롤 상태 관리
+const isScrolling = ref(false)
+const scrollTimeout = ref(null)
+
+// 스크롤 이벤트 핸들러
+const handleScroll = (event) => {
+  if (isScrolling.value) return
+  
+  event.preventDefault()
+  isScrolling.value = true
+
+  const direction = event.deltaY > 0 ? 1 : -1
+  const calendarGrid = document.querySelector('.calendar-modern-grid')
+  
+  if (calendarGrid) {
+    calendarGrid.style.transition = 'transform 0.3s ease-out'
+    calendarGrid.style.transform = `translateY(${direction * -20}px)`
+
+    // 실제 날짜 변경 및 데이터 업데이트
+    setTimeout(() => {
+      calendarGrid.style.transition = 'transform 0s'
+      calendarGrid.style.transform = 'translateY(0)'
+      
+      // 7일씩 이동
+      const newDate = new Date(year.value, month.value, selectedDate.value + (direction * 7))
+      year.value = newDate.getFullYear()
+      month.value = newDate.getMonth()
+      selectedDate.value = newDate.getDate()
+
+      // 스크롤 잠금 해제
+      if (scrollTimeout.value) clearTimeout(scrollTimeout.value)
+      scrollTimeout.value = setTimeout(() => {
+        isScrolling.value = false
+      }, 300)
+    }, 300)
+  }
+}
+
+// 컴포넌트 마운트/언마운트 시 스크롤 이벤트 리스너 등록/해제
 onMounted(() => {
+  const calendarGrid = document.querySelector('.calendar-modern-grid')
+  if (calendarGrid) {
+    calendarGrid.addEventListener('wheel', handleScroll)
+  }
   eventBus.on('meal-data-updated', resetToTodayAndFetchMeals)
-  // 초기 로드 시 오늘 날짜의 식단을 불러옵니다.
   fetchMeals(selectedDate.value)
 })
 
-// 컴포넌트 언마운트 시 이벤트 리스너 제거
 onUnmounted(() => {
+  const calendarGrid = document.querySelector('.calendar-modern-grid')
+  if (calendarGrid) {
+    calendarGrid.removeEventListener('wheel', handleScroll)
+  }
   eventBus.off('meal-data-updated', resetToTodayAndFetchMeals)
 })
 
@@ -343,11 +391,11 @@ const formatDateToKorean = (year, month, date) => {
 }
 
 const selectedDateFormatted = computed(() => {
-  return formatDateToKorean(year.value, month.value, selectedDate.value)
+  return formatDateToKorean(lastClickedDate.value.year, lastClickedDate.value.month, lastClickedDate.value.date)
 })
 
 const apiDateFormatted = computed(() => {
-  return `${year.value}-${String(month.value + 1).padStart(2, '0')}-${String(selectedDate.value).padStart(2, '0')}`
+  return `${lastClickedDate.value.year}-${String(lastClickedDate.value.month + 1).padStart(2, '0')}-${String(lastClickedDate.value.date).padStart(2, '0')}`
 })
 
 const openAddModal = () => {
@@ -359,7 +407,7 @@ const closeModal = () => {
 }
 
 const isWeekend = computed(() => {
-  const date = new Date(year.value, month.value, selectedDate.value)
+  const date = new Date(lastClickedDate.value.year, lastClickedDate.value.month, lastClickedDate.value.date)
   const day = date.getDay()
   return day === 0 || day === 6 // 0은 일요일, 6은 토요일
 })
@@ -435,6 +483,10 @@ const hasAnyMeals = computed(() => {
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
   margin-bottom: 24px;
+  cursor: ns-resize;
+  will-change: transform;
+  position: relative;
+  z-index: 0;
 }
 
 .calendar-modern-day {
@@ -457,6 +509,10 @@ const hasAnyMeals = computed(() => {
   font-size: 1.08rem;
   transition: all 0.2s ease;
   color: #222;
+  user-select: none;
+  -webkit-user-select: none;
+  background: transparent;
+  z-index: 2;
 }
 
 .calendar-modern-cell::before {
@@ -465,14 +521,10 @@ const hasAnyMeals = computed(() => {
   padding-top: 100%;
 }
 
-.calendar-modern-cell.today {
-  color: #ff5a5f;
-  font-weight: 700;
-  font-size: 1.15rem;
-}
-
 .calendar-modern-cell.selected {
   position: relative;
+  color: #ff5a5f;
+  font-weight: 600;
 }
 
 .calendar-modern-cell.selected::after {
@@ -485,6 +537,21 @@ const hasAnyMeals = computed(() => {
   height: 42px;
   border: 2px solid #ff5a5f;
   border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: rgba(255, 90, 95, 0.1);
+  transition: opacity 0.3s ease;
+}
+
+.calendar-modern-cell.other-month.selected::after {
+  border-color: #ff8a8f;
+  background: rgba(255, 90, 95, 0.05);
+}
+
+.calendar-modern-cell.today {
+  color: #ff5a5f;
+  font-weight: 700;
+  font-size: 1.15rem;
 }
 
 .calendar-modern-cell.other-month {
@@ -494,6 +561,15 @@ const hasAnyMeals = computed(() => {
 .calendar-modern-cell.blank {
   background: none;
   cursor: default;
+}
+
+/* 스크롤 중일 때의 스타일 */
+.calendar-modern-grid.scrolling {
+  pointer-events: none;
+}
+
+.calendar-modern-grid.scrolling .calendar-modern-cell.selected::after {
+  transition: none;
 }
 
 .calendar-modern-schedule-list {
