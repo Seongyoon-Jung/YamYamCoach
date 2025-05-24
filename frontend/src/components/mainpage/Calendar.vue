@@ -30,19 +30,29 @@
           {{ error }}
         </div>
         <div v-else>
-          <div v-if="meals.length === 0" class="text-center text-muted">
-            기록된 식사가 없습니다.
-          </div>
-          <div v-else class="meal-list">
-            <div v-for="meal in meals" :key="meal.recordId" class="meal-item">
-              <span class="meal-time">{{ formatTime(meal.recordedAt) }}</span>
-              <span class="meal-type">{{ formatCourseType(meal.courseType) }}</span>
-              <span class="meal-name">{{ meal.dishName }}</span>
+          <div class="meal-section">
+            <div class="meal-section-title">[점심]</div>
+            <div v-if="meals.length === 0" class="text-center text-muted">
+              기록된 식사가 없습니다.
+            </div>
+            <div v-else class="meal-list">
+              {{ meals.map(meal => meal.dishName).join(' · ') }}
             </div>
           </div>
         </div>
       </div>
+      <div class="add-record-button-container">
+        <button class="add-record-button" @click="openAddModal">
+          추가 기록 +
+        </button>
+      </div>
     </div>
+    <!-- 식사 기록 모달 -->
+    <MealRecordModal
+      v-if="showModal"
+      :selectedDate="selectedDateFormatted"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -50,6 +60,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import axios from '@/plugins/axios'
 import eventBus from '@/utils/eventBus'
+import MealRecordModal from './MealRecordModal.vue'
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -257,6 +268,19 @@ onMounted(() => {
 onUnmounted(() => {
   eventBus.off('meal-data-updated', resetToTodayAndFetchMeals)
 })
+
+const showModal = ref(false)
+const selectedDateFormatted = computed(() => {
+  return `${year.value}-${String(month.value + 1).padStart(2, '0')}-${String(selectedDate.value).padStart(2, '0')}`
+})
+
+const openAddModal = () => {
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+}
 </script>
 
 <style scoped>
@@ -264,8 +288,7 @@ onUnmounted(() => {
   width: 100%;
   min-width: 320px;
   max-width: 420px;
-  min-height: 400px;
-  max-height: 520px;
+  height: 100%;
   margin-top: 0 !important;
   margin-bottom: 20px;
   display: flex;
@@ -275,16 +298,15 @@ onUnmounted(() => {
 }
 
 .calendar-modern-container.calendar-rect-container {
+  position: relative;
   width: 100%;
   min-width: 320px;
   max-width: 420px;
-  min-height: 400px;
-  max-height: 520px;
   height: 100%;
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.09);
-  padding: 28px 20px 32px 20px;
+  padding: 28px 20px;
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
@@ -370,78 +392,27 @@ onUnmounted(() => {
 }
 
 .calendar-modern-schedule-list {
-  margin-top: 14px;
+  margin-top: 8px;
+}
+
+.meal-section {
+  padding: 8px 12px;
   border-top: 1px solid #eee;
-  padding-top: 12px;
 }
 
-.calendar-modern-schedule-item {
-  margin-bottom: 8px;
-}
-
-.calendar-modern-schedule-time {
-  font-size: 0.95rem;
-  color: #888;
-  margin-right: 8px;
-}
-
-.calendar-modern-schedule-title {
-  font-size: 1.08rem;
-  font-weight: 500;
-}
-
-.calendar-modern-cell.other-month {
-  color: #ccc;
-  cursor: pointer;
-}
-
-.calendar-modern-cell.other-month:hover {
-  background: rgba(204, 204, 204, 0.1);
-  color: #999;
-}
-
-.calendar-modern-month-label {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.loading-text {
-  color: #666;
+.meal-section-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
   font-size: 0.9rem;
 }
 
 .meal-list {
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.meal-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #eee;
-}
-
-.meal-item:last-child {
-  border-bottom: none;
-}
-
-.meal-time {
   color: #666;
-  margin-right: 8px;
-  min-width: 60px;
-}
-
-.meal-type {
-  color: #4a90e2;
-  margin-right: 8px;
-  min-width: 40px;
-}
-
-.meal-name {
-  color: #333;
-  flex: 1;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .text-center {
@@ -450,9 +421,46 @@ onUnmounted(() => {
 
 .text-muted {
   color: #666;
+  font-size: 0.9rem;
 }
 
 .text-danger {
   color: #dc3545;
+  font-size: 0.9rem;
+}
+
+.loading-text {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.add-record-button-container {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+}
+
+.add-record-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.add-record-button:hover {
+  background-color: #357abd;
+  transform: scale(1.05);
+}
+
+.calendar-modern-container {
+  position: relative;
 }
 </style>

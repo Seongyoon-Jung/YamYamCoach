@@ -308,50 +308,50 @@ INSERT INTO schedule_dish (schedule_id, dish_id, serving_order) VALUES
 (4, 26, 6), -- 사각단무지 (dish_id: 26)
 (4, 27, 7); -- 복숭아 아이스티 (dish_id: 27)
 
--- dish_record 테이블에 최근 4일간(오늘 제외)의 식사 기록 추가 (user_id = 2)
 
--- 4일 전 (5월 17일) 식사 기록
+
+-- dish_record 테이블에 최근 4일간(오늘 제외)의 식사 기록 추가 (user_id = 2)
 INSERT INTO dish_record (user_id, dish_id, recorded_at, course_type, schedule_id)
 VALUES 
 (2, 1, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 1),  -- 아침: 비빔밥
 (2, 2, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 1),  -- 아침: 가다랭이국
-(2, 8, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'B', 2),  -- 점심: 해물볶음우동
-(2, 12, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'B', 2), -- 점심: 샐러드
+(2, 8, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 2),  -- 점심: 해물볶음우동
+(2, 12, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 2), -- 점심: 샐러드
 (2, 14, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 3), -- 저녁: 닭매운찜
 (2, 15, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 3), -- 저녁: 차조밥
-(2, 7, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'B', 4);  -- 간식: ICE초코
+(2, 7, DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), 'A', 4);  -- 간식: ICE초코
 
--- 3일 전 (5월 18일) 식사 기록
+
 INSERT INTO dish_record (user_id, dish_id, recorded_at, course_type, schedule_id)
 VALUES 
 (2, 9, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 2),  -- 아침: 쌀밥&후리가케
 (2, 10, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 2), -- 아침: 해물 가다랭이국
 (2, 21, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 4), -- 점심: 양지쌀국수
 (2, 24, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 4), -- 점심: 알새우칩
-(2, 3, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'A', 1),  -- 저녁: 도토리묵무침
-(2, 4, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'A', 1),  -- 저녁: 시래기된장조림
-(2, 20, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'A', 3); -- 간식: 아이스티(레몬)
+(2, 3, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 1),  -- 저녁: 도토리묵무침
+(2, 4, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 1),  -- 저녁: 시래기된장조림
+(2, 20, DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), 'B', 3); -- 간식: 아이스티(레몬)
 
--- 2일 전 (5월 19일) 식사 기록
+
 INSERT INTO dish_record (user_id, dish_id, recorded_at, course_type, schedule_id)
 VALUES 
-(2, 15, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'A', 3), -- 아침: 차조밥
-(2, 16, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'A', 3), -- 아침: 멸치육수
-(2, 17, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'A', 3), -- 점심: 부추전
-(2, 18, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'A', 3), -- 점심: 견파래볶음
+(2, 15, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 3), -- 아침: 차조밥
+(2, 16, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 3), -- 아침: 멸치육수
+(2, 17, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 3), -- 점심: 부추전
+(2, 18, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 3), -- 점심: 견파래볶음
 (2, 22, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 4), -- 저녁: 미니파인애플볶음밥
 (2, 23, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 4), -- 저녁: 달콤팥춘권
 (2, 27, DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), 'B', 4); -- 간식: 복숭아 아이스티
 
--- 1일 전 (5월 20일) 식사 기록
+
 INSERT INTO dish_record (user_id, dish_id, recorded_at, course_type, schedule_id)
 VALUES 
-(2, 8, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'B', 2),  -- 아침: 해물볶음우동
-(2, 13, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'B', 2), -- 아침: 단무지
+(2, 8, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 2),  -- 아침: 해물볶음우동
+(2, 13, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 2), -- 아침: 단무지
 (2, 14, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 3), -- 점심: 닭매운찜
 (2, 19, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 3), -- 점심: 묵은지 김치
 (2, 1, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 1),  -- 저녁: 비빔밥
 (2, 5, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 1),  -- 저녁: 다시마튀각
-(2, 7, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'B', 2);  -- 간식: ICE초코
+(2, 7, DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), 'A', 2);  -- 간식: ICE초코
 
 
