@@ -16,19 +16,13 @@ const routes = [
     children: [
       {
         path: '',
-        component: () => import('../components/admin/AdminDashboard.vue'),
-      },
-      {
-        path: 'users',
-        component: () => import('../components/admin/AdminUsers.vue'),
-      },
-      {
-        path: 'diet',
         component: () => import('../components/admin/AdminDiet.vue'),
+        meta: { requiresAuth: true, requiresRole: true },
       },
       {
         path: 'diet-upload',
         component: () => import('../components/admin/AdminDietUpload.vue'),
+        meta: { requiresAuth: true, requiresRole: true },
       },
     ],
   },
@@ -40,15 +34,9 @@ const routes = [
   },
   {
     path: '/my',
-    name: 'MyView',
-    component: () => import('../views/user/MyView.vue'),
-    meta: { title: '마이페이지', requiresAuth: true },
-  },
-  {
-    path: '/my/info',
     name: 'MyInfoView',
     component: () => import('../views/user/MyInfoView.vue'),
-    meta: { title: '내 정보 | 마이페이지', requiresAuth: true },
+    meta: { title: '내 정보', requiresAuth: true },
   },
   {
     path: '/board',

@@ -6,10 +6,7 @@
       <h4 class="mb-4">Admin</h4>
       <ul class="nav flex-column">
         <li class="nav-item mb-2">
-          <router-link to="/admin" class="nav-link text-white">Dashboard</router-link>
-        </li>
-        <li class="nav-item mb-2">
-          <router-link to="/admin/diet" class="nav-link text-white">점심 메뉴 관리</router-link>
+          <router-link to="/admin" class="nav-link text-white">점심 메뉴 관리</router-link>
         </li>
         <li class="nav-item mb-2">
           <router-link to="/admin/diet-upload" class="nav-link text-white"
