@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h2>식사 기록 추가</h2>
+        <h2>식사 기록 추가 - {{ selectedDate }}</h2>
         <button class="close-button" @click="closeModal">&times;</button>
       </div>
       <div class="tabs">
@@ -16,7 +16,16 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="records-container">
+        <div v-if="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">기록을 불러오는 중...</p>
+        </div>
+        <div v-else-if="error" class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+        <div v-else class="records-container">
           <div class="records-header">
             <div class="header-cell">음식명</div>
             <div class="header-cell">칼로리(kcal)</div>
@@ -28,30 +37,39 @@
           </div>
           <div class="records-list">
             <div v-for="(record, index) in currentRecords" :key="index" class="record-row">
-              <input type="text" v-model="record.dishName" placeholder="음식명">
-              <input type="number" v-model="record.calories" min="0" step="0.1">
-              <input type="number" v-model="record.carbs" min="0" step="0.1">
-              <input type="number" v-model="record.protein" min="0" step="0.1">
-              <input type="number" v-model="record.fat" min="0" step="0.1">
-              <input type="number" v-model="record.sugar" min="0" step="0.1">
+              <input type="text" v-model="record.dishName" placeholder="음식명" :disabled="saving">
+              <input type="number" v-model="record.calories" min="0" step="0.1" :disabled="saving">
+              <input type="number" v-model="record.carbs" min="0" step="0.1" :disabled="saving">
+              <input type="number" v-model="record.protein" min="0" step="0.1" :disabled="saving">
+              <input type="number" v-model="record.fat" min="0" step="0.1" :disabled="saving">
+              <input type="number" v-model="record.sugar" min="0" step="0.1" :disabled="saving">
               <button 
-                v-if="currentRecords.length > 1"
+                v-if="currentRecords.length > 1 || record.dishName"
                 class="btn btn-outline-danger btn-sm delete-row-button rounded-circle" 
                 @click="deleteRecord(index)"
+                :disabled="saving"
               >
                 <i class="bi bi-dash-lg"></i>
               </button>
             </div>
           </div>
           <div class="add-button-container">
-            <button class="btn btn-outline-primary btn-sm add-row-button rounded-circle" @click="addNewRecord">
+            <button class="btn btn-outline-primary btn-sm add-row-button rounded-circle" 
+                   @click="addNewRecord"
+                   :disabled="saving">
               <i class="bi bi-plus-lg"></i>
             </button>
           </div>
         </div>
+        <div v-if="saveSuccess" class="alert alert-success mt-3" role="alert">
+          식사 기록이 성공적으로 저장되었습니다.
+        </div>
         <div class="button-group">
-          <button type="button" class="cancel-button" @click="closeModal">취소</button>
-          <button type="submit" class="submit-button" @click="submitForm">저장</button>
+          <button type="button" class="cancel-button" @click="closeModal" :disabled="saving">취소</button>
+          <button type="submit" class="submit-button" @click="submitForm" :disabled="saving">
+            <span v-if="saving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            {{ saving ? '저장 중...' : '저장' }}
+          </button>
         </div>
       </div>
     </div>
@@ -59,31 +77,55 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from '@/plugins/axios'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import eventBus from '@/utils/eventBus'
 
 const props = defineProps({
   selectedDate: {
     type: String,
+    required: true
+  },
+  apiDate: {
+    type: String,
+    required: true
+  },
+  isWeekend: {
+    type: Boolean,
     required: true
   }
 })
 
 const emit = defineEmits(['close'])
 
-const tabs = [
-  { label: '저녁', value: 'dinner' },
-  { label: '아침', value: 'breakfast' },
-  { label: '간식', value: 'snack' }
-]
+const tabs = computed(() => {
+  if (props.isWeekend) {
+    return [
+      { label: '점심', value: 'LUNCH' },
+      { label: '저녁', value: 'DINNER' },
+      { label: '아침', value: 'BREAKFAST' },
+      { label: '간식', value: 'SNACK' }
+    ]
+  }
+  return [
+    { label: '저녁', value: 'DINNER' },
+    { label: '아침', value: 'BREAKFAST' },
+    { label: '간식', value: 'SNACK' }
+  ]
+})
 
-const currentTab = ref('dinner')
+const currentTab = ref(props.isWeekend ? 'LUNCH' : 'DINNER')
+const loading = ref(false)
+const error = ref(null)
+const saving = ref(false)
+const saveSuccess = ref(false)
 
+// 각 탭별로 독립적인 records 관리
 const recordsByTab = ref({
-  dinner: [{
-    courseType: 'dinner',
+  DINNER: [{
+    courseType: 'DINNER',
     dishName: '',
     calories: '',
     carbs: '',
@@ -91,8 +133,8 @@ const recordsByTab = ref({
     fat: '',
     sugar: ''
   }],
-  breakfast: [{
-    courseType: 'breakfast',
+  BREAKFAST: [{
+    courseType: 'BREAKFAST',
     dishName: '',
     calories: '',
     carbs: '',
@@ -100,8 +142,17 @@ const recordsByTab = ref({
     fat: '',
     sugar: ''
   }],
-  snack: [{
-    courseType: 'snack',
+  SNACK: [{
+    courseType: 'SNACK',
+    dishName: '',
+    calories: '',
+    carbs: '',
+    protein: '',
+    fat: '',
+    sugar: ''
+  }],
+  LUNCH: [{
+    courseType: 'LUNCH',
     dishName: '',
     calories: '',
     carbs: '',
@@ -111,8 +162,70 @@ const recordsByTab = ref({
   }]
 })
 
+// 기존 기록 불러오기
+const fetchExistingRecords = async () => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await axios.get(`/api/extra-meal-records/by-date/${props.apiDate}`)
+    const records = response.data
+
+    // 기존 기록을 탭별로 분류
+    resetRecordsByTab()
+    
+    records.forEach(record => {
+      const courseType = record.courseType
+      // 빈 초기 레코드가 있으면 제거
+      if (recordsByTab.value[courseType].length === 1 && !recordsByTab.value[courseType][0].dishName) {
+        recordsByTab.value[courseType] = []
+      }
+      
+      recordsByTab.value[courseType].push({
+        id: record.id,
+        courseType: record.courseType,
+        dishName: record.dishName,
+        calories: record.calories,
+        carbs: record.carbs,
+        protein: record.protein,
+        fat: record.fat,
+        sugar: record.sugar
+      })
+    })
+    
+    // 기록이 없는 탭에 빈 레코드 추가
+    Object.keys(recordsByTab.value).forEach(tab => {
+      if (recordsByTab.value[tab].length === 0) {
+        recordsByTab.value[tab].push({
+          courseType: tab,
+          dishName: '',
+          calories: '',
+          carbs: '',
+          protein: '',
+          fat: '',
+          sugar: ''
+        })
+      }
+    })
+    
+  } catch (err) {
+    console.error('식사 기록 불러오기 실패:', err)
+    error.value = '식사 기록을 불러오는데 실패했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+// 모든 탭의 레코드 초기화
+const resetRecordsByTab = () => {
+  Object.keys(recordsByTab.value).forEach(tab => {
+    recordsByTab.value[tab] = []
+  })
+}
+
+// 현재 탭의 records를 반환하는 computed 속성
 const currentRecords = computed(() => {
-  return recordsByTab.value[currentTab.value]
+  return recordsByTab.value[currentTab.value] || []
 })
 
 const addNewRecord = () => {
@@ -128,7 +241,34 @@ const addNewRecord = () => {
 }
 
 const deleteRecord = (index) => {
-  recordsByTab.value[currentTab.value].splice(index, 1)
+  const record = recordsByTab.value[currentTab.value][index]
+  
+  // 이미 저장된 기록이면 API를 통해 삭제
+  if (record.id) {
+    deleteRecordFromServer(record.id, index)
+  } else {
+    recordsByTab.value[currentTab.value].splice(index, 1)
+    
+    // 모든 레코드가 삭제되었다면 빈 레코드 추가
+    if (recordsByTab.value[currentTab.value].length === 0) {
+      addNewRecord()
+    }
+  }
+}
+
+const deleteRecordFromServer = async (id, index) => {
+  try {
+    await axios.delete(`/api/extra-meal-records/${id}`)
+    recordsByTab.value[currentTab.value].splice(index, 1)
+    
+    // 모든 레코드가 삭제되었다면 빈 레코드 추가
+    if (recordsByTab.value[currentTab.value].length === 0) {
+      addNewRecord()
+    }
+  } catch (error) {
+    console.error('식사 기록 삭제 실패:', error)
+    alert('식사 기록 삭제에 실패했습니다.')
+  }
 }
 
 const closeModal = () => {
@@ -137,30 +277,71 @@ const closeModal = () => {
 
 const submitForm = async () => {
   try {
-    const allValidRecords = Object.values(recordsByTab.value).flatMap(records => 
-      records.filter(record => record.dishName.trim() !== '')
-    )
+    saving.value = true
+    saveSuccess.value = false
+    
+    // 모든 탭의 유효한 레코드 수집
+    const allValidRecords = []
+    
+    for (const tab in recordsByTab.value) {
+      const validTabRecords = recordsByTab.value[tab].filter(record => record.dishName.trim() !== '')
+      allValidRecords.push(...validTabRecords)
+    }
     
     if (allValidRecords.length === 0) {
       alert('최소 하나의 음식을 입력해주세요.')
+      saving.value = false
       return
     }
 
-    const promises = allValidRecords.map(record => 
-      axios.post('/api/meal-records', {
-        ...record,
-        recordedAt: props.selectedDate
-      })
-    )
+    // 모든 레코드에 대해 API 호출
+    const promises = allValidRecords.map(record => {
+      const requestData = {
+        id: record.id, // 기존 기록인 경우 ID 포함
+        userId: 1, // 테스트용 고정 값
+        courseType: record.courseType,
+        dishName: record.dishName,
+        calories: record.calories || 0,
+        carbs: record.carbs || 0,
+        protein: record.protein || 0,
+        fat: record.fat || 0,
+        sugar: record.sugar || 0,
+        recordedAt: props.apiDate
+      }
+      
+      // 기존 기록이면 업데이트, 아니면 신규 추가
+      if (record.id) {
+        return axios.put(`/api/extra-meal-records/${record.id}`, requestData)
+      } else {
+        return axios.post('/api/extra-meal-records', requestData)
+      }
+    })
 
     await Promise.all(promises)
-    closeModal()
-    window.eventBus.emit('meal-data-updated')
+    saveSuccess.value = true
+    setTimeout(() => {
+      saveSuccess.value = false
+    }, 3000)
+    
+    fetchExistingRecords() // 기록 다시 불러오기
+    eventBus.emit('meal-data-updated')
   } catch (error) {
     console.error('식사 기록 저장 실패:', error)
     alert('식사 기록 저장에 실패했습니다.')
+  } finally {
+    saving.value = false
   }
 }
+
+// 컴포넌트 마운트 시 기존 기록 불러오기
+onMounted(() => {
+  fetchExistingRecords()
+})
+
+// 날짜가 변경되면 기록 다시 불러오기
+watch(() => props.apiDate, () => {
+  fetchExistingRecords()
+})
 </script>
 
 <style scoped>
@@ -366,5 +547,24 @@ const submitForm = async () => {
   line-height: 1;
   position: relative;
   top: 1px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.25rem;
+  animation: fadeIn 0.3s, fadeOut 0.5s 2.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 </style> 
