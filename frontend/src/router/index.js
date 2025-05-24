@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { userAccountStore } from '@/store/account' // ✅ 올바른 스토어 import
+import RecipeView from '@/views/recipe/RecipeView.vue'
+import RecipeDetailView from '@/views/recipe/RecipeDetailView.vue'
+import RecipeCreateView from '@/views/recipe/RecipeCreateView.vue'
 
 const routes = [
   {
@@ -105,6 +108,28 @@ const routes = [
     name: 'Error',
     component: () => import('../views/error/ErrorView.vue'),
     meta: { title: '에러' },
+  },
+  {
+    path: '/recipe',
+    name: 'Recipe',
+    component: RecipeView,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/recipe/:id',
+    name: 'RecipeDetail',
+    component: RecipeDetailView,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/recipe/create',
+    name: 'RecipeCreateView',
+    component: RecipeCreateView
+  },
+  {
+    path: '/recipe/:recipeId',
+    name: 'RecipeDetailView',
+    component: RecipeDetailView
   },
   {
     path: '/:pathMatch(.*)*',
