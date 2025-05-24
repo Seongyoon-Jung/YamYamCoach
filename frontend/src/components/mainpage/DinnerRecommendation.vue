@@ -15,12 +15,72 @@
       </div>
       <div class="card-body">
         <div v-if="recommendation && rank1Recommendations.length > 0" class="recommendation-result">
-          <div class="card mb-3">
-            <div class="card-body">
+          <div class="card mb-3 overflow-visible">
+            <div class="card-body position-relative">
               <h5 class="card-title text-primary mb-3">추천 메뉴</h5>
               <p class="card-text h5 mb-4">{{ rank1Names }}</p>
-              <h6 class="text-muted mb-2">추천 이유</h6>
-              <p class="card-text">{{ recommendation.reasons }}</p>
+              
+              <!-- 추천 더보기 버튼을 오른쪽 하단에 배치 -->
+              <div class="d-flex justify-content-end mt-3">
+                <div class="position-relative">
+                  <button 
+                    class="btn btn-outline-secondary btn-sm"
+                    style="font-size: 0.8rem;"
+                    @mouseover="handleButtonHover"
+                    @mouseleave="handleButtonLeave"
+                    ref="buttonRef"
+                  >
+                    <i class="bi bi-three-dots"></i> 다른 추천
+                  </button>
+                  
+                  <!-- Portal을 사용하여 팝업을 body에 직접 마운트 -->
+                  <Teleport to="body">
+                    <div 
+                      v-if="showMoreRecommendations" 
+                      class="more-recommendations-popup"
+                      :style="[popupPosition, { visibility: isHoverPathValid ? 'visible' : 'hidden' }]"
+                      @mouseover="handlePopupHover"
+                      @mouseleave="handlePopupLeave"
+                    >
+                      <div v-if="rank2Recommendations.length > 0" class="recommendation-item">
+                        <h6 class="text-primary fw-bold mb-2">2순위 추천 메뉴</h6>
+                        <div class="recommendation-content">
+                          <div class="food-items">
+                            <span 
+                              v-for="(food, index) in rank2Recommendations" 
+                              :key="food.id"
+                              class="food-item"
+                              @click="openRecipe(food.name)"
+                            >
+                              {{ food.name }}
+                              <i class="bi bi-box-arrow-up-right ms-1"></i>
+                              <span v-if="index < rank2Recommendations.length - 1">, </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <hr v-if="rank2Recommendations.length > 0 && rank3Recommendations.length > 0" class="my-2">
+                      <div v-if="rank3Recommendations.length > 0" class="recommendation-item">
+                        <h6 class="text-primary fw-bold mb-2">3순위 추천 메뉴</h6>
+                        <div class="recommendation-content">
+                          <div class="food-items">
+                            <span 
+                              v-for="(food, index) in rank3Recommendations" 
+                              :key="food.id"
+                              class="food-item"
+                              @click="openRecipe(food.name)"
+                            >
+                              {{ food.name }}
+                              <i class="bi bi-box-arrow-up-right ms-1"></i>
+                              <span v-if="index < rank3Recommendations.length - 1">, </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Teleport>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -64,7 +124,7 @@
                 target="_blank"
                 class="btn btn-sm btn-outline-success"
               >
-                <i class="bi bi-book me-1"></i>{{ food.name }} 레시피
+                <i class="bi bi-book me-1"></i>{{ food.name }}
               </a>
             </div>
           </div>
@@ -97,7 +157,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import axios from '@/plugins/axios'
 import eventBus from '@/utils/eventBus'
 
@@ -117,6 +177,49 @@ const totalNutrients = reactive({
 })
 const componentKey = ref(0) // 컴포넌트 강제 리렌더링용 키
 const todayDietNutrients = ref(null) // TodayDiet 컴포넌트로부터 받은 영양소 정보
+
+// 추천 더보기 상태 관리
+const showMoreRecommendations = ref(false)
+const buttonRef = ref(null)
+const popupPosition = ref({
+  top: '0px',
+  left: '0px'
+})
+
+// hover 상태 관리를 위한 변수 추가
+const isHoverPathValid = ref(false)
+let hoverTimeout = null
+
+// hover 핸들러 함수들
+const handleButtonHover = () => {
+  showMoreRecommendations.value = true
+  clearTimeout(hoverTimeout)
+  hoverTimeout = setTimeout(() => {
+    isHoverPathValid.value = true
+  }, 100)
+}
+
+const handleButtonLeave = () => {
+  clearTimeout(hoverTimeout)
+  hoverTimeout = setTimeout(() => {
+    if (!isHoverPathValid.value) {
+      showMoreRecommendations.value = false
+    }
+  }, 300)
+}
+
+const handlePopupHover = () => {
+  clearTimeout(hoverTimeout)
+  isHoverPathValid.value = true
+}
+
+const handlePopupLeave = () => {
+  isHoverPathValid.value = false
+  clearTimeout(hoverTimeout)
+  hoverTimeout = setTimeout(() => {
+    showMoreRecommendations.value = false
+  }, 300)
+}
 
 // 음식 이름에 따른 레시피 검색 링크 생성
 const getRecipeLink = (foodName) => {
@@ -342,6 +445,78 @@ const rank1Names = computed(() => {
   return rank1Recommendations.value.map((food) => food.name).join(', ')
 })
 
+// rank별 추천 computed 속성 추가
+const rank2Recommendations = computed(() => {
+  if (!recommendation.value || !recommendation.value.recommendations) return []
+  return recommendation.value.recommendations.filter((item) => Number(item.rank) === 2)
+})
+
+const rank3Recommendations = computed(() => {
+  if (!recommendation.value || !recommendation.value.recommendations) return []
+  return recommendation.value.recommendations.filter((item) => Number(item.rank) === 3)
+})
+
+// rank별 이름 computed 속성 추가
+const rank2Names = computed(() => {
+  return rank2Recommendations.value.map((food) => food.name).join(', ')
+})
+
+const rank3Names = computed(() => {
+  return rank3Recommendations.value.map((food) => food.name).join(', ')
+})
+
+// 레시피 링크 열기 함수
+const openRecipe = (foodName) => {
+  const recipeUrl = getRecipeLink(foodName)
+  window.open(recipeUrl, '_blank')
+}
+
+// 팝업 위치 계산 함수
+const updatePopupPosition = () => {
+  if (!buttonRef.value) return
+  
+  const buttonRect = buttonRef.value.getBoundingClientRect()
+  const screenWidth = window.innerWidth
+  
+  // 오른쪽에 충분한 공간이 있는지 확인
+  if (buttonRect.right + 220 < screenWidth) {
+    // 오른쪽에 표시
+    popupPosition.value = {
+      position: 'fixed',
+      top: `${buttonRect.top}px`,
+      left: `${buttonRect.right + 10}px`
+    }
+  } else {
+    // 왼쪽에 표시
+    popupPosition.value = {
+      position: 'fixed',
+      top: `${buttonRect.top}px`,
+      left: `${buttonRect.left - 210}px`
+    }
+  }
+}
+
+// 이벤트 리스너 등록 및 해제
+onMounted(() => {
+  window.addEventListener('scroll', updatePopupPosition)
+  window.addEventListener('resize', updatePopupPosition)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', updatePopupPosition)
+  window.removeEventListener('resize', updatePopupPosition)
+  clearTimeout(hoverTimeout)
+})
+
+// showMoreRecommendations가 변경될 때마다 위치 업데이트
+watch(showMoreRecommendations, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      updatePopupPosition()
+    })
+  }
+})
+
 // 컴포넌트 초기화
 onMounted(async () => {
   try {
@@ -422,4 +597,106 @@ onMounted(async () => {
   display: flex;
   align-items: center;
 }
+
+.more-recommendations-popup {
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 350px;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.recommendation-item {
+  margin-bottom: 0.5rem;
+}
+
+.recommendation-item:last-child {
+  margin-bottom: 0;
+}
+
+.recommendation-content {
+  font-size: 0.95rem;
+}
+
+.food-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  color: #495057;
+  line-height: 1.4;
+}
+
+.food-item {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.food-item:hover {
+  color: #0d6efd;
+  background-color: #f8f9fa;
+}
+
+.food-item i {
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.food-item:hover i {
+  opacity: 1;
+}
+
+/* 호버 경로를 위한 투명 영역 */
+.more-recommendations-popup::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  z-index: -1;
+}
+
+@media (max-width: 768px) {
+  .more-recommendations-popup {
+    position: fixed;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: 90%;
+    max-width: 320px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .more-recommendations-popup::before {
+    display: none;
+  }
+}
+
+.recipe-links {
+  margin-top: 0.5rem;
+}
+
+.recipe-links .btn {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.card.overflow-visible {
+  overflow: visible !important;
+}
+
+.card-body.position-relative {
+  overflow: visible !important;
+}
 </style>
+

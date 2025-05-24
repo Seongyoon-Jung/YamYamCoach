@@ -700,29 +700,9 @@ const toggleDishSelection = (dishId) => {
 
 // 코스 변경 시 기존 선택을 초기화하고 코스 변경
 const changeSelectedCourse = (newCourse) => {
-  // 기존 선택을 완전히 초기화
-  Object.keys(selectedDishes).forEach((key) => {
-    selectedDishes[key] = false
-  })
-
-  selectedCourse.value = newCourse
-  _chartRenderKey.value++ // 차트 갱신
-
-  // 현재 선택된 코스의 기존 기록만 체크
-  if (userRecords.value && userRecords.value.length > 0) {
-    userRecords.value.forEach((record) => {
-      if (record.courseType === newCourse) {
-        const dishId = record.dishId || record.dish_id
-        if (dishId) {
-          selectedDishes[dishId.toString()] = true
-        }
-      }
-    })
-  }
-
-  // 콘솔에 현재 상태 출력
-  console.log(`코스 변경됨: ${newCourse}`)
-  console.log('선택된 음식:', selectedDishes)
+  selectedCourse.value = newCourse;
+  _chartRenderKey.value++; // 차트 갱신 (필요한 경우)
+  // console.log(`코스 변경됨: ${newCourse}, 선택된 음식 상태 유지:`, selectedDishes);
 }
 
 // 초기 코스 설정 (사용자의 기존 기록 기반)
