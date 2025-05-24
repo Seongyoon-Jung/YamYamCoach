@@ -73,9 +73,7 @@
               <span class="mx-2">{{ user.username }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><RouterLink class="dropdown-item" to="/my">마이페이지</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/support">고객지원</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/my/info">내 정보 수정</RouterLink></li>
+              <li><RouterLink class="dropdown-item" to="/my">내 정보</RouterLink></li>
               <li><hr class="dropdown-divider" /></li>
               <li><button class="dropdown-item" @click="logout">로그아웃</button></li>
             </ul>

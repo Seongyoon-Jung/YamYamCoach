@@ -45,31 +45,23 @@ public class BoardController {
 	    boardService.writeBoard(boardRequest);
 	}
 	
-	// 게시판 글 수정
 	@PutMapping("")
-	public void modifyBoard(@RequestPart("board") BoardRequest boardRequest, @RequestPart(value = "file", required = false) MultipartFile file) {
-	    String imageUrl = boardRequest.getImageUrl(); // 기본은 기존 이미지 URL 유지
-	    
-	    if (file != null && !file.isEmpty()) {
-	        try {
-	            // 기존 이미지 삭제
-	            if (imageUrl != null && !imageUrl.isEmpty()) {
-	            	System.out.println("delete============================");
-	                s3UploadService.deleteImage(imageUrl);
-	            }
+	public void modifyBoard(@RequestBody BoardRequest boardRequest) {
+	    String newImageUrl = boardRequest.getImageUrl();
+	    String oldImageUrl = boardService.getBoard(boardRequest.getBoardId()).getImageUrl();
 
-	            // 새 이미지 업로드
-	            imageUrl = s3UploadService.saveFile(file, "board");
-	        } catch (IOException e) {
-	            throw new RuntimeException("파일 수정 업로드 중 오류 발생: " + e.getMessage());
-	        }
+	    // 이미지가 바뀐 경우 기존 이미지 삭제
+	    if (oldImageUrl != null && !oldImageUrl.isEmpty()
+	        && newImageUrl != null && !newImageUrl.isEmpty()
+	        && !oldImageUrl.equals(newImageUrl)) {
+	        s3UploadService.deleteImage(oldImageUrl);
 	    }
 
-	    boardService.modifyBoard(boardRequest,imageUrl);
+	    boardService.modifyBoard(boardRequest, newImageUrl);
 	}
 
 	
-	// 게시판 글 삭제
+	// 게시판 글 삭제 
 	@DeleteMapping("")
 	public void deleteBoard(@RequestBody BoardRequest boardRequest) {
 		boardService.deleteBoard(boardRequest.getBoardId());

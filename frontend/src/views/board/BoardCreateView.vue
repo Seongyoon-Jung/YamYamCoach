@@ -82,7 +82,7 @@ const submitPost = async () => {
     if (imageFile.value) {
       const file = imageFile.value
       const uuid = crypto.randomUUID()
-      const fileName = `uploads/board/${uuid}-${file.name}`
+      const fileName = `uploads/board/${uuid}.png`
 
       // 1. presigned PUT URL 요청
       const putUrlRes = await axios.get('/api/s3/put-url', {

@@ -52,10 +52,11 @@ const router = useRouter()
 const title = ref('')
 const content = ref('')
 const imageFile = ref(null)
-const imageUrl = ref('') // 기존 이미지 URL
+const imageUrl = ref('') // 사용자에게 보여줄 presigned URL
 const imagePreviewUrl = ref('')
+const originalImgKey = ref('') // 기존 S3 이미지 key (uploads/board/~~.png)
 
-// 이미지 파일 선택 처리
+// 파일 선택 핸들러
 const handleImageUpload = (e) => {
   const file = e.target.files[0]
   imageFile.value = file
@@ -66,49 +67,72 @@ const handleImageUpload = (e) => {
   }
 }
 
-// 게시글 정보 불러오기
+// 게시글 불러오기
 onMounted(async () => {
   const id = route.params.id
   try {
     const res = await axios.get(`/api/board/${id}?hit=false`)
     title.value = res.data.title
     content.value = res.data.content
-    imageUrl.value = res.data.imageUrl
+    originalImgKey.value = res.data.imageUrl
+
+    if (res.data.imageUrl) {
+      try {
+        const presignedRes = await axios.get('/api/s3/get-url', {
+          params: { filename: res.data.imageUrl },
+        })
+        imageUrl.value = presignedRes.data
+      } catch (e) {
+        console.warn('presigned URL 요청 실패:', e)
+        imageUrl.value = ''
+      }
+    }
   } catch (err) {
     router.push('/error')
   }
 })
 
-// 게시글 수정 요청
+// 게시글 수정 제출
 const submitUpdate = async () => {
-  const formData = new FormData()
+  let newImageKey = originalImgKey.value
 
-  // ✅ JSON 형태로 board 데이터를 FormData에 Blob으로 추가
+  // 새 이미지가 선택된 경우 → presigned URL 업로드
+  if (imageFile.value) {
+    try {
+      const uuid = crypto.randomUUID()
+      const fileName = `uploads/board/${uuid}.png`
+      const putUrlRes = await axios.get('/api/s3/put-url', {
+        params: { fileName },
+      })
+      const presignedUrl = putUrlRes.data
+
+      await fetch(presignedUrl, {
+        method: 'PUT',
+        body: imageFile.value,
+        headers: {
+          'Content-Type': imageFile.value.type,
+        },
+      })
+
+      newImageKey = fileName
+    } catch (e) {
+      console.error('이미지 업로드 실패:', e)
+      return
+    }
+  }
+
   const boardData = {
     boardId: route.params.id,
     title: title.value,
     content: content.value,
-    imageUrl: imageUrl.value, // 기존 이미지 URL
+    imageUrl: newImageKey,
   }
 
-  console.log(imageFile.value)
-
-  formData.append('board', new Blob([JSON.stringify(boardData)], { type: 'application/json' }))
-
-  // ✅ 이미지가 있다면 추가
-  if (imageFile.value) {
-    formData.append('file', imageFile.value)
-  }
-
-  // ✅ multipart/form-data로 전송
   try {
-    await axios.put('/api/board', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    await axios.put('/api/board', boardData)
     router.push(`/board/${route.params.id}`)
   } catch (err) {
+    console.error('게시글 수정 실패', err)
     router.push('/error')
   }
 }
