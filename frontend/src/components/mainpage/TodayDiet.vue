@@ -349,9 +349,8 @@
               v-if="isToday && isEditMode"
               type="button"
               class="btn btn-primary"
-              @click="handleUpdate"
-            >
-              수정
+              @click="handleUpdate">
+              저장
             </button>
           </div>
         </div>
@@ -404,10 +403,11 @@ const selectedDishesNutrients = computed(() => {
   const result = []
   const processedDishIds = new Set() // 이미 처리한 음식 ID를 추적하기 위한 Set
 
-  courses.value.forEach((course) => {
-    if (!course.dishes) return
-
-    course.dishes.forEach((dish) => {
+  // 현재 선택된 코스의 음식만 처리
+  const currentCourse = courses.value.find(course => course.type === selectedCourse.value);
+  
+  if (currentCourse && currentCourse.dishes) {
+    currentCourse.dishes.forEach((dish) => {
       if (!dish || !dish.id) return
 
       const dishId = dish.id.toString()
@@ -443,7 +443,8 @@ const selectedDishesNutrients = computed(() => {
         })
       }
     })
-  })
+  }
+  
   return result
 })
 
@@ -504,10 +505,16 @@ const fetchCourses = async (dateObj) => {
       const dd = String(dateObj.getDate()).padStart(2, '0')
       dateParam = `${yyyy}-${mm}-${dd}`
     }
+    
+    console.log(`코스 데이터 조회: ${dateParam}`);
     const url = dateParam === getTodayYMD() ? '/api/courses/today' : `/api/courses/${dateParam}`
     const response = await axios.get(url)
     courses.value = response.data.courses
     modalCourses.value = response.data.courses // 모달에서 사용할 코스 데이터도 업데이트
+    
+    // 코스 데이터 로드 후 이전 선택 상태 유지 확인
+    console.log('코스 데이터 로드 완료, 선택된 음식 ID:', 
+      Object.keys(selectedDishes).filter(key => selectedDishes[key]).join(', '));
   } catch (error) {
     console.error('코스 조회 실패:', error)
   }
@@ -554,19 +561,22 @@ const handleSave = async () => {
     const selectedMeals = []
     const processedDishIds = new Set() // 중복 제거를 위한 Set
 
-    courses.value.forEach((course) => {
-      course.dishes.forEach((dish) => {
+    // 현재 선택된 코스의 음식만 저장
+    const currentCourse = courses.value.find(course => course.type === selectedCourse.value);
+    
+    if (currentCourse && currentCourse.dishes) {
+      currentCourse.dishes.forEach((dish) => {
         const dishId = dish.id.toString()
         // 이미 처리된 음식은 건너뜁니다
         if (selectedDishes[dishId] && !processedDishIds.has(dishId)) {
           processedDishIds.add(dishId) // 처리된 음식으로 표시
           selectedMeals.push({
-            schedule_id: course.schedule_id || getScheduleIdForCourse(course.type),
+            schedule_id: currentCourse.schedule_id || getScheduleIdForCourse(currentCourse.type),
             dish_id: parseInt(dish.id),
           })
         }
       })
-    })
+    }
 
     if (selectedMeals.length === 0) {
       alert('최소 하나 이상의 음식을 선택해주세요.')
@@ -574,11 +584,23 @@ const handleSave = async () => {
       return
     }
 
+    // 이미 다른 코스에 기록이 있는지 확인
+    const checkResponse = await axios.get('/api/meal-records/today')
+    const existingRecords = checkResponse.data || []
+    
+    if (existingRecords.length > 0) {
+      const existingCourse = existingRecords[0].courseType
+      if (existingCourse && existingCourse !== selectedCourse.value) {
+        console.log(`기존 ${existingCourse} 코스 기록을 삭제하고 ${selectedCourse.value} 코스를 저장합니다.`)
+      }
+    }
+
     console.log('신규 저장 API 호출 (/api/meal-records)')
     console.log('저장할 음식 개수:', selectedMeals.length, '(중복 제거 후)')
     const response = await axios.post('/api/meal-records', {
       courseType: selectedCourse.value,
       meals: selectedMeals,
+      replaceExisting: true // 기존 기록 모두 삭제 후 새로운 기록만 저장
     })
 
     if (response.data.success) {
@@ -611,25 +633,46 @@ const handleUpdate = async () => {
     const selectedMeals = []
     const processedDishIds = new Set() // 중복 제거를 위한 Set
 
-    courses.value.forEach((course) => {
-      course.dishes.forEach((dish) => {
+    // 현재 선택된 코스의 음식만 저장
+    const currentCourse = courses.value.find(course => course.type === selectedCourse.value);
+    
+    if (currentCourse && currentCourse.dishes) {
+      currentCourse.dishes.forEach((dish) => {
         const dishId = dish.id.toString()
         // 이미 처리된 음식은 건너뜁니다
         if (selectedDishes[dishId] && !processedDishIds.has(dishId)) {
           processedDishIds.add(dishId) // 처리된 음식으로 표시
           selectedMeals.push({
-            schedule_id: course.schedule_id || getScheduleIdForCourse(course.type),
+            schedule_id: currentCourse.schedule_id || getScheduleIdForCourse(currentCourse.type),
             dish_id: parseInt(dish.id),
           })
         }
       })
-    })
+    }
+
+    if (selectedMeals.length === 0) {
+      alert('최소 하나 이상의 음식을 선택해주세요.')
+      isSavingManually.value = false
+      return
+    }
+
+    // 기존 코스와 다른 코스로 변경된 경우, 모든 기록 삭제 후 저장
+    const checkResponse = await axios.get('/api/meal-records/today')
+    const existingRecords = checkResponse.data || []
+    
+    if (existingRecords.length > 0) {
+      const existingCourse = existingRecords[0].courseType
+      if (existingCourse && existingCourse !== selectedCourse.value) {
+        console.log(`기존 ${existingCourse} 코스 기록을 삭제하고 ${selectedCourse.value} 코스를 저장합니다.`)
+      }
+    }
 
     console.log('수정 API 호출 (/api/meal-records/update)')
     console.log('저장할 음식 개수:', selectedMeals.length, '(중복 제거 후)')
     const response = await axios.post('/api/meal-records/update', {
       courseType: selectedCourse.value,
       meals: selectedMeals,
+      replaceExisting: true // 기존 기록 모두 삭제 요청
     })
 
     if (response.data.success) {
@@ -698,11 +741,13 @@ const toggleDishSelection = (dishId) => {
   _chartRenderKey.value++
 }
 
-// 코스 변경 시 기존 선택을 초기화하고 코스 변경
+// 코스 변경 시 체크박스 상태를 유지하고 해당 코스에 맞는 영양소 정보 계산
 const changeSelectedCourse = (newCourse) => {
   selectedCourse.value = newCourse;
-  _chartRenderKey.value++; // 차트 갱신 (필요한 경우)
-  // console.log(`코스 변경됨: ${newCourse}, 선택된 음식 상태 유지:`, selectedDishes);
+  console.log(`코스 변경됨: ${newCourse}, 선택된 음식 상태 유지`);
+  
+  // 영양소 차트 갱신
+  _chartRenderKey.value++;
 }
 
 // 초기 코스 설정 (사용자의 기존 기록 기반)
@@ -757,11 +802,11 @@ const cleanup = () => {
 watch(
   () => selectedCourse.value,
   (newValue) => {
-    console.log(`코스 변경 감지: ${newValue}`)
+    console.log(`코스 변경 감지: ${newValue}`);
     // 차트 갱신
-    _chartRenderKey.value++
-  },
-)
+    _chartRenderKey.value++;
+  }
+);
 
 // 선택된 음식들이 변경되었을 때 (깊은 감시 필요)
 watch(
@@ -791,13 +836,21 @@ watch(
 // 모달 열릴 때 오늘 날짜로 초기화 및 데이터 로드
 watch(
   () => showModal.value,
-  (val) => {
+  async (val) => {
     if (val) {
-      selectedDate.value = new Date() // 오늘 날짜로 초기화
-      fetchCourses(selectedDate.value)
+      try {
+        // 모달이 열릴 때 식사 기록 먼저 조회
+        await fetchUserRecords(selectedDate.value);
+        
+        // 코스 데이터 불러오기
+        await fetchCourses(selectedDate.value);
+        
+      } catch (error) {
+        console.error('모달 데이터 로드 중 오류:', error);
+      }
     }
-  },
-)
+  }
+);
 
 // computed 속성 추가 - 기록이 있는지 확인
 const hasRecords = computed(() => {
@@ -827,6 +880,51 @@ const getScheduleIdForCourse = (courseType) => {
 const openCourseTab = (courseType) => {
   selectedCourse.value = courseType
   showModal.value = true
+}
+
+// 사용자의 식사 기록 조회 함수
+const fetchUserRecords = async (dateObj) => {
+  try {
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const dateParam = `${yyyy}-${mm}-${dd}`;
+    
+    console.log(`사용자 식사 기록 조회: ${dateParam}`);
+    
+    const recordsResponse = await axios.get(
+      dateParam === getTodayYMD() 
+        ? '/api/meal-records/today' 
+        : `/api/meal-records/${dateParam}`
+    );
+    
+    userRecords.value = recordsResponse.data || [];
+    console.log('불러온 식사 기록:', userRecords.value);
+    
+    // 체크박스 상태 초기화
+    Object.keys(selectedDishes).forEach(key => {
+      selectedDishes[key] = false;
+    });
+    
+    // 기록된 음식들의 체크박스 선택 상태 설정
+    if (userRecords.value.length > 0) {
+      isEditMode.value = true;
+      userRecords.value.forEach(record => {
+        const dishId = record.dishId || record.dish_id;
+        if (dishId) {
+          selectedDishes[dishId.toString()] = true;
+          console.log(`음식 ID ${dishId} 체크됨`);
+        }
+      });
+      
+      // 기존 기록에 기반한 코스 설정
+      setInitialCourse();
+    } else {
+      isEditMode.value = false;
+    }
+  } catch (error) {
+    console.error('식사 기록 조회 실패:', error);
+  }
 }
 
 // 오늘 날짜 여부 computed
