@@ -13,6 +13,9 @@
         <li class="nav-item">
           <RouterLink class="nav-link" to="/board">커뮤니티</RouterLink>
         </li>
+        <li class="nav-item">
+          <RouterLink class="nav-link" to="/recipe">레시피</RouterLink>
+        </li>
       </ul>
 
       <!-- 우측 메뉴 -->
