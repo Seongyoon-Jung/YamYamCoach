@@ -119,13 +119,12 @@
           <h6 class="mb-2 text-primary">추천 메뉴 레시피</h6>
           <div class="d-flex flex-wrap">
             <div v-for="(food, index) in rank1Recommendations" :key="food.id" class="me-3 mb-2">
-              <a
-                :href="getRecipeLink(food.name)"
-                target="_blank"
+              <button
+                @click="openRecipe(food.name)"
                 class="btn btn-sm btn-outline-success"
               >
                 <i class="bi bi-book me-1"></i>{{ food.name }}
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -225,6 +224,92 @@ const handlePopupLeave = () => {
 const getRecipeLink = (foodName) => {
   // 10000개 레시피 사이트에서 검색하는 URL
   return `https://www.10000recipe.com/recipe/list.html?q=${encodeURIComponent(foodName)}`
+}
+
+// 내부 레시피 검색 함수 추가
+const searchInternalRecipe = async (foodName) => {
+  try {
+    console.log(`내부 레시피 검색: "${foodName}"`)
+    
+    // 검색어 처리: 공백 및 특수문자 처리
+    const cleanedFoodName = foodName.trim().replace(/[^\uAC00-\uD7A3a-zA-Z0-9\s]/g, '')
+    
+    // 완전 일치 결과 먼저 찾기
+    const exactMatchResponse = await axios.get('/api/recipes', {
+      params: { 
+        name: cleanedFoodName,
+        page: 0,
+        size: 5
+      }
+    })
+    
+    console.log('정확한 검색 결과:', exactMatchResponse.data)
+    
+    // 검색 결과가 있고 첫 번째 결과가 입력한 음식 이름과 완전히 일치하는 경우
+    if (exactMatchResponse.data.content && exactMatchResponse.data.content.length > 0) {
+      const exactMatch = exactMatchResponse.data.content.find(
+        recipe => recipe.name === foodName || 
+                recipe.name === cleanedFoodName ||
+                foodName.includes(recipe.name) || 
+                recipe.name.includes(foodName)
+      )
+      
+      if (exactMatch) {
+        console.log('정확히 일치하는 레시피 찾음:', exactMatch.name)
+        return `/recipe/${exactMatch.id}`
+      }
+      
+      // 정확한 일치가 없으면 첫 번째 검색 결과 사용
+      console.log('가장 근접한 레시피 찾음:', exactMatchResponse.data.content[0].name)
+      return `/recipe/${exactMatchResponse.data.content[0].id}`
+    }
+    
+    // 포함 검색으로 다시 시도
+    const containsResponse = await axios.get('/api/recipes/search', {
+      params: { name: cleanedFoodName }
+    })
+    
+    console.log('포함 검색 결과:', containsResponse.data)
+    
+    if (containsResponse.data && containsResponse.data.length > 0) {
+      console.log('포함 검색으로 레시피 찾음:', containsResponse.data[0].name)
+      return `/recipe/${containsResponse.data[0].id}`
+    }
+    
+    // 검색 결과가 없는 경우 null 반환
+    console.log('내부 레시피 검색 결과 없음')
+    return null
+  } catch (error) {
+    console.error('내부 레시피 검색 실패:', error)
+    return null
+  }
+}
+
+// 레시피 링크 열기 함수 수정
+const openRecipe = async (foodName) => {
+  try {
+    // 인터페이스 반응성을 위해 버튼 상태를 변경하거나 로딩 표시를 할 수 있음
+    console.log(`레시피 열기 요청: ${foodName}`)
+    
+    // 먼저 내부 레시피 검색
+    const internalLink = await searchInternalRecipe(foodName)
+    
+    if (internalLink) {
+      // 내부 레시피가 있으면 해당 페이지로 이동
+      console.log(`내부 레시피로 이동: ${internalLink}`)
+      window.location.href = internalLink
+    } else {
+      // 내부 레시피가 없으면 10000개 레시피 사이트로 이동
+      console.log(`외부 레시피 사이트로 이동: ${foodName}`)
+      const externalLink = getRecipeLink(foodName)
+      window.open(externalLink, '_blank')
+    }
+  } catch (error) {
+    console.error('레시피 열기 중 오류:', error)
+    // 오류 발생 시 외부 사이트로 이동
+    const externalLink = getRecipeLink(foodName)
+    window.open(externalLink, '_blank')
+  }
 }
 
 // 오늘 기록이 있는지 확인
@@ -464,12 +549,6 @@ const rank2Names = computed(() => {
 const rank3Names = computed(() => {
   return rank3Recommendations.value.map((food) => food.name).join(', ')
 })
-
-// 레시피 링크 열기 함수
-const openRecipe = (foodName) => {
-  const recipeUrl = getRecipeLink(foodName)
-  window.open(recipeUrl, '_blank')
-}
 
 // 팝업 위치 계산 함수
 const updatePopupPosition = () => {
