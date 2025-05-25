@@ -193,11 +193,17 @@ const getSortText = () => {
 const filteredRecipes = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   
+  // recipes.value가 배열이 아닌 경우 빈 배열 반환
+  if (!recipes.value || !Array.isArray(recipes.value)) {
+    return [];
+  }
+  
   let result = recipes.value.filter(recipe => {
     // 검색어 필터링
     if (q && !(
       recipe.name.toLowerCase().includes(q) || 
-      recipe.ingredients.some(i => i.toLowerCase().includes(q)) ||
+      (recipe.ingredients && typeof recipe.ingredients === 'string' && recipe.ingredients.toLowerCase().includes(q)) ||
+      (recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.some(i => i.toLowerCase().includes(q))) ||
       recipe.category.toLowerCase().includes(q)
     )) {
       return false
@@ -261,7 +267,18 @@ const loadMore = () => {
 const fetchRecipes = async () => {
   try {
     const response = await axios.get('/api/recipes')
-    recipes.value = response.data
+    recipes.value = response.data.content.map(recipe => ({
+      ...recipe,
+      nutrition: recipe.nutrition || {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0
+      },
+      ingredients: Array.isArray(recipe.ingredients) 
+        ? recipe.ingredients 
+        : (recipe.ingredients ? recipe.ingredients.split(',').map(i => i.trim()) : [])
+    }))
   } catch (error) {
     console.error('레시피 데이터 로딩 실패:', error)
   }
