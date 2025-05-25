@@ -304,6 +304,13 @@ const submitRecipe = async () => {
     isSubmitting.value = true
     error.value = ''
 
+    // 필수 입력값 검증
+    if (!recipe.name || !recipe.category || !recipe.ingredientsText) {
+      error.value = '레시피 이름, 카테고리, 재료는 필수 입력사항입니다.'
+      isSubmitting.value = false
+      return
+    }
+
     // FormData 생성
     const formData = new FormData()
     
@@ -314,18 +321,25 @@ const submitRecipe = async () => {
       ingredients: recipe.ingredientsText,
       description: recipe.description,
       content: recipe.content,
-      cookTimeMinutes: recipe.cookTimeMinutes,
-      difficulty: recipe.difficulty,
-      servings: recipe.servings,
+      cookTimeMinutes: recipe.cookTimeMinutes || 30,
+      difficulty: recipe.difficulty || '보통',
+      servings: recipe.servings || 2,
       imageUrl: recipe.imageUrl // 기존 이미지 URL 유지
     }
     
     console.log('수정할 레시피 데이터:', recipeData)
-    formData.append('recipeData', JSON.stringify(recipeData))
+    
+    // 문자열로 변환
+    const recipeDataJson = JSON.stringify(recipeData)
+    console.log('JSON 변환 결과 (길이):', recipeDataJson.length)
+    
+    // FormData에 JSON 문자열 추가
+    formData.append('recipeData', recipeDataJson)
     
     // 새 이미지가 있는 경우에만 추가
     if (imageFile.value) {
       formData.append('mainImage', imageFile.value)
+      console.log('새 이미지 추가됨:', imageFile.value.name, imageFile.value.size, 'bytes', imageFile.value.type)
     }
     
     // API 요청 공통 헤더
@@ -333,44 +347,46 @@ const submitRecipe = async () => {
       'X-USER-ID': accountStore.userId
     }
     
-    // 이미지가 있는 경우와 없는 경우 요청 방식 분리
-    let response
-    if (imageFile.value) {
-      // 이미지가 있는 경우 - FormData로 전송
-      response = await axios.post(`/api/recipes/${recipeId.value}`, formData, {
+    console.log('요청 헤더:', headers)
+    console.log('사용자 ID:', accountStore.userId)
+    
+    // FormData 내용 디버깅
+    let formDataDebug = []
+    for (let pair of formData.entries()) {
+      if (pair[0] === 'recipeData') {
+        formDataDebug.push(`${pair[0]}: ${pair[1].substring(0, 50)}... (${pair[1].length} chars)`)
+      } else {
+        formDataDebug.push(`${pair[0]}: ${pair[1]}`)
+      }
+    }
+    console.log('FormData 내용:', formDataDebug)
+    
+    // 항상 POST 요청 사용 (이미지 있든 없든)
+    try {
+      const response = await axios.post(`/api/recipes/${recipeId.value}`, formData, {
         headers: {
           ...headers,
           'Content-Type': 'multipart/form-data'
         },
         withCredentials: true
       })
-      console.log('이미지 포함 업데이트 응답:', response.data)
-    } else {
-      // 이미지가 없는 경우 - JSON으로 전송
-      response = await axios.put(`/api/recipes/${recipeId.value}`, recipeData, {
-        headers: headers,
-        withCredentials: true
-      })
-      console.log('일반 업데이트 응답:', response.data)
-    }
-
-    alert('레시피가 성공적으로 수정되었습니다!')
-    router.push(`/recipe/${recipeId.value}`)
-  } catch (err) {
-    console.error('레시피 수정 중 오류:', err)
-    if (err.response) {
-      console.error('서버 응답:', err.response.status, err.response.data)
-      if (err.response.status === 401) {
-        error.value = '로그인이 필요합니다. 로그인 페이지로 이동합니다.'
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
+      console.log('업데이트 응답:', response.data)
+      
+      alert('레시피가 성공적으로 수정되었습니다!')
+      router.push(`/recipe/${recipeId.value}`)
+    } catch (requestErr) {
+      console.error('API 요청 실패:', requestErr)
+      if (requestErr.response) {
+        console.error('서버 응답 상태:', requestErr.response.status)
+        console.error('서버 응답 데이터:', requestErr.response.data)
+        error.value = `레시피 수정 중 오류가 발생했습니다: ${requestErr.response.data || requestErr.message || '알 수 없는 오류'}`
       } else {
-        error.value = `레시피 수정 중 오류가 발생했습니다: ${err.response.data || '다시 시도해주세요.'}`
+        error.value = `네트워크 오류: ${requestErr.message}`
       }
-    } else {
-      error.value = '네트워크 오류가 발생했습니다. 다시 시도해주세요.'
     }
+  } catch (err) {
+    console.error('레시피 수정 처리 중 오류:', err)
+    error.value = '레시피 데이터 처리 중 오류가 발생했습니다.'
   } finally {
     isSubmitting.value = false
   }

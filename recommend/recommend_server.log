@@ -11189,3 +11189,199 @@ NameError: name 'calculate_bmi' is not defined
  'timestamp': '2025-05-25T01:56:40.101484',
  'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
 2025-05-25 01:56:40,102 [INFO] 127.0.0.1 - - [25/May/2025 01:56:40] "POST /recommend HTTP/1.1" 200 -
+2025-05-25 20:45:09,150 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:45:09,151 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:09,157 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:45:09,167 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:45:09,167 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:45:09,168 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-25 20:45:09,168 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:09,175 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-25 20:45:09,176 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-25 20:45:09,181 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-25 20:45:09,181 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-25 20:45:09,190 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-25 20:45:09,190 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-25 20:45:09,221 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:45:09,469 [INFO] foods_info 데이터 삽입 완료.
+2025-05-25 20:45:09,469 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:45:09,822 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-25 20:45:09,822 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-25 20:45:09,822 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-25 20:45:09,825 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-25 20:45:09,825 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-25 20:45:09,825 [INFO] MySQL 연결 종료.
+2025-05-25 20:45:09,826 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:45:09,826 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:09,829 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:45:09,836 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:45:09,836 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:45:09,836 [INFO] ==================================================
+2025-05-25 20:45:09,836 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-25 20:45:09,836 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-25 20:45:09,836 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-25 20:45:09,836 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-25 20:45:09,836 [INFO] ==================================================
+2025-05-25 20:45:09,945 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.50.63:5001
+2025-05-25 20:45:09,945 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-25 20:45:09,952 [INFO]  * Restarting with watchdog (fsevents)
+2025-05-25 20:45:10,379 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:45:10,379 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:10,383 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:45:10,390 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:45:10,390 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:45:10,390 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-25 20:45:10,390 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:10,398 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-25 20:45:10,398 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-25 20:45:10,400 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-25 20:45:10,400 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-25 20:45:10,419 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-25 20:45:10,419 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-25 20:45:10,430 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:45:10,675 [INFO] foods_info 데이터 삽입 완료.
+2025-05-25 20:45:10,675 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:45:11,031 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-25 20:45:11,031 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-25 20:45:11,031 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-25 20:45:11,037 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-25 20:45:11,037 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-25 20:45:11,037 [INFO] MySQL 연결 종료.
+2025-05-25 20:45:11,037 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:45:11,037 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:45:11,041 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:45:11,046 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:45:11,046 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:45:11,046 [INFO] ==================================================
+2025-05-25 20:45:11,046 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-25 20:45:11,046 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-25 20:45:11,046 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-25 20:45:11,046 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-25 20:45:11,047 [INFO] ==================================================
+2025-05-25 20:45:11,050 [WARNING]  * Debugger is active!
+2025-05-25 20:45:11,061 [INFO]  * Debugger PIN: 666-746-260
+2025-05-25 20:45:19,844 [INFO] 127.0.0.1 - - [25/May/2025 20:45:19] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-25 20:45:19,850 [INFO] 요청 수신 시간: 2025-05-25 20:45:19
+2025-05-25 20:45:19,851 [INFO] 요청 데이터: {'nutrients': {'calories': 594,
+               'carbohydrate': 93,
+               'fat': 16,
+               'protein': 26,
+               'sugar': 21},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-25 20:45:19,851 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-25 20:45:19,851 [INFO] 계산된 BMI: 27.8
+2025-05-25 20:45:19,852 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-25 20:45:19,852 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-25 20:45:19,852 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 161.4, 'max_g': 274.5}, 'protein': {'min_g': 30.5, 'max_g': 171.9}, 'fat': {'min_g': 34.3, 'max_g': 71.9}, 'sugar': {'min_g': 0, 'max_g': 35.5}}
+2025-05-25 20:45:19,906 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-25 20:45:19,906 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 274.5,
+                                                                'min_g': 161.4},
+                                               'fat': {'max_g': 71.9,
+                                                       'min_g': 34.3},
+                                               'protein': {'max_g': 171.9,
+                                                           'min_g': 30.5},
+                                               'sugar': {'max_g': 35.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-25T20:45:19.906126',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-25 20:45:19,906 [INFO] 127.0.0.1 - - [25/May/2025 20:45:19] "POST /recommend HTTP/1.1" 200 -
+2025-05-25 20:55:24,443 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:55:24,443 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:24,448 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:55:24,456 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:55:24,457 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:55:24,457 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-25 20:55:24,457 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:24,466 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-25 20:55:24,466 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-25 20:55:24,469 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-25 20:55:24,469 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-25 20:55:24,491 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-25 20:55:24,491 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-25 20:55:24,500 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:55:24,749 [INFO] foods_info 데이터 삽입 완료.
+2025-05-25 20:55:24,749 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:55:25,099 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-25 20:55:25,099 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-25 20:55:25,099 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-25 20:55:25,110 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-25 20:55:25,110 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-25 20:55:25,110 [INFO] MySQL 연결 종료.
+2025-05-25 20:55:25,111 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:55:25,111 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:25,114 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:55:25,120 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:55:25,120 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:55:25,120 [INFO] ==================================================
+2025-05-25 20:55:25,120 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-25 20:55:25,121 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-25 20:55:25,121 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-25 20:55:25,121 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-25 20:55:25,121 [INFO] ==================================================
+2025-05-25 20:55:25,144 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.50.63:5001
+2025-05-25 20:55:25,144 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-25 20:55:25,151 [INFO]  * Restarting with watchdog (fsevents)
+2025-05-25 20:55:25,564 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:55:25,564 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:25,569 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:55:25,575 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:55:25,576 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:55:25,576 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-25 20:55:25,576 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:25,583 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-25 20:55:25,584 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-25 20:55:25,586 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-25 20:55:25,586 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-25 20:55:25,615 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-25 20:55:25,615 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-25 20:55:25,632 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:55:25,879 [INFO] foods_info 데이터 삽입 완료.
+2025-05-25 20:55:25,879 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-25 20:55:26,247 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-25 20:55:26,247 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-25 20:55:26,247 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-25 20:55:26,250 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-25 20:55:26,250 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-25 20:55:26,251 [INFO] MySQL 연결 종료.
+2025-05-25 20:55:26,251 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-25 20:55:26,251 [INFO] 음식 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_info.csv
+2025-05-25 20:55:26,255 [INFO] 음식 영양 정보 CSV 로드 시도: /Users/yoon/yamyam/YamYamCoach/recommend/data/foods_nutrients.csv
+2025-05-25 20:55:26,261 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-25 20:55:26,261 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-25 20:55:26,261 [INFO] ==================================================
+2025-05-25 20:55:26,261 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-25 20:55:26,261 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-25 20:55:26,261 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-25 20:55:26,261 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-25 20:55:26,261 [INFO] ==================================================
+2025-05-25 20:55:26,264 [WARNING]  * Debugger is active!
+2025-05-25 20:55:26,273 [INFO]  * Debugger PIN: 666-746-260

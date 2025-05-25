@@ -239,7 +239,7 @@ public class RecipeController {
     @PostMapping("/{id}")
     public ResponseEntity<RecipeResponse> updateRecipeWithImage(
             @PathVariable Long id,
-            @RequestPart("recipeData") String recipeDataJson,
+            @RequestPart(value = "recipeData", required = true) String recipeDataJson,
             @RequestPart(value = "mainImage", required = false) MultipartFile mainImage,
             @RequestHeader(value = "X-USER-ID", required = false) Long headerUserId,
             HttpServletRequest request) {
@@ -248,8 +248,13 @@ public class RecipeController {
             // 디버깅 로그 추가
             System.out.println("POST /api/recipes/" + id + " 요청 받음 (이미지 포함 수정)");
             System.out.println("X-USER-ID 헤더: " + headerUserId);
-            System.out.println("recipeData JSON: " + recipeDataJson);
+            System.out.println("recipeData JSON 길이: " + (recipeDataJson != null ? recipeDataJson.length() : "null"));
             System.out.println("mainImage 있음: " + (mainImage != null && !mainImage.isEmpty()));
+            
+            if (recipeDataJson == null || recipeDataJson.trim().isEmpty()) {
+                System.err.println("recipeData가 비어 있습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
             
             // 사용자 ID 가져오기
             Long userId = headerUserId;
@@ -262,7 +267,6 @@ public class RecipeController {
                     !authentication.getPrincipal().equals("anonymousUser")) {
                     SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                     userId = Long.valueOf(securityAccount.getUserId());
-                    System.out.println("시큐리티에서 찾은 사용자 ID: " + userId);
                 } else {
                     // 기존 세션 방식 시도
                     Object sessionUserId = request.getSession().getAttribute("userId");
@@ -271,36 +275,54 @@ public class RecipeController {
                     } else if (sessionUserId instanceof Integer) {
                         userId = ((Integer) sessionUserId).longValue();
                     }
-                    System.out.println("세션에서 찾은 사용자 ID: " + userId);
                 }
             }
+            
+            System.out.println("최종 사용자 ID: " + userId);
             
             // 사용자 ID가 없으면 인증 실패
             if (userId == null) {
                 System.out.println("사용자 ID를 찾을 수 없어 인증 실패");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
             }
             
             // JSON 문자열을 RecipeRequest 객체로 변환
-            RecipeRequest recipeRequest = objectMapper.readValue(recipeDataJson, RecipeRequest.class);
+            RecipeRequest recipeRequest;
+            try {
+                recipeRequest = objectMapper.readValue(recipeDataJson, RecipeRequest.class);
+                System.out.println("변환된 RecipeRequest: " + recipeRequest);
+            } catch (Exception e) {
+                System.err.println("JSON 변환 오류: " + e.getMessage());
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
             
+            // 레시피 업데이트
             RecipeResponse updatedRecipe;
-            if (mainImage != null && !mainImage.isEmpty()) {
-                updatedRecipe = recipeService.updateRecipeWithImage(id, recipeRequest, mainImage, userId);
-                System.out.println("이미지 포함 레시피 업데이트 성공: " + updatedRecipe.getId());
-            } else {
-                updatedRecipe = recipeService.updateRecipe(id, recipeRequest, userId);
-                System.out.println("일반 레시피 업데이트 성공: " + updatedRecipe.getId());
+            try {
+                if (mainImage != null && !mainImage.isEmpty()) {
+                    System.out.println("이미지 포함 업데이트 진행: 이미지 크기=" + mainImage.getSize() + " bytes");
+                    updatedRecipe = recipeService.updateRecipeWithImage(id, recipeRequest, mainImage, userId);
+                    System.out.println("이미지 포함 레시피 업데이트 성공: " + updatedRecipe.getId());
+                } else {
+                    System.out.println("일반 업데이트 진행 (이미지 없음)");
+                    updatedRecipe = recipeService.updateRecipe(id, recipeRequest, userId);
+                    System.out.println("일반 레시피 업데이트 성공: " + updatedRecipe.getId());
+                }
+                
+                return ResponseEntity.ok(updatedRecipe);
+            } catch (Exception e) {
+                System.err.println("레시피 업데이트 실패: " + e.getMessage());
+                e.printStackTrace();
+                if (e.getMessage() != null && e.getMessage().contains("권한이 없습니다")) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                }
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
-            
-            return ResponseEntity.ok(updatedRecipe);
         } catch (Exception e) {
-            System.out.println("레시피 업데이트 실패: " + e.getMessage());
+            System.err.println("요청 처리 중 예외 발생: " + e.getMessage());
             e.printStackTrace();
-            if (e.getMessage().contains("권한이 없습니다")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 

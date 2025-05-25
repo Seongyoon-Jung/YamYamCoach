@@ -162,32 +162,81 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public RecipeResponse updateRecipeWithImage(Long id, RecipeRequest recipeRequest, MultipartFile imageFile, Long userId) {
         if (imageFile == null || imageFile.isEmpty()) {
+            System.out.println("이미지가 없어 일반 업데이트 메서드 호출");
             return updateRecipe(id, recipeRequest, userId);
         }
         
-        Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("레시피를 찾을 수 없습니다."));
+        // 유효성 검사 추가
+        if (recipeRequest == null) {
+            throw new IllegalArgumentException("레시피 데이터가 없습니다.");
+        }
+        
+        if (id == null || userId == null) {
+            throw new IllegalArgumentException("레시피 ID 또는 사용자 ID가 유효하지 않습니다.");
+        }
+        
+        // 레시피 조회
+        Recipe recipe;
+        try {
+            recipe = recipeRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("레시피를 찾을 수 없습니다: ID=" + id));
+        } catch (Exception e) {
+            System.err.println("레시피 조회 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("레시피 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
         
         // 권한 확인
-        if (recipe.getUser().getUserId() != userId.intValue()) {
+        if (recipe.getUser() == null || recipe.getUser().getUserId() != userId.intValue()) {
+            System.err.println("권한 오류 - 레시피 작성자: " + (recipe.getUser() != null ? recipe.getUser().getUserId() : "null") + ", 요청자: " + userId);
             throw new IllegalArgumentException("레시피를 수정할 권한이 없습니다.");
         }
         
         try {
-            // 기존 이미지가 있다면 삭제
+            System.out.println("이미지 포함 레시피 업데이트 - 레시피 ID: " + id + ", 사용자 ID: " + userId);
+            System.out.println("현재 이미지 URL: " + recipe.getImageUrl());
+            System.out.println("새 이미지 파일: " + imageFile.getOriginalFilename() + ", 크기: " + imageFile.getSize() + " bytes, ContentType: " + imageFile.getContentType());
+            
+            // 이미지 유효성 검사
+            if (imageFile.getContentType() == null || !imageFile.getContentType().startsWith("image/")) {
+                throw new IllegalArgumentException("유효한 이미지 파일이 아닙니다. (ContentType: " + imageFile.getContentType() + ")");
+            }
+            
+            // 기존 이미지가 있다면 삭제 시도
+            String oldImageUrl = null;
             if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
-                s3UploadService.deleteImage(recipe.getImageUrl());
+                oldImageUrl = recipe.getImageUrl();
+                System.out.println("기존 이미지 삭제 시도: " + oldImageUrl);
+                try {
+                    s3UploadService.deleteImage(oldImageUrl);
+                    System.out.println("기존 이미지 삭제 성공");
+                } catch (Exception e) {
+                    System.err.println("기존 이미지 삭제 중 오류 발생 (계속 진행): " + e.getMessage());
+                    // 이미지 삭제 실패해도 업데이트 계속 진행
+                }
             }
             
             // 새 이미지 직접 업로드하고 키 받기
-            String imageKey = s3UploadService.uploadImage(imageFile);
+            String imageKey;
+            try {
+                imageKey = s3UploadService.uploadImage(imageFile);
+                if (imageKey == null || imageKey.isEmpty()) {
+                    throw new RuntimeException("이미지 업로드 후 빈 키가 반환되었습니다.");
+                }
+                System.out.println("새 이미지 업로드 완료 - 키: " + imageKey);
+            } catch (Exception e) {
+                System.err.println("새 이미지 업로드 중 오류 발생: " + e.getMessage());
+                throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다: " + e.getMessage(), e);
+            }
             
             // 이미지 URL 설정
             recipeRequest.setImageUrl(imageKey);
             
+            // 일반 업데이트 메서드 호출 (레시피 정보 업데이트)
             return updateRecipe(id, recipeRequest, userId);
         } catch (Exception e) {
-            throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+            System.err.println("이미지 업로드 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }
 
