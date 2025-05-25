@@ -4,7 +4,6 @@
       <h3 class="text-start fw-bold">{{ accountStore.username }} 님을 위한 뉴스를 준비했어요!</h3>
       <p class="text-start text-muted">{{ persona.description }}</p>
 
-      <!-- 슬라이드 카드 영역 -->
       <div
         class="d-flex transition"
         :class="{ 'disabled-overlay': !personaAvailable }"
@@ -25,7 +24,6 @@
         </div>
       </div>
 
-      <!-- 오버레이 안내 및 버튼 -->
       <div
         v-if="!personaAvailable"
         class="position-absolute top-50 start-50 translate-middle text-center z-3"
@@ -35,7 +33,6 @@
         <router-link to="/survey" class="btn btn-success btn-lg">설문조사 시작하기</router-link>
       </div>
 
-      <!-- 좌우 슬라이드 버튼 -->
       <button
         class="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-2"
         :disabled="!personaAvailable"
@@ -71,7 +68,7 @@
 
     <!-- 감지 지점 -->
     <div ref="scrollObserver" class="w-100 py-3 text-center">
-      <span v-if="isLoading">불러오는 중...</span>
+      <LoadingSpinner v-if="isLoading" />
       <span v-else-if="isEnd">마지막 뉴스입니다.</span>
     </div>
   </div>
@@ -83,6 +80,7 @@ import { userAccountStore } from '@/store/account'
 import axios from '@/plugins/axios'
 import NewsCard from '@/components/news/NewsCard.vue'
 import SectionNewsTabs from '@/components/news/SectionNewsTab.vue'
+import LoadingSpinner from '@/components/loading/LoadingSpinner.vue'
 
 const accountStore = userAccountStore()
 const persona = ref({})
@@ -137,7 +135,7 @@ const loadNextPage = () => {
         observer.unobserve(scrollObserver.value)
         observer.observe(scrollObserver.value)
       }
-    }, 3000)
+    }, 1000)
   }
 }
 
