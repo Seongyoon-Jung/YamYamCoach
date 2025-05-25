@@ -69,7 +69,7 @@ public class SurveyServiceImpl implements SurveyService{
 			
 			// 유저에 데이터 변경
 			userEntity.setPersona(personaEntity);
-			userEntity.setProfileUrl("https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/"+ personaEntity.getPersonaId()+".png");
+			userEntity.setProfileUrl("uploads/user/"+ personaEntity.getPersonaId()+".png");
 			userRepository.save(userEntity);
 			return true;
 		}
