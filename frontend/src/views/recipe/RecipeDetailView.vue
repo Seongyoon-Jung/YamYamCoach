@@ -48,7 +48,18 @@
             <div class="recipe-meta d-flex flex-wrap gap-4 text-muted mb-3">
               <div><i class="bi bi-clock me-2"></i> {{ formatCookTime(recipe.cookTimeMinutes) }}</div>
               <div><i class="bi bi-bar-chart me-2"></i> {{ recipe.difficulty }}</div>
-              <div><i class="bi bi-heart me-2"></i> {{ recipe.likes }}명이 좋아합니다</div>
+              <div class="d-flex align-items-center">
+                <!-- <button 
+                  @click="toggleLike"
+                  class="btn btn-sm me-2"
+                  :class="liked ? 'btn-danger' : 'btn-outline-danger'"
+                  :disabled="!accountStore.userId"
+                  title="좋아요"
+                >
+                  <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
+                </button> -->
+                <span><b>{{ recipe.likes || 0 }}</b>명이 좋아합니다</span>
+              </div>
             </div>
             
             <div class="author-info d-flex align-items-center">
@@ -86,9 +97,8 @@
             </div>
             <div class="card-body">
               <ul class="list-group list-group-flush">
-                <li v-for="(ingredient, index) in recipe.ingredients" :key="index" class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>{{ ingredient }}</span>
-                  <span v-if="recipe.amounts && recipe.amounts[index]" class="text-muted">{{ recipe.amounts[index] }}</span>
+                <li v-for="(ingredient, index) in parseIngredients(recipe.ingredients)" :key="index" class="list-group-item">
+                  {{ ingredient }}
                 </li>
               </ul>
             </div>
@@ -102,18 +112,8 @@
               <h5 class="mb-0">조리 방법</h5>
             </div>
             <div class="card-body">
-              <div v-for="(step, index) in recipe.steps" :key="index" class="cooking-step mb-4">
-                <div class="step-header d-flex align-items-center mb-2">
-                  <div class="step-number me-3">{{ index + 1 }}</div>
-                  <h6 class="mb-0" v-if="step.title">{{ step.title }}</h6>
-                </div>
-                <p>{{ step.description || step }}</p>
-                <img 
-                  v-if="step.imageUrl" 
-                  :src="step.imageUrl" 
-                  class="img-fluid rounded step-image" 
-                  :alt="`조리 단계 ${index + 1} 이미지`"
-                />
+              <div class="cooking-content">
+                <p v-html="formatContent(recipe.content)"></p>
               </div>
             </div>
           </div>
@@ -141,15 +141,6 @@
             # {{ tag }}
           </span>
         </div>
-      </div>
-      
-      <!-- 좋아요 버튼 -->
-      <div class="like-section text-center mb-5">
-        <button class="btn btn-outline-danger" @click="toggleLike">
-          <i :class="liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
-          {{ liked ? '좋아요 취소' : '좋아요' }}
-        </button>
-        <div class="text-muted mt-2">{{ recipe.likes }}명이 이 레시피를 좋아합니다</div>
       </div>
       
       <!-- 관련 레시피 -->
@@ -264,6 +255,11 @@ const fetchLikeStatus = async () => {
   try {
     const response = await axios.get(`/api/recipes/${recipeId.value}/like-status`)
     liked.value = response.data.liked
+    
+    // 좋아요 수도 함께 업데이트 (서버에서 온 최신 정보로)
+    if (recipe.value && response.data.likes !== undefined) {
+      recipe.value.likes = response.data.likes
+    }
   } catch (err) {
     console.error('좋아요 상태 로딩 실패:', err)
     liked.value = false
@@ -306,6 +302,33 @@ const formatCookTime = (minutes) => {
 const formatDate = (date) => {
   const d = new Date(date)
   return `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일`
+}
+
+// 재료 파싱
+const parseIngredients = (ingredients) => {
+  // ingredients가 없거나 빈 문자열인 경우 빈 배열 반환
+  if (!ingredients) return [];
+  
+  // 문자열인 경우 개행 문자로 분리
+  if (typeof ingredients === 'string') {
+    return ingredients.split('\n').filter(item => item.trim() !== '');
+  }
+  
+  // 이미 배열인 경우 그대로 반환
+  if (Array.isArray(ingredients)) {
+    return ingredients;
+  }
+  
+  // 그 외의 경우 빈 배열 반환
+  return [];
+}
+
+// 조리 내용 포맷팅
+const formatContent = (content) => {
+  if (!content) return '';
+  // white-space: pre-line CSS 속성이 개행 문자를 자동으로 처리하므로 
+  // HTML 태그로 변환할 필요 없음
+  return content;
 }
 
 onMounted(() => {
@@ -363,5 +386,15 @@ onMounted(() => {
 
 .related-recipes .card:hover {
   transform: translateY(-5px);
+}
+
+.cooking-content {
+  line-height: 1.8;
+  padding: 1rem;
+}
+
+.cooking-content p {
+  white-space: pre-line;
+  margin-bottom: 0;
 }
 </style> 

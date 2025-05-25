@@ -7,9 +7,9 @@
         <li class="nav-item">
           <RouterLink class="nav-link" to="/">홈</RouterLink>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <RouterLink class="nav-link" to="/features">기능 소개</RouterLink>
-        </li>
+        </li> -->
         <li class="nav-item">
           <RouterLink class="nav-link" to="/board">커뮤니티</RouterLink>
         </li>

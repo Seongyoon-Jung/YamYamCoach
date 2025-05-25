@@ -49,4 +49,10 @@ public interface RecipeService {
     
     // 레시피 좋아요 수 증가
     void incrementLikes(Long recipeId);
+    
+    // 레시피 좋아요 추가
+    void likeRecipe(Long recipeId, Long userId);
+    
+    // 레시피 좋아요 취소
+    void unlikeRecipe(Long recipeId, Long userId);
 } 

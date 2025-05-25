@@ -20,6 +20,26 @@ public class S3UploadServiceImpl implements S3UploadService{
 
 	@Value("${aws-s3-bucket}")
     private String bucket;
+    
+    @Override
+    public String uploadImage(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+        
+        // 파일명 생성 (UUID + 원본 파일명)
+        String uuid = UUID.randomUUID().toString();
+        String fileName = "uploads/recipe/" + uuid + "-" + file.getOriginalFilename();
+        
+        // S3에 업로드
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(file.getContentType());
+        metadata.setContentLength(file.getSize());
+        
+        amazonS3.putObject(bucket, fileName, file.getInputStream(), metadata);
+        
+        return fileName; // S3 key 반환
+    }
 	
 	@Override
 	public void deleteImage(String imageUrl)  {
