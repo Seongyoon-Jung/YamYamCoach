@@ -20,9 +20,21 @@
     <div v-else-if="recipe" class="recipe-detail">
       <!-- 뒤로 가기 버튼 -->
       <div class="mb-4">
-        <router-link to="/recipe" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left me-2"></i> 목록으로 돌아가기
-        </router-link>
+        <div class="d-flex justify-content-between align-items-center">
+          <router-link to="/recipe" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i> 목록으로 돌아가기
+          </router-link>
+          
+          <!-- 작성자 본인인 경우에만 수정/삭제 버튼 표시 -->
+          <div v-if="isAuthor" class="d-flex gap-2">
+            <router-link :to="`/recipe/edit/${recipe.id}`" class="btn btn-primary">
+              <i class="bi bi-pencil me-1"></i> 수정
+            </router-link>
+            <button @click="deleteRecipe" class="btn btn-danger">
+              <i class="bi bi-trash me-1"></i> 삭제
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 레시피 헤더 -->
@@ -36,7 +48,6 @@
             <div class="recipe-meta d-flex flex-wrap gap-4 text-muted mb-3">
               <div><i class="bi bi-clock me-2"></i> {{ formatCookTime(recipe.cookTimeMinutes) }}</div>
               <div><i class="bi bi-bar-chart me-2"></i> {{ recipe.difficulty }}</div>
-              <div><i class="bi bi-fire me-2"></i> {{ recipe.nutrition.calories }}kcal</div>
               <div><i class="bi bi-heart me-2"></i> {{ recipe.likes }}명이 좋아합니다</div>
             </div>
             
@@ -61,41 +72,6 @@
               class="img-fluid rounded shadow recipe-main-image" 
               alt="레시피 이미지"
             />
-          </div>
-        </div>
-      </div>
-
-      <!-- 레시피 영양 정보 -->
-      <div class="nutrition-info card mb-5">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">영양 정보</h5>
-        </div>
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col-md-3 col-6 mb-3">
-              <div class="nutrition-item">
-                <div class="h4 mb-0">{{ recipe.nutrition.calories }}kcal</div>
-                <div class="text-muted">칼로리</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="nutrition-item">
-                <div class="h4 mb-0">{{ recipe.nutrition.protein }}g</div>
-                <div class="text-muted">단백질</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="nutrition-item">
-                <div class="h4 mb-0">{{ recipe.nutrition.carbs }}g</div>
-                <div class="text-muted">탄수화물</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="nutrition-item">
-                <div class="h4 mb-0">{{ recipe.nutrition.fat }}g</div>
-                <div class="text-muted">지방</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -203,9 +179,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/plugins/axios'
+import { userAccountStore } from '@/store/account'
 
 const route = useRoute()
 const router = useRouter()
+const accountStore = userAccountStore()
 
 const recipeId = computed(() => route.params.id)
 
@@ -215,12 +193,42 @@ const error = ref(null)
 const liked = ref(false)
 const relatedRecipes = ref([])
 
+// 현재 사용자가 작성자인지 확인
+const isAuthor = computed(() => {
+  if (!recipe.value || !accountStore.userId) return false
+  return recipe.value.userId === accountStore.userId || 
+         recipe.value.authorId === accountStore.userId
+})
+
+// 레시피 삭제 처리
+const deleteRecipe = async () => {
+  if (!confirm('정말로 이 레시피를 삭제하시겠습니까?')) return
+  
+  try {
+    await axios.delete(`/api/recipes/${recipeId.value}`)
+    alert('레시피가 삭제되었습니다.')
+    router.push('/recipe')
+  } catch (err) {
+    console.error('레시피 삭제 실패:', err)
+    alert('레시피 삭제 중 오류가 발생했습니다.')
+  }
+}
+
 // 레시피 데이터 가져오기
 const fetchRecipe = async () => {
   loading.value = true
   try {
     const response = await axios.get(`/api/recipes/${recipeId.value}`)
-    recipe.value = response.data
+    // nutrition 기본값 추가
+    recipe.value = {
+      ...response.data,
+      nutrition: response.data.nutrition || {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0
+      }
+    }
     
     // 관련 레시피 가져오기
     fetchRelatedRecipes()
@@ -235,11 +243,19 @@ const fetchRecipe = async () => {
 // 관련 레시피 가져오기
 const fetchRelatedRecipes = async () => {
   try {
-    const response = await axios.get(`/api/recipes/related/${recipeId.value}`)
-    relatedRecipes.value = response.data || []
+    // 백엔드에 관련 레시피 API가 구현되지 않았으므로 같은 카테고리 레시피를 불러옵니다.
+    if (recipe.value && recipe.value.category) {
+      const response = await axios.get(`/api/recipes/category/${recipe.value.category}`)
+      // 현재 레시피를 제외한 최대 3개의 레시피 표시
+      relatedRecipes.value = response.data
+        .filter(r => r.id !== recipe.value.id)
+        .slice(0, 3)
+    } else {
+      relatedRecipes.value = []
+    }
   } catch (err) {
     console.error('관련 레시피 로딩 실패:', err)
-    relatedRecipes.value = []
+    relatedRecipes.value = [] // 실패 시 빈 배열 설정
   }
 }
 

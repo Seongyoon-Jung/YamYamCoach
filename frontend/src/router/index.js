@@ -3,6 +3,7 @@ import { userAccountStore } from '@/store/account' // ✅ 올바른 스토어 im
 import RecipeView from '@/views/recipe/RecipeView.vue'
 import RecipeDetailView from '@/views/recipe/RecipeDetailView.vue'
 import RecipeCreateView from '@/views/recipe/RecipeCreateView.vue'
+import RecipeEditView from '@/views/recipe/RecipeEditView.vue'
 
 const routes = [
   {
@@ -104,20 +105,22 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/recipe/create',
+    name: 'RecipeCreate',
+    component: RecipeCreateView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/recipe/edit/:id',
+    name: 'RecipeEdit',
+    component: RecipeEditView,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/recipe/:id',
     name: 'RecipeDetail',
     component: RecipeDetailView,
     meta: { requiresAuth: false }
-  },
-  {
-    path: '/recipe/create',
-    name: 'RecipeCreateView',
-    component: RecipeCreateView
-  },
-  {
-    path: '/recipe/:recipeId',
-    name: 'RecipeDetailView',
-    component: RecipeDetailView
   },
   {
     path: '/:pathMatch(.*)*',
