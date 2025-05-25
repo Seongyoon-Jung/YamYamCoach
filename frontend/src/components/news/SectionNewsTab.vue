@@ -1,7 +1,7 @@
 <!-- src/components/news/SectionNewsTabs.vue -->
 <template>
   <a :href="newsUrl" class="text-decoration-none h-100 d-flex flex-column" target="_blank">
-    <div class="card mb-3 text-start border-0 rounded-4">
+    <div class="card mb-1 text-start border-0 ">
       <div class="row g-0">
         <!-- 이미지 컬럼 -->
         <div class="col-md-2">
@@ -41,18 +41,23 @@ defineProps({
 <style scoped>
 .card-img-wrapper {
   width: 100%;
-  height: 150px; /* 고정 높이 (필요에 따라 조절) */
+  height: 150px;
   background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+:global(body.dark-mode) .card-img-wrapper {
+  background-color: #2a2a2a !important;
 }
 
 .card-img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* 비율 유지하며 잘리지 않게 */
+  object-fit: contain;
 }
 
 .text-truncate-3 {

@@ -29,7 +29,7 @@
             <router-link
               v-if="isLoggedIn"
               to="/news"
-              class="text-decoration-none badge bg-light text-primary me-2"
+              class="text-decoration-none badge bg-light text-primary me-2 news-badge"
               >나의 맞춤 뉴스</router-link
             >
             <div v-if="isLoggedIn" style="height: 1.5rem; overflow: hidden; position: relative">
@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { userAccountStore } from '@/store/account'
 import axios from '@/plugins/axios'
@@ -93,7 +93,7 @@ const accountStore = userAccountStore()
 
 const user = computed(() => accountStore)
 const isLoggedIn = computed(() => !!user.value.username)
-const darkMode = computed(() => document.body.classList.contains('dark-mode'))
+const darkMode = ref(false)
 const imgUrl = ref('')
 
 const newsList = ref([])
@@ -101,8 +101,18 @@ const currentNewsIndex = ref(0)
 let newsInterval = null
 
 function toggleDarkMode() {
+  darkMode.value = !darkMode.value
   document.body.classList.toggle('dark-mode')
+  localStorage.setItem('darkMode', darkMode.value)
 }
+
+onMounted(() => {
+  const savedDarkMode = localStorage.getItem('darkMode')
+  if (savedDarkMode === 'true') {
+    darkMode.value = true
+    document.body.classList.add('dark-mode')
+  }
+})
 
 async function logout() {
   try {

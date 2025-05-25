@@ -4,7 +4,7 @@
       <h3 class="text-center fw-bold text-dark">로그인</h3>
       <hr />
 
-      <form @submit.prevent="login">
+      <form @submit.prevent="handleSubmit">
         <div class="row g-3">
           <span class="text-danger" v-show="click" v-text="warning"></span>
           <!-- 이메일 -->
@@ -43,7 +43,7 @@
 
           <!-- 로그인 버튼 -->
           <div class="col-md-12 text-center mt-4">
-            <button class="btn btn-success w-100 mb-3">로그인</button>
+            <button type="submit" class="btn btn-success w-100 mb-3">로그인</button>
             <router-link class="btn btn-outline-primary w-100 mb-3" to="/signup">
               회원가입
             </router-link>
@@ -89,16 +89,20 @@ const result = ref({
 const click = ref(false)
 const warning = ref('')
 
+const handleSubmit = (e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  login()
+  return false
+}
+
 const login = async () => {
   click.value = true
 
-  if (!result.value.email) {
-    warning.value = '이메일을 입력해주세요'
-    return
-  }
-
-  if (!result.value.password) {
-    warning.value = '비밀번호를 입력해주세요'
+  if (!result.value.email || !result.value.password) {
+    warning.value = !result.value.email 
+      ? '이메일을 입력해주세요' 
+      : '비밀번호를 입력해주세요'
     return
   }
 
@@ -123,7 +127,6 @@ const login = async () => {
     } else {
       router.push('/survey')
     }
-    // goBack()
   } catch (e) {
     warning.value = '이메일 또는 비밀번호가 일치하지 않습니다'
   }
