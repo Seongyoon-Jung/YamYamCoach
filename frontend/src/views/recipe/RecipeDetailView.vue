@@ -149,11 +149,6 @@
         <div class="row g-3">
           <div v-for="relatedRecipe in relatedRecipes" :key="relatedRecipe.id" class="col-md-4">
             <div class="card h-100 shadow-sm" @click="goToRecipe(relatedRecipe.id)">
-              <img 
-                :src="relatedRecipe.imageUrl || '/images/default-recipe.jpg'" 
-                class="card-img-top related-recipe-image" 
-                alt="관련 레시피 이미지"
-              />
               <div class="card-body">
                 <h6 class="card-title">{{ relatedRecipe.name }}</h6>
                 <p class="card-text text-truncate-2 small">{{ relatedRecipe.description }}</p>
@@ -396,5 +391,43 @@ onMounted(() => {
 .cooking-content p {
   white-space: pre-line;
   margin-bottom: 0;
+}
+
+.ingredients-list,
+.cooking-steps {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ingredients-list .card-body,
+.cooking-steps .card-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ingredients-list .list-group,
+.cooking-steps .cooking-content {
+  height: 100%;
+}
+
+.cooking-content p {
+  white-space: pre-line;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .ingredients-list,
+  .cooking-steps {
+    height: auto;
+  }
+}
+
+.related-recipes {
+  margin-top: 5px;
+}
+
+.related-recipes h5 {
+  margin-bottom: 1rem;
 }
 </style> 

@@ -11529,3 +11529,147 @@ NameError: name 'calculate_bmi' is not defined
  'timestamp': '2025-05-25T21:27:36.331105',
  'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
 2025-05-25 21:27:36,331 [INFO] 127.0.0.1 - - [25/May/2025 21:27:36] "POST /recommend HTTP/1.1" 200 -
+2025-05-25 23:42:19,522 [INFO] 127.0.0.1 - - [25/May/2025 23:42:19] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-25 23:42:19,528 [INFO] 요청 수신 시간: 2025-05-25 23:42:19
+2025-05-25 23:42:19,529 [INFO] 요청 데이터: {'nutrients': {'calories': 0,
+               'carbohydrate': 0,
+               'fat': 0,
+               'protein': 0,
+               'sugar': 0},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-25 23:42:19,529 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-25 23:42:19,531 [INFO] 계산된 BMI: 27.8
+2025-05-25 23:42:19,532 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-25 23:42:19,532 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-25 23:42:19,532 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-25 23:42:19,588 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-25 23:42:19,589 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                                'min_g': 254.4},
+                                               'fat': {'max_g': 87.9,
+                                                       'min_g': 50.3},
+                                               'protein': {'max_g': 197.9,
+                                                           'min_g': 56.5},
+                                               'sugar': {'max_g': 56.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-25T23:42:19.588980',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-25 23:42:19,589 [INFO] 127.0.0.1 - - [25/May/2025 23:42:19] "POST /recommend HTTP/1.1" 200 -
+2025-05-25 23:42:37,678 [INFO] 127.0.0.1 - - [25/May/2025 23:42:37] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-25 23:42:37,682 [INFO] 요청 수신 시간: 2025-05-25 23:42:37
+2025-05-25 23:42:37,683 [INFO] 요청 데이터: {'nutrients': {'calories': 0,
+               'carbohydrate': 0,
+               'fat': 0,
+               'protein': 0,
+               'sugar': 0},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-25 23:42:37,683 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-25 23:42:37,683 [INFO] 계산된 BMI: 27.8
+2025-05-25 23:42:37,683 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-25 23:42:37,683 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-25 23:42:37,683 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-25 23:42:37,730 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-25 23:42:37,730 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                                'min_g': 254.4},
+                                               'fat': {'max_g': 87.9,
+                                                       'min_g': 50.3},
+                                               'protein': {'max_g': 197.9,
+                                                           'min_g': 56.5},
+                                               'sugar': {'max_g': 56.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-25T23:42:37.730660',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-25 23:42:37,731 [INFO] 127.0.0.1 - - [25/May/2025 23:42:37] "POST /recommend HTTP/1.1" 200 -
+2025-05-26 01:29:00,363 [INFO] 127.0.0.1 - - [26/May/2025 01:29:00] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-26 01:29:00,371 [INFO] 요청 수신 시간: 2025-05-26 01:29:00
+2025-05-26 01:29:00,372 [INFO] 요청 데이터: {'nutrients': {'calories': 509,
+               'carbohydrate': 82,
+               'fat': 11,
+               'protein': 22,
+               'sugar': 19},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 3,
+          'weight': 90}}
+2025-05-26 01:29:00,372 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-26 01:29:00,376 [INFO] 계산된 BMI: 27.8
+2025-05-26 01:29:00,376 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-26 01:29:00,376 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-26 01:29:00,376 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 172.4, 'max_g': 285.5}, 'protein': {'min_g': 34.5, 'max_g': 175.9}, 'fat': {'min_g': 39.3, 'max_g': 76.9}, 'sugar': {'min_g': 0, 'max_g': 37.5}}
+2025-05-26 01:29:00,441 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-26 01:29:00,442 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 285.5,
+                                                                'min_g': 172.4},
+                                               'fat': {'max_g': 76.9,
+                                                       'min_g': 39.3},
+                                               'protein': {'max_g': 175.9,
+                                                           'min_g': 34.5},
+                                               'sugar': {'max_g': 37.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-26T01:29:00.441705',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-26 01:29:00,442 [INFO] 127.0.0.1 - - [26/May/2025 01:29:00] "POST /recommend HTTP/1.1" 200 -
