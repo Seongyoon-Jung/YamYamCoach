@@ -2,7 +2,7 @@
   <div class="info-section-low">
     <div class="card shadow-sm info-card-low">
       <!-- 헤더 -->
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">건강 정보</h6>
         <div>
           <button class="btn btn-sm btn-outline-primary" @click="openDetailModal">

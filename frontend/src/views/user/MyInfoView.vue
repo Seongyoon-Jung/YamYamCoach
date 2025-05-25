@@ -368,4 +368,12 @@ const goBack = () => {
 .hero {
   min-height: 0; /* 기존 Hero 가 있다면 제거 */
 }
+
+.btn.text-decoration-underline {
+  color: #6c757d;
+}
+
+:global(body.dark-mode) .btn.text-decoration-underline {
+  color: #fff;
+}
 </style>

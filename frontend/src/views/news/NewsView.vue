@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-4 position-relative p-5" style="background-color: #eaeef3">
+  <div class="mb-4 position-relative p-5 news-header" :class="{ 'dark-header': isDarkMode }">
     <div class="overflow-hidden position-relative">
       <h3 class="text-start fw-bold">{{ accountStore.username }} 님을 위한 뉴스를 준비했어요!</h3>
       <p class="text-start text-muted">{{ persona.description }}</p>
@@ -26,14 +26,15 @@
 
       <div
         v-if="!personaAvailable"
-        class="position-absolute top-50 start-50 translate-middle text-center z-3"
-        style="background: rgba(255, 255, 255, 0.85); padding: 2rem; border-radius: 1rem"
+        class="position-absolute top-50 start-50 translate-middle text-center z-3 survey-notice"
       >
         <p class="mb-3 fw-bold">맞춤 뉴스를 보려면 설문조사를 완료해 주세요</p>
         <router-link to="/survey" class="btn btn-success btn-lg">설문조사 시작하기</router-link>
       </div>
 
-      <button
+     
+    </div>
+     <button
         class="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-2"
         :disabled="!personaAvailable"
         :class="{ 'disabled-button': !personaAvailable }"
@@ -50,7 +51,6 @@
       >
         <i class="bi bi-chevron-right"></i>
       </button>
-    </div>
   </div>
 
   <!-- 무한스크롤 뉴스 영역 -->
@@ -62,7 +62,6 @@
         :description="news.description"
         :newsUrl="news.newsUrl"
         :date="news.date"
-        class="mb-4"
       />
     </div>
 
@@ -92,6 +91,9 @@ const pageSize = 6
 const isLoading = ref(false)
 const isEnd = ref(false)
 const scrollObserver = ref(null)
+
+// 다크모드 상태 감지
+const isDarkMode = computed(() => document.body.classList.contains('dark-mode'))
 
 const personaAvailable = computed(() => accountStore.personaId > 0 && persona.value.description)
 
@@ -126,11 +128,9 @@ const loadNextPage = () => {
     loadedNews.value.push(...nextChunk)
     page.value++
 
-    // ✅ 3초 유지 후 로딩 끝 + 강제 감지 재등록
     setTimeout(() => {
       isLoading.value = false
 
-      // ⭐ 감지 지점 강제 재등록
       if (scrollObserver.value && observer) {
         observer.unobserve(scrollObserver.value)
         observer.observe(scrollObserver.value)
@@ -164,7 +164,6 @@ onMounted(async () => {
   }, 5000)
   onBeforeUnmount(() => clearInterval(interval))
 
-  // ✅ 감지기 생성
   observer = new IntersectionObserver(
     (entries) => {
       if (entries[0].isIntersecting && !isLoading.value && !isEnd.value) {
@@ -184,13 +183,58 @@ onMounted(async () => {
 .transition {
   transition: transform 0.5s ease;
 }
+
 .disabled-overlay {
   filter: blur(4px);
   pointer-events: none;
   user-select: none;
 }
+
 .disabled-button {
   pointer-events: none;
   opacity: 0.4;
+}
+
+.news-header {
+  background-color: #eaeef3;
+  transition: background-color 0.3s ease;
+}
+
+.dark-header {
+  background-color: #333 !important;
+}
+
+.survey-notice {
+  background: #FFFFFFD9;
+  backdrop-filter: blur(8px);
+  padding: 2rem;
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+:global(body.dark-mode) .survey-notice {
+  background: rgba(42, 42, 42, 0.9);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* 다크모드 추가 스타일 */
+:global(body.dark-mode) .text-muted {
+  color: #9ca3af !important;
+}
+
+:global(body.dark-mode) .btn-outline-secondary {
+  color: #e0e0e0;
+  border-color: #666;
+}
+
+:global(body.dark-mode) .btn-outline-secondary:hover:not(:disabled) {
+  background-color: #404040;
+  border-color: #888;
+  color: #fff;
+}
+
+:global(body.dark-mode) .btn-outline-secondary:disabled {
+  color: #666;
+  border-color: #444;
 }
 </style>
