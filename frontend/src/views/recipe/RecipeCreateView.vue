@@ -56,7 +56,7 @@
               v-model="recipe.ingredientsText"
               rows="6"
               required
-              placeholder="재료를 입력하세요"
+              placeholder="재료를 한 줄에 하나씩 입력하세요&#10;예시:&#10;밀가루 2컵&#10;설탕 1/2컵&#10;소금 1티스푼"
             ></textarea>
           </div>
 

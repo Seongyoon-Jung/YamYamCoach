@@ -30,6 +30,7 @@ import com.yamyam.recipe.dto.RecipeRequest;
 import com.yamyam.recipe.dto.RecipeResponse;
 import com.yamyam.recipe.model.Recipe;
 import com.yamyam.recipe.repository.RecipeRepository;
+import com.yamyam.recipe.repository.RecipeLikeRepository;
 import com.yamyam.recipe.service.RecipeService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,11 +42,13 @@ public class RecipeController {
     private final RecipeService recipeService;
     private final ObjectMapper objectMapper;
     private final RecipeRepository recipeRepository;
+    private final RecipeLikeRepository recipeLikeRepository;
     
-    public RecipeController(RecipeService recipeService, ObjectMapper objectMapper, RecipeRepository recipeRepository) {
+    public RecipeController(RecipeService recipeService, ObjectMapper objectMapper, RecipeRepository recipeRepository, RecipeLikeRepository recipeLikeRepository) {
         this.recipeService = recipeService;
         this.objectMapper = objectMapper;
         this.recipeRepository = recipeRepository;
+        this.recipeLikeRepository = recipeLikeRepository;
     }
 
     // 레시피 생성
@@ -187,6 +190,11 @@ public class RecipeController {
         // 사용자 ID 가져오기
         Long userId = headerUserId;
         
+        // 디버깅 로그 추가
+        System.out.println("PUT /api/recipes/" + id + " 요청 받음");
+        System.out.println("X-USER-ID 헤더: " + headerUserId);
+        System.out.println("레시피 데이터: " + recipeRequest);
+        
         // 세션에서도 시도
         if (userId == null) {
             // 스프링 시큐리티 인증 객체에서 사용자 정보 가져오기
@@ -195,6 +203,7 @@ public class RecipeController {
                 !authentication.getPrincipal().equals("anonymousUser")) {
                 SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                 userId = Long.valueOf(securityAccount.getUserId());
+                System.out.println("시큐리티에서 찾은 사용자 ID: " + userId);
             } else {
                 // 기존 세션 방식 시도
                 Object sessionUserId = request.getSession().getAttribute("userId");
@@ -203,18 +212,22 @@ public class RecipeController {
                 } else if (sessionUserId instanceof Integer) {
                     userId = ((Integer) sessionUserId).longValue();
                 }
+                System.out.println("세션에서 찾은 사용자 ID: " + userId);
             }
         }
         
         // 사용자 ID가 없으면 인증 실패
         if (userId == null) {
+            System.out.println("사용자 ID를 찾을 수 없어 인증 실패");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
         try {
             RecipeResponse updatedRecipe = recipeService.updateRecipe(id, recipeRequest, userId);
+            System.out.println("레시피 업데이트 성공: " + updatedRecipe.getId());
             return ResponseEntity.ok(updatedRecipe);
         } catch (Exception e) {
+            System.out.println("레시피 업데이트 실패: " + e.getMessage());
             if (e.getMessage().contains("권한이 없습니다")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
@@ -232,6 +245,12 @@ public class RecipeController {
             HttpServletRequest request) {
         
         try {
+            // 디버깅 로그 추가
+            System.out.println("POST /api/recipes/" + id + " 요청 받음 (이미지 포함 수정)");
+            System.out.println("X-USER-ID 헤더: " + headerUserId);
+            System.out.println("recipeData JSON: " + recipeDataJson);
+            System.out.println("mainImage 있음: " + (mainImage != null && !mainImage.isEmpty()));
+            
             // 사용자 ID 가져오기
             Long userId = headerUserId;
             
@@ -243,6 +262,7 @@ public class RecipeController {
                     !authentication.getPrincipal().equals("anonymousUser")) {
                     SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                     userId = Long.valueOf(securityAccount.getUserId());
+                    System.out.println("시큐리티에서 찾은 사용자 ID: " + userId);
                 } else {
                     // 기존 세션 방식 시도
                     Object sessionUserId = request.getSession().getAttribute("userId");
@@ -251,11 +271,13 @@ public class RecipeController {
                     } else if (sessionUserId instanceof Integer) {
                         userId = ((Integer) sessionUserId).longValue();
                     }
+                    System.out.println("세션에서 찾은 사용자 ID: " + userId);
                 }
             }
             
             // 사용자 ID가 없으면 인증 실패
             if (userId == null) {
+                System.out.println("사용자 ID를 찾을 수 없어 인증 실패");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             
@@ -265,12 +287,16 @@ public class RecipeController {
             RecipeResponse updatedRecipe;
             if (mainImage != null && !mainImage.isEmpty()) {
                 updatedRecipe = recipeService.updateRecipeWithImage(id, recipeRequest, mainImage, userId);
+                System.out.println("이미지 포함 레시피 업데이트 성공: " + updatedRecipe.getId());
             } else {
                 updatedRecipe = recipeService.updateRecipe(id, recipeRequest, userId);
+                System.out.println("일반 레시피 업데이트 성공: " + updatedRecipe.getId());
             }
             
             return ResponseEntity.ok(updatedRecipe);
         } catch (Exception e) {
+            System.out.println("레시피 업데이트 실패: " + e.getMessage());
+            e.printStackTrace();
             if (e.getMessage().contains("권한이 없습니다")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
@@ -336,20 +362,16 @@ public class RecipeController {
             @PathVariable Long id,
             @RequestHeader(value = "X-USER-ID", required = false) Long headerUserId,
             HttpServletRequest request) {
-        
         // 사용자 ID 가져오기
         Long userId = headerUserId;
-        
-        // 세션에서도 시도
+        // 세션에서도 시도 (생략)
         if (userId == null) {
-            // 스프링 시큐리티 인증 객체에서 사용자 정보 가져오기
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() && 
                 !authentication.getPrincipal().equals("anonymousUser")) {
                 SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                 userId = Long.valueOf(securityAccount.getUserId());
             } else {
-                // 기존 세션 방식 시도
                 Object sessionUserId = request.getSession().getAttribute("userId");
                 if (sessionUserId instanceof Long) {
                     userId = (Long) sessionUserId;
@@ -358,40 +380,30 @@ public class RecipeController {
                 }
             }
         }
-        
-        // 사용자 ID가 없으면 인증 실패
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
         try {
-            recipeService.incrementLikes(id);
+            recipeService.likeRecipe(id, userId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
-    
     // 레시피 좋아요 취소
     @DeleteMapping("/{id}/like")
     public ResponseEntity<Void> unlikeRecipe(
             @PathVariable Long id,
             @RequestHeader(value = "X-USER-ID", required = false) Long headerUserId,
             HttpServletRequest request) {
-        
-        // 사용자 ID 가져오기
         Long userId = headerUserId;
-        
-        // 세션에서도 시도
         if (userId == null) {
-            // 스프링 시큐리티 인증 객체에서 사용자 정보 가져오기
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() && 
                 !authentication.getPrincipal().equals("anonymousUser")) {
                 SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                 userId = Long.valueOf(securityAccount.getUserId());
             } else {
-                // 기존 세션 방식 시도
                 Object sessionUserId = request.getSession().getAttribute("userId");
                 if (sessionUserId instanceof Long) {
                     userId = (Long) sessionUserId;
@@ -400,20 +412,11 @@ public class RecipeController {
                 }
             }
         }
-        
-        // 사용자 ID가 없으면 인증 실패
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
         try {
-            // 좋아요 수 감소 (현재 API 서비스가 존재하지 않아 간단히 수정)
-            Recipe recipe = recipeRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("레시피를 찾을 수 없습니다."));
-            if (recipe.getLikes() > 0) {
-                recipe.setLikes(recipe.getLikes() - 1);
-                recipeRepository.save(recipe);
-            }
+            recipeService.unlikeRecipe(id, userId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -426,20 +429,15 @@ public class RecipeController {
             @PathVariable Long id,
             @RequestHeader(value = "X-USER-ID", required = false) Long headerUserId,
             HttpServletRequest request) {
-        
         // 사용자 ID 가져오기
         Long userId = headerUserId;
-        
-        // 세션에서도 시도
         if (userId == null) {
-            // 스프링 시큐리티 인증 객체에서 사용자 정보 가져오기
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() && 
                 !authentication.getPrincipal().equals("anonymousUser")) {
                 SecurityAccount securityAccount = (SecurityAccount) authentication.getPrincipal();
                 userId = Long.valueOf(securityAccount.getUserId());
             } else {
-                // 기존 세션 방식 시도
                 Object sessionUserId = request.getSession().getAttribute("userId");
                 if (sessionUserId instanceof Long) {
                     userId = (Long) sessionUserId;
@@ -449,12 +447,22 @@ public class RecipeController {
             }
         }
         
-        // 비로그인 사용자는 항상 좋아요 안한 상태
-        if (userId == null) {
-            return ResponseEntity.ok(java.util.Map.of("liked", false));
+        boolean liked = false;
+        if (userId != null) {
+            liked = recipeLikeRepository.findByRecipeIdAndUserId(id, userId).isPresent();
         }
         
-        // 더미 데이터 반환 (실제로는 좋아요 DB 조회 필요)
-        return ResponseEntity.ok(java.util.Map.of("liked", false));
+        // 실제 좋아요 수 카운트 (NaN 방지)
+        int likes = recipeLikeRepository.countByRecipeId(id);
+        
+        // 레시피 엔티티의 likes 필드도 함께 업데이트
+        recipeRepository.findById(id).ifPresent(recipe -> {
+            if (recipe.getLikes() == null || recipe.getLikes() != likes) {
+                recipe.setLikes(likes);
+                recipeRepository.save(recipe);
+            }
+        });
+        
+        return ResponseEntity.ok(java.util.Map.of("liked", liked, "likes", likes));
     }
 } 

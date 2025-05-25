@@ -12,66 +12,31 @@
       
       <!-- 레시피 정보 -->
       <div class="col-md-9">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
+        <div class="card-body d-flex flex-column justify-content-center align-items-center position-relative" style="min-height: 180px;">
+          <div class="w-100 text-center">
+            <!-- 레시피 제목 -->
+            <h5 class="card-title mb-2">{{ recipe.name }}</h5>
+            <!-- 레시피 메타 정보 -->
+            <div class="recipe-meta d-flex justify-content-center gap-3 text-muted small mb-2">
+              <span><i class="bi bi-clock me-1"></i> {{ formatCookTime(recipe.cookTimeMinutes) }}</span>
+              <span><i class="bi bi-bar-chart me-1"></i> {{ recipe.difficulty }}</span>
               <!-- 카테고리 뱃지 -->
-              <span class="badge bg-primary mb-2">{{ recipe.category }}</span>
-              
-              <!-- 레시피 제목 -->
-              <h5 class="card-title mb-2">{{ recipe.name }}</h5>
-              
-              <!-- 간단한 설명 -->
-              <p class="card-text text-truncate-2 mb-3">{{ recipe.description }}</p>
-              
-              <!-- 레시피 메타 정보 -->
-              <div class="recipe-meta d-flex gap-3 text-muted small">
-                <span><i class="bi bi-clock me-1"></i> {{ formatCookTime(recipe.cookTimeMinutes) }}</span>
-                <span><i class="bi bi-bar-chart me-1"></i> {{ recipe.difficulty }}</span>
-                <span><i class="bi bi-fire me-1"></i> {{ recipe.nutrition.calories }}kcal</span>
-                <span 
-                  @click.stop="toggleLike"
-                  class="like-button"
-                  :class="{ 'liked': liked }"
-                >
-                  <i :class="liked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart'"></i>
-                  {{ recipe.likes }}
-                </span>
-              </div>
+              <span class="badge bg-primary mb-3">{{ recipe.category }}</span>
             </div>
-            
-            <!-- 작성자 정보 -->
-            <div class="text-end">
-              <div class="d-flex align-items-center justify-content-end">
-                <img
-                  :src="recipe.authorProfileUrl || '/images/default-profile.jpg'"
-                  alt="프로필"
-                  class="rounded-circle me-2"
-                  width="30"
-                  height="30"
-                />
-                <span class="text-muted small">{{ recipe.authorName }}</span>
-              </div>
-              <div class="text-muted small mt-1">
-                {{ formatDate(recipe.createdAt) }}
-              </div>
-              <!-- 작성자 본인인 경우 수정/삭제 버튼 표시 -->
-              <div v-if="isAuthor" class="mt-2">
-                <button @click.stop="editRecipe" class="btn btn-sm btn-outline-primary me-1">
-                  <i class="bi bi-pencil"></i> 수정
-                </button>
-                <button @click.stop="deleteRecipe" class="btn btn-sm btn-outline-danger">
-                  <i class="bi bi-trash"></i> 삭제
-                </button>
-              </div>
-            </div>
+            <!-- 간단한 설명 -->
+            <p class="card-text text-truncate-2 mb-3">{{ recipe.description }}</p>
           </div>
-          
-          <!-- 레시피 요약 영양 정보 -->
-          <div class="nutrition-summary mt-3">
-            <div class="row">
-              <div class="col-md-6">
-                <!-- 재료 리스트 (최대 4개만 표시) -->
+          <!-- 좋아요 버튼 (구분선 위, 오른쪽 정렬) -->
+          <div class="w-100 d-flex justify-content-end mb-2">
+            <button class="btn btn-outline-danger d-flex align-items-center gap-1 like-btn" @click.stop="toggleLike">
+              <i :class="liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
+              <span class="like-count text-danger ms-1">{{ Number.isFinite(recipe.likes) ? recipe.likes : 0 }}</span>
+            </button>
+          </div>
+          <!-- 재료+작성자+날짜 행은 그대로 아래에 유지 -->
+          <div class="recipe-summary mt-3 w-100">
+            <div class="row g-3">
+              <div class="col-md-7">
                 <div class="ingredients-preview">
                   <span class="text-muted small me-2">재료:</span>
                   <span v-for="(ingredient, index) in displayIngredients" :key="index" class="ingredient-tag">
@@ -82,12 +47,17 @@
                   </span>
                 </div>
               </div>
-              <div class="col-md-6">
-                <!-- 영양소 정보 -->
-                <div class="d-flex justify-content-end gap-3 text-muted small">
-                  <span>단백질: {{ recipe.nutrition.protein }}g</span>
-                  <span>탄수화물: {{ recipe.nutrition.carbs }}g</span>
-                  <span>지방: {{ recipe.nutrition.fat }}g</span>
+              <div class="col-md-5">
+                <div class="d-flex align-items-center justify-content-end">
+                  <img
+                    :src="recipe.authorProfileUrl || '/images/default-profile.jpg'"
+                    alt="프로필"
+                    class="rounded-circle me-2"
+                    width="24"
+                    height="24"
+                  />
+                  <span class="text-muted small me-2">{{ recipe.authorName }}</span>
+                  <span class="text-muted small">{{ formatDate(recipe.createdAt) }}</span>
                 </div>
               </div>
             </div>
@@ -242,55 +212,64 @@ onMounted(() => {
   font-size: 0.8rem;
 }
 
-.nutrition-summary {
+.recipe-summary {
   border-top: 1px solid #eee;
-  padding-top: 0.5rem;
+  padding-top: 0.75rem;
 }
 
-.like-button {
-  cursor: pointer;
-  transition: all 0.2s;
+.like-btn {
+  font-size: 1rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 1.5rem;
+  background: transparent;
+  border-width: 1.2px;
+  height: 36px;
+  line-height: 1;
+  box-shadow: none !important;
 }
 
-.like-button:hover {
-  transform: scale(1.1);
-  color: #dc3545 !important;
+.like-btn:active, .like-btn:focus {
+  outline: none;
+  box-shadow: none !important;
 }
 
-.like-button.liked {
-  color: #dc3545 !important;
+.like-count {
+  font-weight: bold;
+  font-size: 1.05rem;
+  background: none !important;
+  border: none !important;
+  padding: 0;
 }
 
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border-radius: 0.2rem;
+.card-body {
+  position: relative;
 }
 
-.btn-outline-primary {
-  color: #007bff;
-  border-color: #007bff;
-}
-
-.btn-outline-primary:hover {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-outline-danger {
-  color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
+.card-body .card-title {
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {
   .recipe-image {
     height: 150px;
     width: 100%;
+  }
+  
+  .recipe-summary .row {
+    flex-direction: column;
+  }
+  
+  .recipe-summary .col-md-5 {
+    margin-top: 0.5rem;
+  }
+  .card-body {
+    min-height: 120px !important;
+  }
+  .like-btn {
+    bottom: 0.5rem !important;
+    right: 0.5rem !important;
+    padding: 0.2rem 0.8rem;
+    font-size: 0.95rem;
   }
 }
 </style> 

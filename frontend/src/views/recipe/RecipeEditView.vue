@@ -52,7 +52,7 @@
                   v-model="recipe.ingredientsText"
                   rows="6"
                   required
-                  placeholder="재료를 입력하세요 (예: 쌀 2컵, 물 3컵, 소금 1작은술)"
+                  placeholder="재료를 한 줄에 하나씩 입력하세요&#10;예시:&#10;밀가루 2컵&#10;설탕 1/2컵&#10;소금 1티스푼"
                 ></textarea>
               </div>
               
@@ -134,19 +134,32 @@
               <!-- 대표 이미지 -->
               <div class="mb-3">
                 <label for="recipeImage" class="form-label">대표 이미지</label>
-                <input
-                  type="file"
-                  class="form-control"
-                  id="recipeImage"
-                  @change="handleImageUpload"
-                  accept="image/*"
-                />
-                <div v-if="imagePreview" class="image-preview mt-3">
-                  <img :src="imagePreview" alt="이미지 미리보기" class="img-fluid rounded" style="max-height: 200px" />
+                
+                <!-- 현재 이미지 표시 -->
+                <div v-if="recipe.imageUrl" class="current-image mb-3">
+                  <img :src="recipe.imageUrl" alt="현재 레시피 이미지" class="img-fluid rounded" style="max-height: 200px" />
+                  <div class="text-muted small mt-2">현재 이미지</div>
                 </div>
-                <div v-else-if="recipeImageUrl" class="image-preview mt-3">
-                  <img :src="recipeImageUrl" alt="현재 이미지" class="img-fluid rounded" style="max-height: 200px" />
-                  <div class="text-muted small mt-1">새 이미지를 업로드하지 않으면 기존 이미지가 유지됩니다.</div>
+
+                <!-- 새 이미지 업로드 -->
+                <div class="new-image-upload">
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="recipeImage"
+                    @change="handleImageUpload"
+                    accept="image/*"
+                  />
+                  <div class="text-muted small mt-1">새 이미지를 업로드하면 기존 이미지가 교체됩니다.</div>
+                </div>
+
+                <!-- 새 이미지 미리보기 -->
+                <div v-if="imagePreview" class="image-preview mt-3">
+                  <img :src="imagePreview" alt="새 이미지 미리보기" class="img-fluid rounded" style="max-height: 200px" />
+                  <div class="text-muted small mt-2">새 이미지 미리보기</div>
+                  <button @click="cancelImageUpload" class="btn btn-sm btn-outline-secondary mt-2">
+                    <i class="bi bi-x"></i> 새 이미지 취소
+                  </button>
                 </div>
               </div>
             </div>
@@ -252,9 +265,10 @@ const fetchRecipeData = async () => {
     
     // 재료 처리
     if (Array.isArray(recipeData.ingredients)) {
-      recipe.ingredientsText = recipeData.ingredients.join(', ')
+      recipe.ingredientsText = recipeData.ingredients.join('\n');
     } else if (typeof recipeData.ingredients === 'string') {
-      recipe.ingredientsText = recipeData.ingredients
+      // 이미 문자열인 경우 그대로 사용 (개행 문자 포함)
+      recipe.ingredientsText = recipeData.ingredients;
     }
     
   } catch (err) {
@@ -265,102 +279,97 @@ const fetchRecipeData = async () => {
   }
 }
 
-// 메인 이미지 업로드 처리
+// 이미지 업로드 처리
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
     imageFile.value = file
     // 파일 미리보기 생성
     imagePreview.value = URL.createObjectURL(file)
-  } else {
-    imageFile.value = null
-    imagePreview.value = null
   }
+}
+
+// 이미지 업로드 취소
+const cancelImageUpload = () => {
+  imageFile.value = null
+  imagePreview.value = null
+  // input 필드 초기화
+  const input = document.getElementById('recipeImage')
+  if (input) input.value = ''
 }
 
 // 폼 제출 처리
 const submitRecipe = async () => {
-  // 로그인 여부 확인
-  if (!accountStore.username) {
-    error.value = '레시피를 수정하려면 로그인이 필요합니다.'
-    setTimeout(() => {
-      router.push('/login')
-    }, 2000)
-    return
-  }
-
   try {
     isSubmitting.value = true
     error.value = ''
 
-    // 이미지 업로드를 위한 변수
-    let imageKey = recipe.imageUrl; // 기본적으로 기존 이미지 URL 유지
-
-    // 새 이미지 파일이 있는 경우 S3에 먼저 업로드
-    if (imageFile.value) {
-      const file = imageFile.value
-      const uuid = crypto.randomUUID()
-      const fileName = `uploads/recipe/${uuid}-${file.name}`
-
-      try {
-        // 1. presigned PUT URL 요청
-        const putUrlRes = await axios.get('/api/s3/put-url', {
-          params: { fileName },
-        })
-        const putUrl = putUrlRes.data
-
-        // 2. S3에 직접 업로드
-        await fetch(putUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        })
-
-        // 3. 업로드 성공 후 fileName 저장
-        imageKey = fileName
-      } catch (uploadErr) {
-        console.error('이미지 업로드 실패:', uploadErr)
-        error.value = '이미지 업로드 중 오류가 발생했습니다.'
-        isSubmitting.value = false
-        return
-      }
-    }
+    // FormData 생성
+    const formData = new FormData()
     
-    // 레시피 데이터 생성
+    // 레시피 데이터 추가
     const recipeData = {
       name: recipe.name,
-      description: recipe.description,
       category: recipe.category,
       ingredients: recipe.ingredientsText,
+      description: recipe.description,
       content: recipe.content,
-      imageUrl: imageKey, // S3에 업로드된 이미지 키 (없으면 기존 이미지 URL)
       cookTimeMinutes: recipe.cookTimeMinutes,
       difficulty: recipe.difficulty,
-      servings: recipe.servings
+      servings: recipe.servings,
+      imageUrl: recipe.imageUrl // 기존 이미지 URL 유지
     }
     
-    // API 요청 (PUT 메서드로 업데이트)
-    const response = await axios.put(`/api/recipes/${recipeId.value}`, recipeData)
+    console.log('수정할 레시피 데이터:', recipeData)
+    formData.append('recipeData', JSON.stringify(recipeData))
     
-    // 응답 데이터 확인 및 처리
-    console.log('수정된 레시피 데이터:', response.data)
+    // 새 이미지가 있는 경우에만 추가
+    if (imageFile.value) {
+      formData.append('mainImage', imageFile.value)
+    }
     
+    // API 요청 공통 헤더
+    const headers = {
+      'X-USER-ID': accountStore.userId
+    }
+    
+    // 이미지가 있는 경우와 없는 경우 요청 방식 분리
+    let response
+    if (imageFile.value) {
+      // 이미지가 있는 경우 - FormData로 전송
+      response = await axios.post(`/api/recipes/${recipeId.value}`, formData, {
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      })
+      console.log('이미지 포함 업데이트 응답:', response.data)
+    } else {
+      // 이미지가 없는 경우 - JSON으로 전송
+      response = await axios.put(`/api/recipes/${recipeId.value}`, recipeData, {
+        headers: headers,
+        withCredentials: true
+      })
+      console.log('일반 업데이트 응답:', response.data)
+    }
+
     alert('레시피가 성공적으로 수정되었습니다!')
     router.push(`/recipe/${recipeId.value}`)
   } catch (err) {
     console.error('레시피 수정 중 오류:', err)
-    
-    if (err.response && err.response.status === 403) {
-      error.value = '자신이 작성한 레시피만 수정할 수 있습니다.'
-    } else {
-      error.value = '레시피 수정 중 오류가 발생했습니다. 다시 시도해주세요.'
-    }
-    
-    // 에러 상세 정보 로깅
     if (err.response) {
-      console.error('서버 응답 오류:', err.response.status, err.response.data)
+      console.error('서버 응답:', err.response.status, err.response.data)
+      if (err.response.status === 401) {
+        error.value = '로그인이 필요합니다. 로그인 페이지로 이동합니다.'
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
+      } else {
+        error.value = `레시피 수정 중 오류가 발생했습니다: ${err.response.data || '다시 시도해주세요.'}`
+      }
+    } else {
+      error.value = '네트워크 오류가 발생했습니다. 다시 시도해주세요.'
     }
   } finally {
     isSubmitting.value = false
@@ -399,5 +408,24 @@ textarea {
   object-fit: cover;
   width: 100%;
   max-height: 200px;
+}
+
+.current-image {
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f8f9fa;
+}
+
+.image-preview {
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f8f9fa;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }
 </style> 
