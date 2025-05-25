@@ -32,7 +32,7 @@ async function bootstrap() {
       accountStore.setAccount({
         userId: null,
         username: '',
-        personaId: null,
+        personaId: -1,
         role: '',
         profileUrl: '',
       })
@@ -53,7 +53,7 @@ async function bootstrap() {
       accountStore.setAccount({
         userId: res.data.userId,
         username: res.data.username,
-        personaId: res.data.personaId,
+        personaId: res.data.personaId ?? -1,
         role: res.data.role,
         profileUrl: profileUrl,
       })
