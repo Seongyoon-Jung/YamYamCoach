@@ -1,4 +1,6 @@
 -- persona
+SElect * from news;
+
 SELECT * FROM `persona`;
 INSERT INTO persona (persona_id, name, disease_tags, description, recommendation) VALUES
 (0, '헬시 히어로', '', '건강 관리가 잘 되어 있는 이상적인 상태입니다. 식단과 운동 습관이 균형 잡혀 있습니다.', '지금의 습관을 유지하세요! 정기 검진과 꾸준한 활동을 추천합니다.'),
@@ -103,3 +105,8 @@ INSERT INTO comment (
 ) VALUES
 (1, 1, '첫 번째 게시글에 대한 첫 번째 댓글입니다.'),
 (1, 2, '첫번째 게시글에 달린 첫번째 댓글이에요!');
+
+select * from dish_record;
+select * from dish;
+select * from course_schedule;
+select * from schedule_dish;

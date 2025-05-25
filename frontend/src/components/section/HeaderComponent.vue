@@ -67,7 +67,7 @@
               role="button"
               data-bs-toggle="dropdown"
             >
-              <img :src="user.profileUrl" class="rounded-circle" width="32" height="32" />
+              <img :src="imgUrl" class="rounded-circle" width="32" height="32" />
               <span class="mx-2">{{ user.username }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -94,6 +94,7 @@ const accountStore = userAccountStore()
 const user = computed(() => accountStore)
 const isLoggedIn = computed(() => !!user.value.username)
 const darkMode = computed(() => document.body.classList.contains('dark-mode'))
+const imgUrl = ref('')
 
 const newsList = ref([])
 const currentNewsIndex = ref(0)
@@ -130,6 +131,18 @@ watch(
       } catch (err) {
         console.error('뉴스 로딩 실패:', err)
       }
+    }
+
+    if (personaId === -1) {
+      const res = await axios.get('/api/s3/get-url', {
+        params: { filename: `uploads/user/default-avatar.png` },
+      })
+      imgUrl.value = res.data
+    } else {
+      const res = await axios.get('/api/s3/get-url', {
+        params: { filename: `uploads/user/${personaId}.png` },
+      })
+      imgUrl.value = res.data
     }
   },
   { immediate: true },
