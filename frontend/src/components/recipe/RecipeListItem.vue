@@ -12,7 +12,20 @@
       
       <!-- 레시피 정보 -->
       <div class="col-md-9">
-        <div class="card-body d-flex flex-column justify-content-center align-items-center position-relative" style="min-height: 180px;">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center position-relative" style="min-height: 90px;">
+          <!-- 좋아요 버튼: 상단 우측에 배치 -->
+          <div class="position-absolute top-0 end-0 mt-2 me-2">
+            <button
+              class="btn btn-outline-danger d-flex align-items-center gap-1 like-btn"
+              @click.stop="toggleLike"
+            >
+              <i :class="liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
+              <span class="like-count text-danger ms-1">
+                {{ Number.isFinite(recipe.likes) ? recipe.likes : 0 }}
+              </span>
+            </button>
+          </div>
+
           <div class="w-100 text-center">
             <!-- 레시피 제목 -->
             <h5 class="card-title mb-2">{{ recipe.name }}</h5>
@@ -26,13 +39,7 @@
             <!-- 간단한 설명 -->
             <p class="card-text text-truncate-2 mb-3">{{ recipe.description }}</p>
           </div>
-          <!-- 좋아요 버튼 (구분선 위, 오른쪽 정렬) -->
-          <div class="w-100 d-flex justify-content-end mb-2">
-            <button class="btn btn-outline-danger d-flex align-items-center gap-1 like-btn" @click.stop="toggleLike">
-              <i :class="liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
-              <span class="like-count text-danger ms-1">{{ Number.isFinite(recipe.likes) ? recipe.likes : 0 }}</span>
-            </button>
-          </div>
+
           <!-- 재료+작성자+날짜 행은 그대로 아래에 유지 -->
           <div class="recipe-summary mt-3 w-100">
             <div class="row g-3">
@@ -176,6 +183,9 @@ onMounted(() => {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .recipe-list-item:hover {
@@ -186,7 +196,10 @@ onMounted(() => {
 .recipe-image {
   height: 100%;
   object-fit: cover;
-  min-height: 180px;
+  min-height: 150px;
+  max-height: 250px;
+  width: 100%;
+  object-position: center;
 }
 
 .text-truncate-2 {
@@ -194,6 +207,7 @@ onMounted(() => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  max-height: 3em;
 }
 
 .ingredient-tag {
@@ -215,17 +229,20 @@ onMounted(() => {
 .recipe-summary {
   border-top: 1px solid #eee;
   padding-top: 0.75rem;
+  max-height: 100px;
+  overflow: hidden;
 }
 
 .like-btn {
-  font-size: 1rem;
+  font-size: 0.9rem;
   padding: 0.2rem 0.8rem;
   border-radius: 1.5rem;
   background: transparent;
   border-width: 1.2px;
-  height: 36px;
+  height: 32px;
   line-height: 1;
   box-shadow: none !important;
+  z-index: 1;
 }
 
 .like-btn:active, .like-btn:focus {
@@ -243,6 +260,9 @@ onMounted(() => {
 
 .card-body {
   position: relative;
+  padding: 2rem;
+  max-height: 400px;
+  overflow: hidden;
 }
 
 .card-body .card-title {
@@ -251,7 +271,8 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .recipe-image {
-    height: 150px;
+    height: 120px;
+    max-height: 120px;
     width: 100%;
   }
   
@@ -263,13 +284,19 @@ onMounted(() => {
     margin-top: 0.5rem;
   }
   .card-body {
+    padding: 1rem;
     min-height: 120px !important;
+    max-height: 350px;
   }
+
+  .recipe-summary {
+    max-height: 80px;
+  }
+  
   .like-btn {
-    bottom: 0.5rem !important;
-    right: 0.5rem !important;
-    padding: 0.2rem 0.8rem;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    padding: 0.15rem 0.6rem;
+    height: 30px;
   }
 }
 </style> 
