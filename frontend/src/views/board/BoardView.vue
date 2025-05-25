@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import axios from '@/plugins/axios'
 import BoardCard from '@/components/board/BoardCard.vue'
 import LoadingSpinner from '@/components/loading/LoadingSpinner.vue'
@@ -99,9 +99,9 @@ const filteredPosts = computed(() => {
   })
 })
 
-const loadNextPage = () => {
+const loadNextPage = (silent = false) => {
   if (isLoading.value || isEnd.value) return
-  isLoading.value = true
+  if (!silent) isLoading.value = true
 
   const start = page.value * pageSize
   const end = start + pageSize
@@ -117,7 +117,7 @@ const loadNextPage = () => {
   page.value++
 
   setTimeout(() => {
-    isLoading.value = false
+    if (!silent) isLoading.value = false
     if (scrollObserver.value && observer) {
       observer.unobserve(scrollObserver.value)
       observer.observe(scrollObserver.value)
@@ -170,6 +170,14 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (observer && scrollObserver.value) observer.unobserve(scrollObserver.value)
+})
+
+// 필터나 검색어가 변경될 때마다 초기화하고 다시 로딩
+watch([filteredPosts, searchQuery, onlyMine, sortBy], () => {
+  page.value = 0
+  isEnd.value = false
+  loadedBoards.value = []
+  loadNextPage(true) // 🔸 silent=true → 로딩 스피너 표시 X
 })
 </script>
 

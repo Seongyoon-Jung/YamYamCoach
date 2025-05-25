@@ -24,8 +24,8 @@ INSERT INTO persona (persona_id, name, disease_tags, description, recommendation
 INSERT INTO `user`
   (email, password, username, gender, birth_date, height, weight, target_weight, role, persona_id)
 VALUES
-  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자', 0, '2000-01-01', '180', '90', '40','ROLE_ADMIN', NULL);
- 
+  ('admin@admin.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '관리자', 0, '2000-01-01', '180', '90', '40','ROLE_ADMIN', NULL),
+ ('user@example.com', '$2a$10$Ul3upD/sqazPp0/1DGI1zu0fA.PBKfdzgBj4Qg4YzJY2e6Y/IxTxq', '김싸피', 0, '2000-01-01', '180', '90', '40','ROLE_USER', NULL);
  
  -- general user
  INSERT INTO `user`
