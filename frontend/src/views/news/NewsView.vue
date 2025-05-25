@@ -1,16 +1,13 @@
 <template>
   <div class="mb-4 position-relative p-5" style="background-color: #eaeef3">
-    <!-- <div class="card-header d-flex justify-content-between align-items-center">
-        <span>맞춤 뉴스</span>
-        <button class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i></button>
-      </div> -->
-
-    <!-- 슬라이드 영역 -->
     <div class="overflow-hidden position-relative">
       <h3 class="text-start fw-bold">{{ accountStore.username }} 님을 위한 뉴스를 준비했어요!</h3>
-      <!-- wrapper -->
+      <p class="text-start text-muted">{{ persona.description }}</p>
+
+      <!-- 슬라이드 카드 영역 -->
       <div
         class="d-flex transition"
+        :class="{ 'disabled-overlay': !personaAvailable }"
         :style="{ transform: `translateX(-${currentIndex * slideWidth}%)` }"
       >
         <div
@@ -27,28 +24,41 @@
           />
         </div>
       </div>
+
+      <!-- 오버레이 안내 및 버튼 -->
+      <div
+        v-if="!personaAvailable"
+        class="position-absolute top-50 start-50 translate-middle text-center z-3"
+        style="background: rgba(255, 255, 255, 0.85); padding: 2rem; border-radius: 1rem"
+      >
+        <p class="mb-3 fw-bold">맞춤 뉴스를 보려면 설문조사를 완료해 주세요</p>
+        <router-link to="/survey" class="btn btn-success btn-lg">설문조사 시작하기</router-link>
+      </div>
+
+      <!-- 좌우 슬라이드 버튼 -->
+      <button
+        class="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-2"
+        :disabled="!personaAvailable"
+        :class="{ 'disabled-button': !personaAvailable }"
+        @click="prev"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </button>
+
+      <button
+        class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-2"
+        :disabled="!personaAvailable"
+        :class="{ 'disabled-button': !personaAvailable }"
+        @click="next"
+      >
+        <i class="bi bi-chevron-right"></i>
+      </button>
     </div>
-
-    <!-- 좌우 버튼 -->
-    <button
-      class="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-2"
-      @click="prev"
-    >
-      <i class="bi bi-chevron-left"></i>
-    </button>
-
-    <button
-      class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-2"
-      @click="next"
-    >
-      <i class="bi bi-chevron-right"></i>
-    </button>
   </div>
 
-  <!-- 섹션별 뉴스 탭: 좌/우 두 컬럼 -->
+  <!-- 무한스크롤 뉴스 영역 -->
   <div class="row mt-5">
-    <div class="col-md-6" v-for="news in leftList" :key="news.id || news.title">
-      <!-- 왼쪽 절반 -->
+    <div v-for="(news, index) in loadedNews" :key="news.id || news.title + index" class="col-md-6">
       <SectionNewsTabs
         :imageUrl="news.imageUrl"
         :title="news.title"
@@ -58,16 +68,11 @@
         class="mb-4"
       />
     </div>
-    <div class="col-md-6" v-for="news in rightList" :key="news.id || news.title">
-      <!-- 오른쪽 절반 -->
-      <SectionNewsTabs
-        :imageUrl="news.imageUrl"
-        :title="news.title"
-        :description="news.description"
-        :newsUrl="news.newsUrl"
-        :date="news.date"
-        class="mb-4"
-      />
+
+    <!-- 감지 지점 -->
+    <div ref="scrollObserver" class="w-100 py-3 text-center">
+      <span v-if="isLoading">불러오는 중...</span>
+      <span v-else-if="isEnd">마지막 뉴스입니다.</span>
     </div>
   </div>
 </template>
@@ -80,49 +85,114 @@ import NewsCard from '@/components/news/NewsCard.vue'
 import SectionNewsTabs from '@/components/news/SectionNewsTab.vue'
 
 const accountStore = userAccountStore()
+const persona = ref({})
 const newsList = ref([])
+const loadedNews = ref([])
+
+const page = ref(0)
+const pageSize = 6
+const isLoading = ref(false)
+const isEnd = ref(false)
+const scrollObserver = ref(null)
+
+const personaAvailable = computed(() => accountStore.personaId > 0 && persona.value.description)
+
 const currentIndex = ref(0)
-
-// 리스트 절반 나누기
-const mid = computed(() => Math.ceil(newsList.value.length / 2))
-const leftList = computed(() => newsList.value.slice(0, mid.value))
-const rightList = computed(() => newsList.value.slice(mid.value))
-
-// 한번에 보여줄 카드 개수
 const visibleCount = 4
-// 슬라이드 한 칸당 이동할 퍼센트
 const slideWidth = 100 / visibleCount
-
-// 최대 인덱스 (맨 끝에서 더 이상 오른쪽으로 넘어가지 않게)
 const maxIndex = computed(() => Math.max(0, newsList.value.length - visibleCount))
 
 const next = () => {
   currentIndex.value = currentIndex.value >= maxIndex.value ? 0 : currentIndex.value + 1
 }
-
 const prev = () => {
   currentIndex.value = currentIndex.value <= 0 ? maxIndex.value : currentIndex.value - 1
 }
 
+let observer
+
+const loadNextPage = () => {
+  if (isLoading.value || isEnd.value) return
+  isLoading.value = true
+
+  const start = page.value * pageSize
+  const end = start + pageSize
+  const nextChunk = newsList.value.slice(start, end)
+
+  if (nextChunk.length === 0) {
+    setTimeout(() => {
+      isEnd.value = true
+      isLoading.value = false
+    }, 2000)
+  } else {
+    loadedNews.value.push(...nextChunk)
+    page.value++
+
+    // ✅ 3초 유지 후 로딩 끝 + 강제 감지 재등록
+    setTimeout(() => {
+      isLoading.value = false
+
+      // ⭐ 감지 지점 강제 재등록
+      if (scrollObserver.value && observer) {
+        observer.unobserve(scrollObserver.value)
+        observer.observe(scrollObserver.value)
+      }
+    }, 3000)
+  }
+}
+
 onMounted(async () => {
-  const personaId = accountStore.personaId ?? -1
+  if (accountStore.personaId > 0) {
+    try {
+      const res = await axios.get(`/api/personas/${accountStore.personaId}`)
+      persona.value = res.data.persona
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   try {
-    const res = await axios.get(`/api/news/${personaId}`)
+    const res = await axios.get(`/api/news/${accountStore.personaId ?? -1}`)
     newsList.value = res.data
+    loadNextPage()
   } catch (err) {
     console.error(err)
   }
 
-  // 자동 슬라이드 5초마다
   const interval = setInterval(() => {
-    currentIndex.value = (currentIndex.value + 1) % newsList.value.length
+    if (personaAvailable.value) {
+      currentIndex.value = (currentIndex.value + 1) % newsList.value.length
+    }
   }, 5000)
   onBeforeUnmount(() => clearInterval(interval))
+
+  // ✅ 감지기 생성
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !isLoading.value && !isEnd.value) {
+        loadNextPage()
+      }
+    },
+    { threshold: 1.0 },
+  )
+
+  if (scrollObserver.value) {
+    observer.observe(scrollObserver.value)
+  }
 })
 </script>
 
 <style scoped>
 .transition {
   transition: transform 0.5s ease;
+}
+.disabled-overlay {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+}
+.disabled-button {
+  pointer-events: none;
+  opacity: 0.4;
 }
 </style>

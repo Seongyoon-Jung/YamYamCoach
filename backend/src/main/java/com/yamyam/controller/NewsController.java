@@ -29,4 +29,6 @@ public class NewsController {
 	public ResponseEntity<List<NewsResponse>> getAllPersonaNews(@PathVariable("personaId") int personaId){
 		return ResponseEntity.ok(newsService.getAllPersonaNews(personaId));
 	}
+	
+	
 }

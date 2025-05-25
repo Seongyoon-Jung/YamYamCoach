@@ -29,7 +29,7 @@ public class PersonaController {
      * 특정 페르소나 ID로 페르소나 정보 조회
      */
     @GetMapping("/{personaId}")
-    public ResponseEntity<?> getPersona(@PathVariable Integer personaId) {
+    public ResponseEntity<?> getPersona(@PathVariable("personaId") Integer personaId) {
         try {
             logger.info("페르소나 ID [{}] 조회 요청", personaId);
             

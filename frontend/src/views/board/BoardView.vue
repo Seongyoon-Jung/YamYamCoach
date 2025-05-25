@@ -1,6 +1,10 @@
 <!-- src/views/CommunityPage.vue -->
 <template>
-  <div class="community-page container py-5">
+  <div v-if="isLoading">
+    <LoadingSpinner></LoadingSpinner>
+  </div>
+
+  <div v-else class="community-page container py-5">
     <!-- 제목 -->
     <h2 class="text-center mb-4">커뮤니티 게시판</h2>
 
@@ -52,8 +56,10 @@ import { ref, computed, onMounted } from 'vue'
 import axios from '@/plugins/axios'
 import BoardCard from '@/components/board/BoardCard.vue'
 import { userAccountStore } from '@/store/account'
-
+import LoadingSpinner from '@/components/loading/LoadingSpinner.vue'
 const accountStore = userAccountStore()
+
+const isLoading = ref(true)
 
 // 검색어
 const searchQuery = ref('')
@@ -97,6 +103,7 @@ onMounted(async () => {
     )
 
     boards.value = withUrls
+    isLoading.value = false
   } catch (err) {
     console.error('게시글 로딩 실패', err)
   }

@@ -16,8 +16,8 @@
         <!-- 텍스트 컬럼 -->
         <div class="col-md-10">
           <div class="card-body">
-            <h5 class="card-title text-truncate">{{ title }}</h5>
-            <p class="card-text text-truncate-1">{{ description }}</p>
+            <h5 class="card-title text-truncate text-bold">{{ title }}</h5>
+            <p class="card-text text-truncate-1 text-muted small">{{ description }}</p>
             <p class="card-text">
               <small class="text-muted">{{ date }}</small>
             </p>

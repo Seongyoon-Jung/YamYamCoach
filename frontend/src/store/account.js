@@ -5,7 +5,7 @@ export const userAccountStore = defineStore('account', {
   state: () => ({
     userId: null,
     username: '',
-    personaId: false,
+    personaId: -1,
     role: '',
     profileUrl: '',
   }),
@@ -20,7 +20,7 @@ export const userAccountStore = defineStore('account', {
     clearAccount() {
       this.userId = null
       this.username = ''
-      this.personaId = false
+      this.personaId = -1
       this.role = ''
       this.profileUrl = ''
     },

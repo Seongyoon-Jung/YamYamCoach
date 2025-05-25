@@ -32,15 +32,10 @@
               class="text-decoration-none badge bg-light text-primary me-2"
               >나의 맞춤 뉴스</router-link
             >
-            <div style="height: 1.5rem; overflow: hidden; position: relative">
-              <transition-group
-                name="slide-down"
-                tag="div"
-                class="position-relative"
-                style="height: 1.5rem; line-height: 1.5rem"
-              >
+            <div v-if="isLoggedIn" style="height: 1.5rem; overflow: hidden; position: relative">
+              <transition name="slide-down" mode="out-in">
                 <a
-                  v-if="newsList.length"
+                  v-if="newsList.length > 0"
                   :key="newsList[currentNewsIndex].title"
                   :href="newsList[currentNewsIndex].newsUrl"
                   target="_blank"
@@ -50,7 +45,7 @@
                 >
                   {{ newsList[currentNewsIndex].title }}
                 </a>
-              </transition-group>
+              </transition>
             </div>
           </li>
 
@@ -88,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { userAccountStore } from '@/store/account'
 import axios from '@/plugins/axios'
@@ -101,8 +96,8 @@ const isLoggedIn = computed(() => !!user.value.username)
 const darkMode = computed(() => document.body.classList.contains('dark-mode'))
 
 const newsList = ref([])
-
 const currentNewsIndex = ref(0)
+let newsInterval = null
 
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode')
@@ -112,26 +107,33 @@ async function logout() {
   try {
     await axios.post('/api/auth/logout')
     accountStore.clearAccount()
+    newsList.value = []
     router.push({ name: 'HomeView' })
   } catch (e) {
     console.error(e)
   }
 }
 
-let newsInterval = null
-onMounted(async () => {
-  const personaId = accountStore.personaId ?? -1
-  try {
-    const res = await axios.get(`/api/news/${personaId}`)
-    newsList.value = res.data
-  } catch (err) {
-    console.error(err)
-  }
-
-  newsInterval = setInterval(() => {
-    currentNewsIndex.value = (currentNewsIndex.value + 1) % newsList.value.length
-  }, 5000)
-})
+// ✅ personaId가 생겼을 때 뉴스 가져오기 + 인터벌 설정
+watch(
+  () => accountStore.personaId,
+  async (personaId) => {
+    if (personaId >= -1) {
+      try {
+        const res = await axios.get(`/api/news/${personaId}`)
+        newsList.value = res.data
+        currentNewsIndex.value = 0
+        if (newsInterval) clearInterval(newsInterval)
+        newsInterval = setInterval(() => {
+          currentNewsIndex.value = (currentNewsIndex.value + 1) % newsList.value.length
+        }, 5000)
+      } catch (err) {
+        console.error('뉴스 로딩 실패:', err)
+      }
+    }
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   clearInterval(newsInterval)

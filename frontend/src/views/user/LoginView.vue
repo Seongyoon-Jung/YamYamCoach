@@ -111,7 +111,7 @@ const login = async () => {
     accountStore.setAccount({
       userId: res.data.userId,
       username: res.data.username,
-      personaId: res.data.personaId,
+      personaId: res.data.personaId ?? -1,
       role: res.data.role,
       profileUrl: presigned.data,
     })

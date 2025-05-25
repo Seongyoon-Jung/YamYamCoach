@@ -12,8 +12,8 @@
       </div>
 
       <div class="card-body news-card__body text-start">
-        <h5 class="card-title text-truncate-2">{{ title }}</h5>
-        <p class="card-text small text-muted text-truncate-3">{{ description }}</p>
+        <h5 class="card-title text-truncate-2 text-bold">{{ title }}</h5>
+        <p class="card-text small text-muted text-truncate-3 text-muted">{{ description }}</p>
       </div>
     </a>
   </div>
