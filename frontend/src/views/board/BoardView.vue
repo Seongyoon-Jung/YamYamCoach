@@ -1,18 +1,12 @@
-<!-- src/views/CommunityPage.vue -->
 <template>
-  <div v-if="isLoading">
-    <LoadingSpinner></LoadingSpinner>
-  </div>
-
-  <div v-else class="community-page container py-5">
-    <!-- 제목 -->
+  <div class="community-page container py-5">
     <h2 class="text-center mb-4">커뮤니티 게시판</h2>
 
-    <div class="text-end">
+    <div class="text-end mb-3">
       <router-link class="btn btn-success" to="/board/create">작성</router-link>
     </div>
 
-    <!-- 검색 바 -->
+    <!-- 검색 -->
     <div class="d-flex justify-content-center mb-3">
       <div class="input-group w-75">
         <input
@@ -28,7 +22,7 @@
       </div>
     </div>
 
-    <!-- 필터 바 -->
+    <!-- 필터 -->
     <div
       class="d-flex justify-content-between align-items-center bg-light p-2 rounded shadow-sm mb-4"
     >
@@ -44,41 +38,93 @@
 
     <!-- 게시글 그리드 -->
     <div class="row g-4">
-      <div v-for="board in filteredPosts" :key="board.id" class="col-md-4">
+      <div v-for="board in loadedBoards" :key="board.id" class="col-md-4">
         <BoardCard :board="board" />
+      </div>
+
+      <div ref="scrollObserver" class="text-center py-3">
+        <LoadingSpinner v-if="isLoading" />
+        <span v-else-if="isEnd">마지막 게시글입니다.</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from '@/plugins/axios'
 import BoardCard from '@/components/board/BoardCard.vue'
-import { userAccountStore } from '@/store/account'
 import LoadingSpinner from '@/components/loading/LoadingSpinner.vue'
+import { userAccountStore } from '@/store/account'
+
 const accountStore = userAccountStore()
 
-const isLoading = ref(true)
-
-// 검색어
 const searchQuery = ref('')
-// 내 게시글만 보기 체크박스
 const onlyMine = ref(false)
-// 전체 게시글 배열
-const boards = ref([])
-
 const sortBy = ref('latest')
 
-const toggleSort = () => {
-  sortBy.value = sortBy.value === 'latest' ? 'views' : 'latest'
-}
+const boards = ref([]) // 전체 게시글
+const loadedBoards = ref([]) // 화면에 보이는 부분
+const page = ref(0)
+const pageSize = 6
+const isLoading = ref(false)
+const isEnd = ref(false)
+
+const scrollObserver = ref(null)
+let observer = null
 
 const onInputChange = (e) => {
   searchQuery.value = e.target.value
 }
+const toggleSort = () => {
+  sortBy.value = sortBy.value === 'latest' ? 'views' : 'latest'
+}
 
-// 백엔드에서 전체 게시글을 가져와 posts 에 할당
+const filteredPosts = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  let result = boards.value.filter((board) => {
+    if (onlyMine.value && board.username !== accountStore.username) return false
+
+    if (!q) return true
+    const title = board.title?.toLowerCase() || ''
+    const content = board.content?.toLowerCase() || ''
+    const username = board.username?.toLowerCase() || ''
+
+    return title.includes(q) || content.includes(q) || username.includes(q)
+  })
+
+  return result.sort((a, b) => {
+    if (sortBy.value === 'latest') return new Date(b.createdAt) - new Date(a.createdAt)
+    else return (b.viewCount ?? 0) - (a.viewCount ?? 0)
+  })
+})
+
+const loadNextPage = () => {
+  if (isLoading.value || isEnd.value) return
+  isLoading.value = true
+
+  const start = page.value * pageSize
+  const end = start + pageSize
+  const chunk = filteredPosts.value.slice(start, end)
+
+  if (chunk.length === 0) {
+    isEnd.value = true
+    isLoading.value = false
+    return
+  }
+
+  loadedBoards.value.push(...chunk)
+  page.value++
+
+  setTimeout(() => {
+    isLoading.value = false
+    if (scrollObserver.value && observer) {
+      observer.unobserve(scrollObserver.value)
+      observer.observe(scrollObserver.value)
+    }
+  }, 1000)
+}
+
 onMounted(async () => {
   try {
     const res = await axios.get('/api/board')
@@ -103,35 +149,27 @@ onMounted(async () => {
     )
 
     boards.value = withUrls
-    isLoading.value = false
+    loadNextPage()
   } catch (err) {
     console.error('게시글 로딩 실패', err)
   }
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !isLoading.value && !isEnd.value) {
+        loadNextPage()
+      }
+    },
+    { threshold: 1.0 },
+  )
+
+  if (scrollObserver.value) {
+    observer.observe(scrollObserver.value)
+  }
 })
 
-const filteredPosts = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-
-  let result = boards.value.filter((board) => {
-    if (onlyMine.value && board.username !== accountStore.username) return false
-
-    if (!q) return true
-
-    const title = board.title?.toLowerCase() || ''
-    const content = board.content?.toLowerCase() || ''
-    const username = board.username?.toLowerCase() || ''
-
-    return title.includes(q) || content.includes(q) || username.includes(q)
-  })
-
-  // 정렬 처리 (sortBy.value 대신 sortBy.value를 바로 사용하도록 주의)
-  return result.sort((a, b) => {
-    if (sortBy.value === 'latest') {
-      return new Date(b.createdAt) - new Date(a.createdAt)
-    } else {
-      return (b.viewCount ?? 0) - (a.viewCount ?? 0)
-    }
-  })
+onBeforeUnmount(() => {
+  if (observer && scrollObserver.value) observer.unobserve(scrollObserver.value)
 })
 </script>
 
@@ -139,32 +177,12 @@ const filteredPosts = computed(() => {
 .community-page input::placeholder {
   color: #aaa;
 }
-
-/* 카드 텍스트 3줄 초과 시 말줄임 */
-.text-truncate-3 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-
-/* 카드 이미지 고정 비율 */
 .card-img-top {
   height: 220px;
   object-fit: cover;
 }
-
-/* 검색창 그림자와 원형 처리 */
-.input-group .form-control {
-  border-radius: 50px !important;
-}
+.input-group .form-control,
 .input-group .input-group-text {
   border-radius: 50px !important;
-  z-index: 2;
-}
-
-/* 전체 버튼 그림자 */
-.btn-outline-secondary {
-  border-radius: 50px;
 }
 </style>
