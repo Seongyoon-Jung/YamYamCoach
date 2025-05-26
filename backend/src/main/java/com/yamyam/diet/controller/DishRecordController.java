@@ -1,8 +1,8 @@
 package com.yamyam.diet.controller;
 
+import com.yamyam.auth.dto.SecurityAccount;
 import com.yamyam.diet.entity.DishRecord;
 import com.yamyam.diet.service.DishRecordService;
-import com.yamyam.dto.SecurityAccount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

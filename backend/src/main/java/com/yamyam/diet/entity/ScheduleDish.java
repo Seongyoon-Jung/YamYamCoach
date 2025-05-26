@@ -2,6 +2,8 @@ package com.yamyam.diet.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "schedule_dish")
@@ -11,12 +13,12 @@ public class ScheduleDish {
 
     @ManyToOne
     @MapsId("scheduleId")
-    @JoinColumn(name = "schedule_id")
+    @JoinColumn(name = "schedule_id", nullable = false)
     private CourseSchedule courseSchedule;
 
     @ManyToOne
     @MapsId("dishId")
-    @JoinColumn(name = "dish_id")
+    @JoinColumn(name = "dish_id", nullable = false)
     private Dish dish;
 
     @Column(nullable = false)
@@ -25,24 +27,15 @@ public class ScheduleDish {
     @Column(length = 255)
     private String note;
 
-    @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Getters
+    // --- Getters ---
     public ScheduleDishId getId() {
         return id;
     }
@@ -71,7 +64,7 @@ public class ScheduleDish {
         return updatedAt;
     }
 
-    // Setters
+    // --- Setters ---
     public void setId(ScheduleDishId id) {
         this.id = id;
     }
@@ -92,11 +85,12 @@ public class ScheduleDish {
         this.note = note;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    // timestamps는 외부에서 변경하지 않도록 protected로 제한
+    protected void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    protected void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-} 
+}

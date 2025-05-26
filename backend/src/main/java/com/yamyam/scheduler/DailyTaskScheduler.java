@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.yamyam.service.NaverNewsService;
+import com.yamyam.news.service.NaverNewsService;
 
 import java.io.IOException;
 import java.nio.file.Files;
