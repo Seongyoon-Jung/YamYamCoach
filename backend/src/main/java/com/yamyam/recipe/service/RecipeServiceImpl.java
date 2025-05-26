@@ -10,14 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.yamyam.entity.UserEntity;
 import com.yamyam.recipe.dto.RecipeRequest;
 import com.yamyam.recipe.dto.RecipeResponse;
 import com.yamyam.recipe.model.Recipe;
 import com.yamyam.recipe.repository.RecipeRepository;
-import com.yamyam.repository.UserRepository;
-import com.yamyam.service.S3Service;
-import com.yamyam.service.S3UploadService;
+import com.yamyam.s3.service.S3Service;
+import com.yamyam.s3.service.S3UploadService;
+import com.yamyam.user.entity.UserEntity;
+import com.yamyam.user.repository.UserRepository;
 import com.yamyam.recipe.repository.RecipeLikeRepository;
 import com.yamyam.recipe.model.RecipeLike;
 

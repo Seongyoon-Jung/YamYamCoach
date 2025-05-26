@@ -2,6 +2,8 @@ package com.yamyam.recipe.model;
 
 import java.time.LocalDateTime;
 
+import com.yamyam.user.entity.UserEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import com.yamyam.entity.UserEntity;
 
 @Entity
 @Table(name = "recipes")

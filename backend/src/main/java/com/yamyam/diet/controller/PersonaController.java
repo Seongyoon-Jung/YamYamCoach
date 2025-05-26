@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yamyam.entity.PersonaEntity;
-import com.yamyam.repository.PersonaRepository;
+import com.yamyam.persona.entity.PersonaEntity;
+import com.yamyam.persona.repository.PersonaRepository;
+
 
 @RestController
 @RequestMapping("/api/personas")

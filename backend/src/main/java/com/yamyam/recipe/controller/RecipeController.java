@@ -24,11 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yamyam.dto.SecurityAccount;
-import com.yamyam.entity.UserEntity;
+import com.yamyam.auth.dto.SecurityAccount;
 import com.yamyam.recipe.dto.RecipeRequest;
 import com.yamyam.recipe.dto.RecipeResponse;
-import com.yamyam.recipe.model.Recipe;
 import com.yamyam.recipe.repository.RecipeRepository;
 import com.yamyam.recipe.repository.RecipeLikeRepository;
 import com.yamyam.recipe.service.RecipeService;

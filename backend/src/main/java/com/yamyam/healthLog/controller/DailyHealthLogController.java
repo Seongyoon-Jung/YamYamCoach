@@ -1,8 +1,8 @@
 package com.yamyam.healthLog.controller;
 
+import com.yamyam.auth.dto.SecurityAccount;
 import com.yamyam.healthLog.entity.DailyHealthLog;
 import com.yamyam.healthLog.service.DailyHealthLogService;
-import com.yamyam.dto.SecurityAccount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

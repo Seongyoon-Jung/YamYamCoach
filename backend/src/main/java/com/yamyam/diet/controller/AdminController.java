@@ -7,8 +7,6 @@ import com.yamyam.diet.entity.ScheduleDish;
 import com.yamyam.diet.repository.CourseScheduleRepository;
 import com.yamyam.diet.repository.DishRecordRepository;
 import com.yamyam.diet.repository.ScheduleDishRepository;
-import com.yamyam.dto.SecurityAccount;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
