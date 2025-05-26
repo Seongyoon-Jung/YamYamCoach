@@ -7,6 +7,7 @@ $ remember --crew "SSAFY 13기 12반"
 $ run ./forever-13기-12반
 
 <span class="text-danger">❗ Error 404:</span>  SSAFY 13기 12반의 흔적은 이 경로에 없지만...
+<img src="/public/pxArt.png" class="pixel-photo" alt="SSAFY 픽셀단체사진" />
 💡 우리는 영원히 메모리에 남아있습니다.
 
 [ Tip ] 홈으로 가려면 아래 명령어를 입력하세요:
@@ -75,5 +76,16 @@ onBeforeUnmount(() => {
   50% {
     opacity: 0;
   }
+}
+
+.pixel-photo {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 320px;
+  width: 90%;
+  border: 2px dashed #00ff00;
+  padding: 0.5rem;
+  image-rendering: pixelated;
+  background-color: #222;
 }
 </style>
