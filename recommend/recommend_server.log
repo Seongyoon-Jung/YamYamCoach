@@ -11673,3 +11673,661 @@ NameError: name 'calculate_bmi' is not defined
  'timestamp': '2025-05-26T01:29:00.441705',
  'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
 2025-05-26 01:29:00,442 [INFO] 127.0.0.1 - - [26/May/2025 01:29:00] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 14:31:47,575 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 14:31:47,576 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:47,589 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 14:31:47,613 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 14:31:47,613 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 14:31:47,614 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 14:31:47,615 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:47,640 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 14:31:47,641 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 14:31:47,666 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 14:31:47,667 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 14:31:47,679 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 14:31:47,680 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 14:31:47,793 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 14:31:49,093 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 14:31:49,094 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 14:31:50,736 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 14:31:50,737 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 14:31:50,737 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 14:31:50,752 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 14:31:50,752 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 14:31:50,753 [INFO] MySQL 연결 종료.
+2025-05-27 14:31:50,754 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 14:31:50,755 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:50,766 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 14:31:50,785 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 14:31:50,786 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 14:31:50,786 [INFO] ==================================================
+2025-05-27 14:31:50,787 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 14:31:50,787 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 14:31:50,788 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 14:31:50,788 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 14:31:50,788 [INFO] ==================================================
+2025-05-27 14:31:50,916 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.215:5001
+2025-05-27 14:31:50,916 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-27 14:31:50,917 [INFO]  * Restarting with stat
+2025-05-27 14:31:51,846 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 14:31:51,847 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:51,862 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 14:31:51,884 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 14:31:51,885 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 14:31:51,886 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 14:31:51,886 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:51,913 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 14:31:51,913 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 14:31:51,921 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 14:31:51,922 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 14:31:52,053 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 14:31:52,053 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 14:31:52,162 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 14:31:53,376 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 14:31:53,376 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 14:31:55,014 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 14:31:55,015 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 14:31:55,015 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 14:31:55,033 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 14:31:55,033 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 14:31:55,034 [INFO] MySQL 연결 종료.
+2025-05-27 14:31:55,036 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 14:31:55,037 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 14:31:55,048 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 14:31:55,068 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 14:31:55,069 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 14:31:55,069 [INFO] ==================================================
+2025-05-27 14:31:55,069 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 14:31:55,070 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 14:31:55,070 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 14:31:55,070 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 14:31:55,070 [INFO] ==================================================
+2025-05-27 14:31:55,120 [WARNING]  * Debugger is active!
+2025-05-27 14:31:55,129 [INFO]  * Debugger PIN: 278-348-806
+2025-05-27 15:22:41,258 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 15:22:41,258 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:41,276 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 15:22:41,299 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 15:22:41,300 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 15:22:41,300 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 15:22:41,301 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:41,324 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 15:22:41,324 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 15:22:41,345 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 15:22:41,346 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 15:22:41,410 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 15:22:41,410 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 15:22:41,510 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 15:22:42,964 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 15:22:42,965 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 15:22:44,732 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 15:22:44,732 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 15:22:44,732 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 15:22:44,748 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 15:22:44,748 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 15:22:44,748 [INFO] MySQL 연결 종료.
+2025-05-27 15:22:44,750 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 15:22:44,750 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:44,760 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 15:22:44,777 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 15:22:44,778 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 15:22:44,779 [INFO] ==================================================
+2025-05-27 15:22:44,779 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 15:22:44,779 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 15:22:44,779 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 15:22:44,779 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 15:22:44,780 [INFO] ==================================================
+2025-05-27 15:22:44,930 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.215:5001
+2025-05-27 15:22:44,931 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-27 15:22:44,935 [INFO]  * Restarting with stat
+2025-05-27 15:22:45,752 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 15:22:45,752 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:45,764 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 15:22:45,783 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 15:22:45,784 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 15:22:45,784 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 15:22:45,785 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:45,807 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 15:22:45,807 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 15:22:45,815 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 15:22:45,815 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 15:22:45,883 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 15:22:45,883 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 15:22:45,988 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 15:22:47,423 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 15:22:47,423 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 15:22:49,188 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 15:22:49,188 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 15:22:49,189 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 15:22:49,203 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 15:22:49,203 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 15:22:49,204 [INFO] MySQL 연결 종료.
+2025-05-27 15:22:49,205 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 15:22:49,205 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 15:22:49,216 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 15:22:49,233 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 15:22:49,234 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 15:22:49,235 [INFO] ==================================================
+2025-05-27 15:22:49,235 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 15:22:49,235 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 15:22:49,235 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 15:22:49,236 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 15:22:49,236 [INFO] ==================================================
+2025-05-27 15:22:49,280 [WARNING]  * Debugger is active!
+2025-05-27 15:22:49,287 [INFO]  * Debugger PIN: 278-348-806
+2025-05-27 15:41:29,681 [INFO] 127.0.0.1 - - [27/May/2025 15:41:29] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 15:41:29,943 [INFO] 요청 수신 시간: 2025-05-27 15:41:29
+2025-05-27 15:41:29,944 [INFO] 요청 데이터: {'nutrients': {'calories': 711,
+               'carbohydrate': 108,
+               'fat': 20,
+               'protein': 29,
+               'sugar': 27},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 15:41:29,944 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 15:41:29,945 [INFO] 계산된 BMI: 27.8
+2025-05-27 15:41:29,945 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 15:41:29,945 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 15:41:29,945 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 146.4, 'max_g': 259.5}, 'protein': {'min_g': 27.5, 'max_g': 168.9}, 'fat': {'min_g': 30.299999999999997, 'max_g': 67.9}, 'sugar': {'min_g': 0, 'max_g': 29.5}}
+2025-05-27 15:41:30,034 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 15:41:30,037 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 259.5,
+                                                                'min_g': 146.4},
+                                               'fat': {'max_g': 67.9,
+                                                       'min_g': 30.299999999999997},
+                                               'protein': {'max_g': 168.9,
+                                                           'min_g': 27.5},
+                                               'sugar': {'max_g': 29.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T15:41:30.035328',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 15:41:30,038 [INFO] 127.0.0.1 - - [27/May/2025 15:41:30] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 15:42:03,742 [INFO] 127.0.0.1 - - [27/May/2025 15:42:03] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 15:42:04,053 [INFO] 요청 수신 시간: 2025-05-27 15:42:04
+2025-05-27 15:42:04,053 [INFO] 요청 데이터: {'nutrients': {'calories': 0,
+               'carbohydrate': 0,
+               'fat': 0,
+               'protein': 0,
+               'sugar': 0},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 15:42:04,054 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 15:42:04,054 [INFO] 계산된 BMI: 27.8
+2025-05-27 15:42:04,054 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 15:42:04,055 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 15:42:04,055 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 15:42:04,146 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 15:42:04,147 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                                'min_g': 254.4},
+                                               'fat': {'max_g': 87.9,
+                                                       'min_g': 50.3},
+                                               'protein': {'max_g': 197.9,
+                                                           'min_g': 56.5},
+                                               'sugar': {'max_g': 56.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T15:42:04.147089',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 15:42:04,148 [INFO] 127.0.0.1 - - [27/May/2025 15:42:04] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 15:51:13,577 [INFO] 127.0.0.1 - - [27/May/2025 15:51:13] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 15:51:13,841 [INFO] 요청 수신 시간: 2025-05-27 15:51:13
+2025-05-27 15:51:13,841 [INFO] 요청 데이터: {'nutrients': {'calories': 711,
+               'carbohydrate': 108,
+               'fat': 20,
+               'protein': 29,
+               'sugar': 27},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 15:51:13,841 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 15:51:13,842 [INFO] 계산된 BMI: 27.8
+2025-05-27 15:51:13,842 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 15:51:13,842 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 15:51:13,843 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 146.4, 'max_g': 259.5}, 'protein': {'min_g': 27.5, 'max_g': 168.9}, 'fat': {'min_g': 30.299999999999997, 'max_g': 67.9}, 'sugar': {'min_g': 0, 'max_g': 29.5}}
+2025-05-27 15:51:13,927 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 15:51:13,928 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 259.5,
+                                                                'min_g': 146.4},
+                                               'fat': {'max_g': 67.9,
+                                                       'min_g': 30.299999999999997},
+                                               'protein': {'max_g': 168.9,
+                                                           'min_g': 27.5},
+                                               'sugar': {'max_g': 29.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T15:51:13.928227',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 15:51:13,929 [INFO] 127.0.0.1 - - [27/May/2025 15:51:13] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 16:21:17,724 [INFO] 127.0.0.1 - - [27/May/2025 16:21:17] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 16:21:17,987 [INFO] 요청 수신 시간: 2025-05-27 16:21:17
+2025-05-27 16:21:17,987 [INFO] 요청 데이터: {'nutrients': {'calories': 711,
+               'carbohydrate': 108,
+               'fat': 20,
+               'protein': 29,
+               'sugar': 27},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 16:21:17,988 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 16:21:17,988 [INFO] 계산된 BMI: 27.8
+2025-05-27 16:21:17,988 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 16:21:17,988 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 16:21:17,989 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 146.4, 'max_g': 259.5}, 'protein': {'min_g': 27.5, 'max_g': 168.9}, 'fat': {'min_g': 30.299999999999997, 'max_g': 67.9}, 'sugar': {'min_g': 0, 'max_g': 29.5}}
+2025-05-27 16:21:18,076 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 16:21:18,077 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 259.5,
+                                                                'min_g': 146.4},
+                                               'fat': {'max_g': 67.9,
+                                                       'min_g': 30.299999999999997},
+                                               'protein': {'max_g': 168.9,
+                                                           'min_g': 27.5},
+                                               'sugar': {'max_g': 29.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T16:21:18.077204',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 16:21:18,078 [INFO] 127.0.0.1 - - [27/May/2025 16:21:18] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 16:24:20,733 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:24:20,734 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:20,746 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:24:20,765 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:24:20,766 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:24:20,766 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:24:20,767 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:20,791 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:24:20,791 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:24:20,815 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:24:20,815 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:24:20,888 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:24:20,888 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:24:20,997 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:24:22,276 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:24:22,276 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:24:23,951 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:24:23,952 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:24:23,952 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:24:23,965 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:24:23,965 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:24:23,965 [INFO] MySQL 연결 종료.
+2025-05-27 16:24:23,967 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:24:23,967 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:23,978 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:24:23,994 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:24:23,995 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:24:23,996 [INFO] ==================================================
+2025-05-27 16:24:23,996 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:24:23,996 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:24:23,996 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:24:23,996 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:24:23,997 [INFO] ==================================================
+2025-05-27 16:24:24,061 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.215:5001
+2025-05-27 16:24:24,061 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-27 16:24:24,063 [INFO]  * Restarting with stat
+2025-05-27 16:24:24,933 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:24:24,933 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:24,947 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:24:24,967 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:24:24,967 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:24:24,968 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:24:24,968 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:24,993 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:24:24,993 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:24:25,001 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:24:25,001 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:24:25,079 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:24:25,079 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:24:25,191 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:24:26,415 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:24:26,416 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:24:27,875 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:24:27,875 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:24:27,876 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:24:27,889 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:24:27,889 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:24:27,890 [INFO] MySQL 연결 종료.
+2025-05-27 16:24:27,891 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:24:27,891 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:24:27,902 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:24:27,918 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:24:27,919 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:24:27,919 [INFO] ==================================================
+2025-05-27 16:24:27,920 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:24:27,920 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:24:27,920 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:24:27,920 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:24:27,921 [INFO] ==================================================
+2025-05-27 16:24:27,966 [WARNING]  * Debugger is active!
+2025-05-27 16:24:27,974 [INFO]  * Debugger PIN: 278-348-806
+2025-05-27 16:25:11,579 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:25:11,579 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:11,591 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:25:11,611 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:25:11,611 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:25:11,612 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:25:11,612 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:11,637 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:25:11,637 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:25:11,644 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:25:11,644 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:25:11,707 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:25:11,707 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:25:11,811 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:25:13,256 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:25:13,256 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:25:14,784 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:25:14,784 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:25:14,785 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:25:14,799 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:25:14,799 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:25:14,800 [INFO] MySQL 연결 종료.
+2025-05-27 16:25:14,801 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:25:14,802 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:14,812 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:25:14,830 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:25:14,831 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:25:14,831 [INFO] ==================================================
+2025-05-27 16:25:14,832 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:25:14,832 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:25:14,832 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:25:14,832 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:25:14,833 [INFO] ==================================================
+2025-05-27 16:25:14,902 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.215:5001
+2025-05-27 16:25:14,902 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-27 16:25:14,903 [INFO]  * Restarting with stat
+2025-05-27 16:25:15,710 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:25:15,710 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:15,723 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:25:15,742 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:25:15,742 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:25:15,743 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:25:15,743 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:15,768 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:25:15,768 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:25:15,795 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:25:15,795 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:25:15,866 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:25:15,866 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:25:15,981 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:25:17,294 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:25:17,295 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:25:18,980 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:25:18,980 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:25:18,980 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:25:18,996 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:25:18,996 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:25:18,997 [INFO] MySQL 연결 종료.
+2025-05-27 16:25:18,998 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:25:18,998 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:25:19,009 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:25:19,027 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:25:19,028 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:25:19,028 [INFO] ==================================================
+2025-05-27 16:25:19,028 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:25:19,029 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:25:19,029 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:25:19,029 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:25:19,029 [INFO] ==================================================
+2025-05-27 16:25:19,079 [WARNING]  * Debugger is active!
+2025-05-27 16:25:19,087 [INFO]  * Debugger PIN: 278-348-806
+2025-05-27 16:43:13,013 [INFO] 127.0.0.1 - - [27/May/2025 16:43:13] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 16:43:13,277 [INFO] 요청 수신 시간: 2025-05-27 16:43:13
+2025-05-27 16:43:13,278 [INFO] 요청 데이터: {'nutrients': {'calories': 711,
+               'carbohydrate': 108,
+               'fat': 20,
+               'protein': 29,
+               'sugar': 27},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 16:43:13,278 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 16:43:13,278 [INFO] 계산된 BMI: 27.8
+2025-05-27 16:43:13,279 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 16:43:13,279 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 16:43:13,279 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 146.4, 'max_g': 259.5}, 'protein': {'min_g': 27.5, 'max_g': 168.9}, 'fat': {'min_g': 30.299999999999997, 'max_g': 67.9}, 'sugar': {'min_g': 0, 'max_g': 29.5}}
+2025-05-27 16:43:13,374 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 16:43:13,375 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 259.5,
+                                                                'min_g': 146.4},
+                                               'fat': {'max_g': 67.9,
+                                                       'min_g': 30.299999999999997},
+                                               'protein': {'max_g': 168.9,
+                                                           'min_g': 27.5},
+                                               'sugar': {'max_g': 29.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T16:43:13.374893',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 16:43:13,376 [INFO] 127.0.0.1 - - [27/May/2025 16:43:13] "POST /recommend HTTP/1.1" 200 -
+2025-05-27 16:46:01,134 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:46:01,135 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:01,147 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:46:01,168 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:46:01,169 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:46:01,170 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:46:01,170 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:01,193 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:46:01,193 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:46:01,202 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:46:01,202 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:46:01,271 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:46:01,272 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:46:01,373 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:46:02,565 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:46:02,566 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:46:04,113 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:46:04,113 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:46:04,114 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:46:04,127 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:46:04,127 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:46:04,128 [INFO] MySQL 연결 종료.
+2025-05-27 16:46:04,129 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:46:04,130 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:04,140 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:46:04,157 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:46:04,158 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:46:04,158 [INFO] ==================================================
+2025-05-27 16:46:04,158 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:46:04,159 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:46:04,159 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:46:04,159 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:46:04,159 [INFO] ==================================================
+2025-05-27 16:46:04,228 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://70.12.50.215:5001
+2025-05-27 16:46:04,228 [INFO] [33mPress CTRL+C to quit[0m
+2025-05-27 16:46:04,230 [INFO]  * Restarting with stat
+2025-05-27 16:46:05,091 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:46:05,091 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:05,104 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:46:05,123 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:46:05,124 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:46:05,125 [INFO] 데이터베이스 초기화 및 CSV 데이터 적재를 시작합니다...
+2025-05-27 16:46:05,125 [INFO] [DB 작업 1/5] CSV 파일 로드 중... 경로: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:05,149 [INFO] [DB 작업 1/5] CSV 파일 로드 완료.
+2025-05-27 16:46:05,150 [INFO] [DB 작업 2/5] MySQL 연결 시도...
+2025-05-27 16:46:05,157 [INFO] [DB 작업 2/5] MySQL 연결 완료.
+2025-05-27 16:46:05,158 [INFO] [DB 작업 3/5] 기존 테이블 삭제 시도...
+2025-05-27 16:46:05,224 [INFO] [DB 작업 3/5] 기존 테이블 삭제 완료.
+2025-05-27 16:46:05,225 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 시도...
+2025-05-27 16:46:05,324 [INFO] foods_info 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:46:06,664 [INFO] foods_info 데이터 삽입 완료.
+2025-05-27 16:46:06,664 [INFO] foods_nutrients 테이블에 2614개 데이터 삽입 시작...
+2025-05-27 16:46:08,382 [INFO] foods_nutrients 데이터 삽입 완료.
+2025-05-27 16:46:08,382 [INFO] [DB 작업 4/5] 테이블 생성 및 데이터 삽입 완료.
+2025-05-27 16:46:08,382 [INFO] [DB 작업 5/5] 변경사항 커밋 중...
+2025-05-27 16:46:08,398 [INFO] [DB 작업 5/5] 커밋 완료.
+2025-05-27 16:46:08,399 [INFO] ✅ 데이터베이스 초기화 및 CSV 데이터 적재 작업 완료.
+2025-05-27 16:46:08,399 [INFO] MySQL 연결 종료.
+2025-05-27 16:46:08,401 [INFO] 음식 데이터 로드를 시작합니다...
+2025-05-27 16:46:08,401 [INFO] 음식 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_info.csv
+2025-05-27 16:46:08,411 [INFO] 음식 영양 정보 CSV 로드 시도: C:\Users\SSAFY\Desktop\YamYamCoach\recommend\data\foods_nutrients.csv
+2025-05-27 16:46:08,429 [INFO] CSV에서 2614개의 음식 데이터를 성공적으로 로드하고 병합 (메모리).
+2025-05-27 16:46:08,430 [INFO] 전역 음식 데이터 로드 완료. 총 2614개 음식.
+2025-05-27 16:46:08,430 [INFO] ==================================================
+2025-05-27 16:46:08,430 [INFO] ===== 식단 추천 시스템 서버 시작 (recSys_demo 연동, DB 자동 초기화) =====
+2025-05-27 16:46:08,430 [INFO] 인메모리 음식 데이터(Pandas DF) 2614개 로드 완료.
+2025-05-27 16:46:08,431 [INFO] 요청 로그는 recommendation_requests.log 파일에 저장됩니다.
+2025-05-27 16:46:08,431 [INFO] Flask 서버 실행: host=0.0.0.0, port=5001, debug=True
+2025-05-27 16:46:08,431 [INFO] ==================================================
+2025-05-27 16:46:08,477 [WARNING]  * Debugger is active!
+2025-05-27 16:46:08,484 [INFO]  * Debugger PIN: 278-348-806
+2025-05-27 16:47:56,038 [INFO] 127.0.0.1 - - [27/May/2025 16:47:56] "OPTIONS /recommend HTTP/1.1" 200 -
+2025-05-27 16:47:56,302 [INFO] 요청 수신 시간: 2025-05-27 16:47:56
+2025-05-27 16:47:56,303 [INFO] 요청 데이터: {'nutrients': {'calories': 711,
+               'carbohydrate': 108,
+               'fat': 20,
+               'protein': 29,
+               'sugar': 27},
+ 'user': {'age': 25,
+          'diseaseTags': '',
+          'gender': False,
+          'height': 180,
+          'targetWeight': 40,
+          'userId': 2,
+          'weight': 90}}
+2025-05-27 16:47:56,303 [WARNING] 점심 영양소 정보 중 'sodium' 필드가 누락되어 0으로 기본값을 설정합니다.
+2025-05-27 16:47:56,303 [INFO] 계산된 BMI: 27.8
+2025-05-27 16:47:56,304 [INFO] BMI 기반 'obesity' 태그 추가. 업데이트된 질병 태그: obesity
+2025-05-27 16:47:56,304 [INFO] 일일 목표 EER: 2261.54 kcal, 목표 영양소: {'carbohydrate': {'min_g': 254.4, 'max_g': 367.5}, 'protein': {'min_g': 56.5, 'max_g': 197.9}, 'fat': {'min_g': 50.3, 'max_g': 87.9}, 'sugar': {'min_g': 0, 'max_g': 56.5}}
+2025-05-27 16:47:56,304 [INFO] 저녁 목표 영양소: {'carbohydrate': {'min_g': 146.4, 'max_g': 259.5}, 'protein': {'min_g': 27.5, 'max_g': 168.9}, 'fat': {'min_g': 30.299999999999997, 'max_g': 67.9}, 'sugar': {'min_g': 0, 'max_g': 29.5}}
+2025-05-27 16:47:56,399 [INFO] 추천 결과: {'recommended_dishes': [{'name': '닭백숙', 'id': 'C00268'}, {'name': '더덕장아찌', 'id': 'O00002'}, {'name': '돼지갈비전골', 'id': 'T00115'}, {'name': '호박오가리나물무침', 'id': 'E00026'}, {'name': '김치 고기만두', 'id': 'F00134'}], 'reason': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 고기만두 (점수: 2.48)'}
+2025-05-27 16:47:56,400 [INFO] 최종 응답 데이터: {'nutrition_targets': {'daily_eer_kcal': 2261.54,
+                       'daily_macros_gram': {'carbohydrate': {'max_g': 367.5,
+                                                              'min_g': 254.4},
+                                             'fat': {'max_g': 87.9,
+                                                     'min_g': 50.3},
+                                             'protein': {'max_g': 197.9,
+                                                         'min_g': 56.5},
+                                             'sugar': {'max_g': 56.5,
+                                                       'min_g': 0}},
+                       'evening_macros_gram': {'carbohydrate': {'max_g': 259.5,
+                                                                'min_g': 146.4},
+                                               'fat': {'max_g': 67.9,
+                                                       'min_g': 30.299999999999997},
+                                               'protein': {'max_g': 168.9,
+                                                           'min_g': 27.5},
+                                               'sugar': {'max_g': 29.5,
+                                                         'min_g': 0}}},
+ 'reasons': '국 및 탕류의 닭백숙 (점수: 2.27) / 장아찌·절임류의 더덕장아찌 (점수: 2.50) | 찌개 및 전골류의 '
+            '돼지갈비전골 (점수: 1.81) / 나물·숙채류의 호박오가리나물무침 (점수: 2.33) | 면 및 만두류에서 김치 '
+            '고기만두 (점수: 2.48)',
+ 'recommendations': [{'id': 'C00268', 'name': '닭백숙', 'rank': 1},
+                     {'id': 'O00002', 'name': '더덕장아찌', 'rank': 1},
+                     {'id': 'T00115', 'name': '돼지갈비전골', 'rank': 2},
+                     {'id': 'E00026', 'name': '호박오가리나물무침', 'rank': 2},
+                     {'id': 'F00134', 'name': '김치 고기만두', 'rank': 3}],
+ 'timestamp': '2025-05-27T16:47:56.399392',
+ 'user_profile': {'bmi': 27.8, 'disease_tags_updated': 'obesity,obesity'}}
+2025-05-27 16:47:56,401 [INFO] 127.0.0.1 - - [27/May/2025 16:47:56] "POST /recommend HTTP/1.1" 200 -

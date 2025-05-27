@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name = "schedule_dish")
 public class ScheduleDish {
+
     @EmbeddedId
     private ScheduleDishId id;
 
@@ -21,19 +22,37 @@ public class ScheduleDish {
     @JoinColumn(name = "dish_id", nullable = false)
     private Dish dish;
 
-    @Column(nullable = false)
+    @Column(name = "serving_order", nullable = false)
     private Integer servingOrder;
 
     @Column(length = 255)
     private String note;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at",
+            nullable = false,
+            updatable = false,
+            columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column(name = "updated_at",
+            nullable = false,
+            columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    // --- JPA Lifecycle Callbacks ---
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // --- Getters ---
     public ScheduleDishId getId() {

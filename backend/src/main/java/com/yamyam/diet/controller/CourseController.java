@@ -28,7 +28,7 @@ public class CourseController {
 
     @GetMapping("/{date}")
     public ResponseEntity<Map<String, Object>> getCoursesByDate(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    		@PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Map<String, Object> courses = courseService.getCoursesByDate(date);
         return ResponseEntity.ok(courses);
     }

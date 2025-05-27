@@ -62,7 +62,7 @@ public class UserEntity {
         this.weight = weight;
         this.targetWeight = targetWeight;
         this.role = "ROLE_USER";
-        this.profileUrl = "https://yamyamcoach.s3.ap-northeast-2.amazonaws.com/uploads/user/default-avatar.png";
+        this.profileUrl = "uploads/user/default-avatar.png";
     }
 
     // Static Factory Method for Signup
