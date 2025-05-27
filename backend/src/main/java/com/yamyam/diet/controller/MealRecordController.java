@@ -39,7 +39,7 @@ public class MealRecordController {
     // 날짜별 식사 기록 조회
     @GetMapping("/by-date/{date}")
     public ResponseEntity<List<MealRecordDto>> getMealRecordsByDate(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @PathVariable("date")  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<MealRecord> mealRecords = mealRecordService.getMealRecordsByDate(date);
         List<MealRecordDto> mealRecordDtos = mealRecords.stream()
                 .map(MealRecordDto::fromEntity)
@@ -51,7 +51,7 @@ public class MealRecordController {
     @GetMapping("/user/{userId}/date/{date}")
     public ResponseEntity<List<MealRecordDto>> getMealRecordsByUserAndDate(
             @PathVariable Long userId,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<MealRecord> mealRecords = mealRecordService.getMealRecordsByUserAndDate(userId, date);
         List<MealRecordDto> mealRecordDtos = mealRecords.stream()
                 .map(MealRecordDto::fromEntity)
@@ -63,7 +63,7 @@ public class MealRecordController {
     @GetMapping("/user/{userId}/date/{date}/type/{type}")
     public ResponseEntity<List<MealRecordDto>> getMealRecordsByUserDateAndType(
             @PathVariable Long userId,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @PathVariable("date")  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable String type) {
         MealRecord.CourseType courseType = MealRecord.CourseType.valueOf(type.toUpperCase());
         List<MealRecord> mealRecords = mealRecordService.getMealRecordsByUserDateAndType(userId, date, courseType);
@@ -101,8 +101,8 @@ public class MealRecordController {
     @GetMapping("/user/{userId}/date-range")
     public ResponseEntity<List<MealRecordDto>> getMealRecordsByUserAndDateRange(
             @PathVariable Long userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         List<MealRecord> mealRecords = mealRecordService.getMealRecordsByUserAndDateRange(userId, startDate, endDate);
         List<MealRecordDto> mealRecordDtos = mealRecords.stream()
                 .map(MealRecordDto::fromEntity)

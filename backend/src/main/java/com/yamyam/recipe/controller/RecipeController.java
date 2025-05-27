@@ -104,7 +104,7 @@ public class RecipeController {
 
     // 레시피 상세 조회
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable Long id) {
+    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable("id") Long id) {
         try {
             RecipeResponse recipe = recipeService.getRecipe(id);
             return ResponseEntity.ok(recipe);
@@ -116,10 +116,10 @@ public class RecipeController {
     // 레시피 목록 조회 (페이징)
     @GetMapping
     public ResponseEntity<Page<RecipeResponse>> getRecipes(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String category) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "category", required = false) String category) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         
